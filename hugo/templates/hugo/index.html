@@ -455,23 +455,20 @@
                                     <div class="space-y-2">
                                         <input type="text" v-model="item.label" placeholder="Label (e.g., Home)"
                                             class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
-                                        <div class="flex items-center space-x-2">
-                                            <select v-model="item.type"
-                                                class="text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                                <option value="page">Page</option>
-                                                <option value="external">External URL</option>
-                                            </select>
-                                            <select v-if="item.type === 'page'" v-model="item.url"
-                                                class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                                <option value="">Select a page...</option>
-                                                <option v-for="page in pages" :key="page.id" :value="page.slug">
-                                                    {{ page.title }} ({{ page.slug }})
-                                                </option>
-                                            </select>
-                                            <input v-else type="text" v-model="item.url"
-                                                placeholder="https://example.com"
-                                                class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
-                                        </div>
+                                        <select v-model="item.type"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                            <option value="page">Page</option>
+                                            <option value="external">External URL</option>
+                                        </select>
+                                        <select v-if="item.type === 'page'" v-model="item.url"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                            <option value="">Select a page...</option>
+                                            <option v-for="page in pages" :key="page.id" :value="page.slug">
+                                                {{ page.title }} ({{ page.slug }})
+                                            </option>
+                                        </select>
+                                        <input v-else type="text" v-model="item.url" placeholder="https://example.com"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
                                     </div>
                                 </div>
                                 <button
