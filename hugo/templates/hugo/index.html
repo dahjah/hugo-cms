@@ -1051,27 +1051,35 @@
         const app = createApp({
             components: {Icon, DropZone, BlockRenderer},
             setup() {
+                // --- CONSTANTS ---
+                const ZONES = {
+                    HEADER: 'header',
+                    FOOTER: 'footer',
+                    MAIN: 'main',
+                    SIDEBAR: 'sidebar'
+                };
+
+                // --- STATE ---
                 const componentLibrary = ref([]);
                 const layoutTemplates = ref([]);
                 const pages = ref([]);
                 const activePageId = ref(null);
                 const viewMode = ref('editor');
                 const selectedBlockId = ref(null);
-                const sidebarTab = ref('pages'); // pages | blocks | meta
+                const sidebarTab = ref('pages');
 
                 // UNIFIED STATE: All content zones (global and page-specific) in one place
                 const contentZones = ref({
-                    header: [],   // Global zone
-                    footer: [],   // Global zone
-                    main: [],     // Page-specific zone
-                    sidebar: []   // Page-specific zone
+                    [ZONES.HEADER]: [],
+                    [ZONES.FOOTER]: [],
+                    [ZONES.MAIN]: [],
+                    [ZONES.SIDEBAR]: []
                 });
 
                 const isLoaded = ref(false);
 
                 // --- STATE MANAGEMENT HELPERS ---
 
-                // Central function to find a block anywhere in the structure (top-level or nested)
                 const findBlockAndParent = (blockId) => {
                     // Helper to search a list recursively
                     const searchList = (list, parent = null, zone = null) => {
@@ -1382,6 +1390,50 @@ layout = "${activePage.value.layout}"
                 // Helper to generate UUIDs
                 const generateId = () => uuid.v4();
 
+                // --- DRAG & DROP HANDLERS ---
+
+                // Helper to insert a block into the correct position within a zone or column
+                const insertIntoCorrectPosition = (list, newBlock, targetZone, targetIndex) => {
+                    if(!targetZone.startsWith('col_')) {
+                        // Top-level insertion (Header, Footer, Main, Sidebar)
+                        newBlock.placement_key = targetZone;
+
+                        if(targetIndex < list.length) {
+                            list.splice(targetIndex, 0, newBlock);
+                        } else {
+                            list.push(newBlock);
+                        }
+
+                        // Update sort_order for all blocks in this zone
+                        list.forEach((b, index) => {
+                            b.sort_order = index;
+                        });
+
+                    } else {
+                        // Nested insertion into flex column
+                        const currentColBlocks = list.filter(b => b.placement_key === targetZone)
+                            .sort((a, b) => a.sort_order - b.sort_order);
+
+                        if(currentColBlocks.length === 0) {
+                            list.push(newBlock);
+                        } else if(targetIndex < currentColBlocks.length) {
+                            const blockToInsertBefore = currentColBlocks[targetIndex];
+                            const actualIndex = list.findIndex(b => b.id === blockToInsertBefore.id);
+                            list.splice(actualIndex, 0, newBlock);
+                        } else {
+                            list.push(newBlock);
+                        }
+
+                        // Update sort_order for nested blocks
+                        let currentSortOrder = 0;
+                        list.forEach(b => {
+                            if(b.placement_key === targetZone) {
+                                b.sort_order = currentSortOrder++;
+                            }
+                        });
+                    }
+                };
+
                 // Helper to find the mutable array reference for blocks within a zone/column
                 const findMutableBlockArray = (zone, parentBlockId) => {
                     if(parentBlockId) {
@@ -1421,57 +1473,12 @@ layout = "${activePage.value.layout}"
                     const mutationList = findMutableBlockArray(targetZone, parentBlockId);
 
                     if(!mutationList) {
-                        console.error('[DROP] No mutation list found for zone:', targetZone);
+                        console.error('No mutation list found for zone:', targetZone);
                         return;
                     }
 
-                    // Helper to insert into the correct visual position within the mutationList
-                    const insertIntoCorrectPosition = (list, newBlock, targetZone, targetIndex) => {
-                        if(!targetZone.startsWith('col_')) {
-                            // Top-level insertion (Header, Footer, Main, Sidebar)
-                            newBlock.placement_key = targetZone;
-
-                            // Since list is now specific to the zone (main_blocks or sidebar_blocks),
-                            // we can simply splice at the target index!
-                            if(targetIndex < list.length) {
-                                list.splice(targetIndex, 0, newBlock);
-                            } else {
-                                list.push(newBlock);
-                            }
-
-                            // Update sort_order for ALL blocks in this zone based on their new array order
-                            list.forEach((b, index) => {
-                                b.sort_order = index;
-                            });
-
-                        } else {
-                            // Nested insertion: Find the actual index in the parent's children array
-
-                            // 1. Get the list of blocks currently in the target column
-                            const currentColBlocks = list.filter(b => b.placement_key === targetZone).sort((a, b) => a.sort_order - b.sort_order);
-
-                            if(currentColBlocks.length === 0) {
-                                list.push(newBlock);
-                            } else if(targetIndex < currentColBlocks.length) {
-                                const blockToInsertBefore = currentColBlocks[targetIndex];
-                                const actualIndex = list.findIndex(b => b.id === blockToInsertBefore.id);
-                                list.splice(actualIndex, 0, newBlock);
-                            } else {
-                                list.push(newBlock);
-                            }
-
-                            // 2. Update sort_order for nested blocks
-                            let currentSortOrder = 0;
-                            list.forEach(b => {
-                                if(b.placement_key === targetZone) {
-                                    b.sort_order = currentSortOrder++;
-                                }
-                            });
-                        }
-                    };
-
-                    // 1. Handling New Drop from Sidebar
                     if(source === 'sidebar') {
+                        // New block from component library
                         const type = e.dataTransfer.getData('type');
                         const definition = componentLibrary.value.find(c => c.id === type);
 
@@ -1479,16 +1486,12 @@ layout = "${activePage.value.layout}"
                             id: generateId(),
                             type: type,
                             params: {...definition.default_params},
-                            // Initialize children for containers
                             children: type === 'flex_columns' ? [] : null,
-                            // Only set placement_key for nested zones (columns), not for top-level zones
                             placement_key: targetZone,
                             parent_id: parentBlockId || null,
                         };
 
-                        // --- FIX: Initialize column structure on drop ---
                         if(type === 'flex_columns') {
-                            // Ensure col_widths is set
                             newBlock.params.col_widths = newBlock.params.col_widths || '50.0, 50.0';
                         }
 
@@ -1496,8 +1499,8 @@ layout = "${activePage.value.layout}"
                         selectedBlockId.value = newBlock.id;
                     }
                     else if(source === 'canvas') {
+                        // Move existing block
                         const blockId = e.dataTransfer.getData('blockId');
-
                         const sourceResult = findBlockAndParent(blockId);
 
                         if(!sourceResult) {
@@ -1507,10 +1510,8 @@ layout = "${activePage.value.layout}"
 
                         const sourceList = sourceResult.list;
                         const blockIndex = sourceResult.index;
-
                         const [movedBlock] = sourceList.splice(blockIndex, 1);
 
-                        // Update relational keys for moved block - only set placement_key for nested zones
                         movedBlock.placement_key = targetZone;
                         movedBlock.parent_id = parentBlockId || null;
 
