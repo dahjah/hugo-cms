@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hugo CMS Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <!-- CSRF Token for future API requests -->
+    {% csrf_token %}
+    <script>
+        // Global helper to retrieve the CSRF token from the template
+        const getCsrfToken = () => document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const API_BASE_URL = '/api/'; // Django API root
+    </script>
+
+    <style>
+        /* Custom scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+{% verbatim %}
+<body class="bg-slate-50 text-slate-800 font-sans overflow-hidden">
+    <div id="app" class="flex h-screen w-full">
+        
+        <!-- Loading Spinner while fetching initial data -->
+        <div v-if="!isLoaded" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center flex-col">
+            <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-4 text-lg text-slate-700">Loading CMS Data...</p>
+        </div>
+
+        <!-- CMS Editor UI (Visible when loaded) -->
+        <template v-else>
+            <!-- LEFT SIDEBAR -->
+            <aside class="w-80 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 z-20 shadow-sm">
+                <!-- App Header -->
+                <div class="p-4 border-b border-slate-100 flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                        <icon name="layout" :size="18"></icon>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-slate-800 leading-tight">HugoCMS</h1>
+                        <p class="text-xs text-slate-500">Django + Vue Mode</p>
+                    </div>
+                </div>
+
+                <!-- Sidebar Tabs -->
+                <div class="flex items-center border-b border-slate-200 bg-slate-50/50">
+                    <button 
+                        v-for="tab in ['pages', 'blocks', 'meta']" 
+                        :key="tab"
+                        @click="sidebarTab = tab"
+                        class="flex-1 py-3 text-xs font-bold uppercase tracking-wide transition-colors relative"
+                        :class="sidebarTab === tab ? 'text-indigo-600 bg-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'"
+                    >
+                        {{ tab }}
+                        <div v-if="sidebarTab === tab" class="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600"></div>
+                    </button>
+                </div>
+
+                <!-- Sidebar Content Area -->
+                <div class="flex-1 overflow-y-auto bg-white">
+                    
+                    <!-- PAGES TAB -->
+                    <div v-if="sidebarTab === 'pages'" class="p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">All Pages</h3>
+                            <button class="text-slate-400 hover:text-indigo-600 transition-colors">
+                                <icon name="plus" :size="16"></icon>
+                            </button>
+                        </div>
+                        <div class="space-y-1">
+                            <div 
+                                v-for="page in pages" 
+                                :key="page.id"
+                                @click="setActivePage(page.id)"
+                                class="group flex items-center justify-between px-3 py-2 rounded-md cursor-pointer text-sm transition-all"
+                                :class="activePageId === page.id ? 'bg-indigo-50 text-indigo-700 font-medium border border-indigo-100' : 'hover:bg-slate-50 text-slate-600 border border-transparent'"
+                            >
+                                <div class="flex items-center space-x-3 truncate">
+                                    <icon name="file-text" :size="16" :class="activePageId === page.id ? 'text-indigo-500' : 'text-slate-400'"></icon>
+                                    <span class="truncate">{{ page.title }}</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 rounded-full" :class="page.status === 'published' ? 'bg-emerald-400' : 'bg-amber-400'"></span>
+                                    <icon name="more-vertical" :size="14" class="opacity-0 group-hover:opacity-100 text-slate-400"></icon>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="mt-4 w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
+                            <icon name="plus" :size="12"></icon>
+                            <span>Create New Page</span>
+                        </button>
+                    </div>
+
+                    <!-- BLOCKS TAB -->
+                    <div v-if="sidebarTab === 'blocks'" class="p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Component Library</h3>
+                            <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Drag to Canvas</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div
+                                v-for="comp in componentLibrary"
+                                :key="comp.id"
+                                draggable="true"
+                                @dragstart="handleDragStartNew($event, comp.id)"
+                                class="bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-sm p-3 rounded-md cursor-grab active:cursor-grabbing flex items-center space-x-3 transition-all group"
+                            >
+                                <div class="text-slate-400 group-hover:text-indigo-500 transition-colors">
+                                    <icon :name="comp.icon" :size="20"></icon>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-medium text-slate-700 block">{{ comp.label }}</span>
+                                    <span class="text-[10px] text-slate-400 block">
+                                        {{ comp.has_visual_preview ? 'Visual Block' : 'Shortcode' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 p-3 bg-indigo-50 rounded-md border border-indigo-100 text-xs text-indigo-700">
+                            <div class="font-bold mb-1">Tip:</div>
+                            New components are loaded from Django's BlockDefinition model.
+                        </div>
+                    </div>
+
+                    <!-- META TAB -->
+                    <div v-if="sidebarTab === 'meta'" class="p-4 space-y-5">
+                        <div v-if="activePage">
+                            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Frontmatter & SEO</h3>
+                            
+                            <!-- Title -->
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-slate-600">Page Title</label>
+                                <input v-model="activePage.title" type="text" class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow" />
+                            </div>
+
+                            <!-- Slug -->
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-slate-600">URL Slug</label>
+                                <div class="flex items-center">
+                                    <span class="bg-slate-50 border border-r-0 border-slate-200 text-slate-400 text-xs px-2 py-2 rounded-l-md font-mono">/</span>
+                                    <input v-model="activePage.slug" type="text" class="flex-1 w-full text-sm border border-slate-200 rounded-r-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow font-mono text-slate-600" />
+                                </div>
+                            </div>
+
+                            <!-- Date -->
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-slate-600">Publish Date</label>
+                                <input v-model="activePage.date" type="date" class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-slate-600" />
+                            </div>
+
+                            <!-- Description -->
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-slate-600">Description</label>
+                                <textarea v-model="activePage.description" rows="3" class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow resize-none"></textarea>
+                            </div>
+
+                            <!-- Tags -->
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-slate-600">Tags (comma separated)</label>
+                                <input v-model="activePage.tags" type="text" placeholder="e.g. news, tech" class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow" />
+                            </div>
+                            
+                            <div class="border-t border-slate-100 my-4"></div>
+
+                            <!-- Layout -->
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-slate-600">Layout Template</label>
+                                <div class="relative">
+                                    <select v-model="activePage.layout" class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 pr-8 appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white">
+                                        <option value="home">home.html</option>
+                                        <option value="single">single.html</option>
+                                        <option value="list">list.html</option>
+                                        <option value="contact">contact.html</option>
+                                    </select>
+                                    <icon name="chevron-down" :size="14" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></icon>
+                                </div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-slate-600">Status</label>
+                                <div class="flex space-x-2">
+                                    <button 
+                                        @click="activePage.status = 'published'"
+                                        class="flex-1 py-1.5 text-xs rounded border transition-colors flex items-center justify-center space-x-1"
+                                        :class="activePage.status === 'published' ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-medium' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'"
+                                    >
+                                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-500" v-if="activePage.status === 'published'"></div>
+                                        <span>Published</span>
+                                    </button>
+                                    <button 
+                                        @click="activePage.status = 'draft'"
+                                        class="flex-1 py-1.5 text-xs rounded border transition-colors flex items-center justify-center space-x-1"
+                                        :class="activePage.status === 'draft' ? 'bg-amber-50 border-amber-200 text-amber-700 font-medium' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'"
+                                    >
+                                        <div class="w-1.5 h-1.5 rounded-full bg-amber-500" v-if="activePage.status === 'draft'"></div>
+                                        <span>Draft</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div v-else class="text-center text-slate-400 mt-10">
+                            No page selected
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom User Profile -->
+                <div class="p-4 border-t border-slate-200 bg-slate-50">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                            JD
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-slate-900">John Doe</div>
+                            <div class="text-xs text-slate-500">Admin</div>
+                        </div>
+                        <icon name="settings" :size="16" class="text-slate-400 cursor-pointer hover:text-slate-600"></icon>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- MAIN CONTENT AREA -->
+            <main class="flex-1 flex flex-col h-screen min-w-0 bg-slate-100">
+                
+                <!-- Top Bar -->
+                <header class="relative h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm z-10">
+                    <!-- LEFT SECTION -->
+                    <div v-if="activePage" class="flex items-center space-x-4 z-20">
+                        <div class="flex flex-col">
+                            <h2 class="text-lg font-semibold text-slate-800">{{ activePage.title }}</h2>
+                            <div class="flex items-center text-xs text-slate-500 mt-0.5 space-x-2">
+                                <span class="text-slate-400">url:</span>
+                                <span class="font-mono text-slate-600">{{ activePage.slug }}</span>
+                                <span class="text-slate-300">|</span>
+                                <span class="font-mono text-slate-400">layout: {{ activePage.layout }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CENTER SECTION (Absolute Positioned) -->
+                    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center bg-slate-100 rounded-lg p-1">
+                        <button 
+                            @click="viewMode = 'editor'"
+                            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
+                            :class="viewMode === 'editor' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                        >
+                            <icon name="edit-3" :size="14"></icon>
+                            <span>Editor</span>
+                        </button>
+                        <button 
+                            @click="viewMode = 'preview'"
+                            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
+                            :class="viewMode === 'preview' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                        >
+                            <icon name="eye" :size="14"></icon>
+                            <span>Preview</span>
+                        </button>
+                        <button 
+                            @click="viewMode = 'code'"
+                            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
+                            :class="viewMode === 'code' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                        >
+                            <icon name="code" :size="14"></icon>
+                            <span>Code</span>
+                        </button>
+                    </div>
+
+                    <!-- RIGHT SECTION -->
+                    <div class="flex items-center space-x-3 z-20">
+                        <button class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-md text-sm font-medium hover:bg-slate-50 transition-colors flex items-center space-x-2">
+                            <icon name="save" :size="16"></icon>
+                            <span>Save Draft</span>
+                        </button>
+                        <button class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors flex items-center space-x-2">
+                            <icon name="send" :size="16"></icon>
+                            <span>Publish</span>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Canvas Area -->
+                <div class="flex-1 overflow-auto p-8 relative">
+                    
+                    <!-- Code View -->
+                    <div v-if="viewMode === 'code'" class="max-w-4xl mx-auto bg-slate-800 rounded-lg shadow-xl overflow-hidden text-slate-300 font-mono text-sm">
+                        <div class="bg-slate-900 px-4 py-2 border-b border-slate-700 flex justify-between">
+                            <span>config.toml</span>
+                            <span class="text-xs text-slate-500">Read-only generated view</span>
+                        </div>
+                        <div class="p-6 whitespace-pre overflow-x-auto">{{ generateConfig }}</div>
+                    </div>
+
+                    <!-- Editor/Preview View -->
+                    <div v-else class="max-w-5xl mx-auto min-h-[800px] bg-white shadow-xl rounded-lg border border-slate-200 flex flex-col transition-all duration-300" :class="viewMode === 'preview' ? 'scale-[1.02]' : ''">
+                        
+                        <!-- Header Zone (Global) -->
+                        <drop-zone 
+                            title="Site Header (Global)" 
+                            zone="header" 
+                            :blocks="activeContent.header" 
+                            :is-active="viewMode === 'editor'"
+                            :selected-id="selectedBlockId"
+                            @drop-item="handleDrop"
+                            @select-block="setSelectedBlockId"
+                            @drag-start-block="handleDragStartExisting"
+                            class="bg-slate-50/50"
+                        ></drop-zone>
+
+                        <!-- Main Content Zone (Page Specific) -->
+                        <drop-zone 
+                            title="Page Content" 
+                            zone="main" 
+                            :blocks="activeContent.main" 
+                            :is-active="viewMode === 'editor'"
+                            :selected-id="selectedBlockId"
+                            class="flex-1 min-h-[400px]"
+                            @drop-item="handleDrop"
+                            @select-block="setSelectedBlockId"
+                            @drag-start-block="handleDragStartExisting"
+                        ></drop-zone>
+
+                        <!-- Footer Zone (Global) -->
+                        <drop-zone 
+                            title="Site Footer (Global)" 
+                            zone="footer" 
+                            :blocks="activeContent.footer" 
+                            :is-active="viewMode === 'editor'"
+                            :selected-id="selectedBlockId"
+                            @drop-item="handleDrop"
+                            @select-block="setSelectedBlockId"
+                            @drag-start-block="handleDragStartExisting"
+                            class="bg-slate-50/50"
+                        ></drop-zone>
+                    </div>
+                </div>
+            </main>
+
+            <!-- RIGHT PROPERTY SIDEBAR -->
+            <aside v-if="viewMode === 'editor' && selectedBlock" class="w-80 bg-white border-l border-slate-200 shadow-xl z-30 flex flex-col transition-all">
+                <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800">Edit Component</h3>
+                        <span class="text-xs text-slate-500 uppercase tracking-wide">{{ selectedBlock.label || selectedBlock.type }}</span>
+                    </div>
+                    <button 
+                        @click="deleteBlock(selectedBlock.id)"
+                        class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-md transition-colors"
+                        title="Delete Block"
+                    >
+                        <icon name="trash-2" :size="16"></icon>
+                    </button>
+                </div>
+                
+                <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+                    <div v-for="(value, key) in selectedBlock.params" :key="key">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">
+                            {{ formatKey(key) }}
+                        </label>
+                        
+                        <textarea 
+                            v-if="key === 'content' || key === 'md' || key.toLowerCase().includes('text') && value.length > 50"
+                            :value="value"
+                            @input="updateBlockParams(selectedBlock.id, key, $event.target.value)"
+                            rows="6"
+                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none font-mono"
+                        ></textarea>
+                        
+                        <input 
+                            v-else
+                            type="text" 
+                            :value="value"
+                            @input="updateBlockParams(selectedBlock.id, key, $event.target.value)"
+                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                        />
+
+                        <div v-if="key.includes('Image')" class="mt-2 rounded-md overflow-hidden h-24 bg-slate-100 border border-slate-200 flex items-center justify-center relative group">
+                            <img :src="value" alt="Preview" class="h-full w-full object-cover" @error="$event.target.style.display = 'none'" />
+                            <div class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white text-xs">Preview</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-4 border-t border-slate-100 bg-slate-50 text-xs text-slate-500 text-center">
+                    Changes are synced to local state
+                </div>
+            </aside>
+        </template>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        const { createApp, ref, computed, reactive, onMounted, watch } = Vue;
+        
+        // --- API HELPERS ---
+        const fetchWithRetry = async (url, options = {}, retries = 3, delay = 1000) => {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        const errorBody = await response.json().catch(() => ({}));
+                        throw new Error(`HTTP error! status: ${response.status} - ${JSON.stringify(errorBody)}`);
+                    }
+                    return response.json();
+                } catch (error) {
+                    if (i === retries - 1) throw error;
+                    await new Promise(resolve => setTimeout(resolve, delay * (2 ** i)));
+                }
+            }
+        };
+
+        // --- BLOCK DEFINITIONS (Will be overridden by API data) ---
+        let BLOCK_DEFINITIONS = {};
+
+        // --- ICON COMPONENT ---
+        const ICONS = {
+            'layout': '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="9" y2="21"/>',
+            'file-text': '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/>',
+            'type': '<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" x2="15" y1="20" y2="20"/><line x1="12" x2="12" y1="4" y2="20"/>',
+            'image': '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+            'columns': '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="12" x2="12" y1="3" y2="21"/>',
+            'save': '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
+            'send': '<line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+            'more-vertical': '<circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>',
+            'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>',
+            'settings': '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+            'code': '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+            'eye': '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+            'edit-3': '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+            'trash-2': '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+            'move': '<polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 15 22 12 19 9"/><line x1="2" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="22"/>',
+            'chevron-down': '<polyline points="6 9 12 15 18 9"/>',
+            'video': '<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>',
+            'alert-triangle': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+        };
+
+        const Icon = {
+            props: ['name', 'size'],
+            template: `
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    :width="size || 24" 
+                    :height="size || 24" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    stroke-width="2" 
+                    stroke-linecap="round" 
+                    stroke-linejoin="round"
+                    v-html="path"
+                >
+                </svg>
+            `,
+            computed: {
+                path() {
+                    return ICONS[this.name] || '';
+                }
+            }
+        };
+
+        // --- BLOCK RENDERER COMPONENT ---
+        const BlockRenderer = {
+            props: ['block', 'isSelected', 'isEditable'],
+            components: { Icon },
+            template: `
+                <div 
+                    :class="wrapperClass"
+                    @click="handleClick"
+                    :draggable="isEditable"
+                    @dragstart="handleDragStart"
+                    :data-block-id="block.id"
+                >
+                    <!-- Drag Handle -->
+                    <div v-if="isEditable" class="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur shadow-sm p-1 rounded cursor-grab active:cursor-grabbing text-slate-500">
+                        <icon name="move" :size="14"></icon>
+                    </div>
+                    
+                    <!-- Overlay -->
+                    <div v-if="isEditable" class="absolute inset-0 z-0"></div>
+                    
+                    <!-- Specific Renderers (Visual) -->
+                    <div v-if="block.type === 'hero'" class="relative h-64 w-full flex items-center justify-center text-center text-white overflow-hidden rounded-sm">
+                        <div class="absolute inset-0 bg-slate-900/40 z-10"></div>
+                        <img :src="block.params.bgImage" alt="Hero" class="absolute inset-0 w-full h-full object-cover" />
+                        <div class="relative z-20 p-6 max-w-2xl">
+                            <h1 class="text-4xl font-bold mb-2">{{ block.params.title }}</h1>
+                            <p class="text-lg opacity-90">{{ block.params.subtitle }}</p>
+                        </div>
+                    </div>
+
+                    <div v-else-if="block.type === 'text'" class="prose max-w-none text-slate-600 p-4">
+                        <p>{{ block.params.content }}</p>
+                    </div>
+
+                    <div v-else-if="block.type === 'columns'" class="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+                        <div v-for="(col, i) in getColumns(block)" :key="i" class="bg-slate-50 p-6 rounded-lg text-center border border-slate-100">
+                            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mx-auto mb-3">
+                                {{ i + 1 }}
+                            </div>
+                            <h3 class="font-semibold text-slate-800">{{ col }}</h3>
+                            <p class="text-sm text-slate-500 mt-2">Column content goes here.</p>
+                        </div>
+                    </div>
+
+                    <div v-else-if="block.type === 'image'" class="p-4">
+                        <figure>
+                            <img :src="block.params.src" :alt="block.params.caption" class="w-full rounded-lg shadow-sm" />
+                            <figcaption class="text-center text-sm text-slate-500 mt-2 italic">{{ block.params.caption }}</figcaption>
+                        </figure>
+                    </div>
+
+                    <div v-else-if="block.type === 'markdown'" class="p-6 bg-white border border-slate-100 rounded-lg">
+                        <div class="font-mono text-sm text-slate-800 whitespace-pre-wrap">{{ block.params.md }}</div>
+                    </div>
+
+                    <!-- GENERIC RENDERER (For unknown/arbitrary blocks) -->
+                    <div v-else class="p-4 bg-white border border-slate-100 rounded-lg shadow-sm m-1">
+                        <div class="flex items-center space-x-2 text-slate-500 mb-3 border-b border-slate-100 pb-2">
+                            <icon :name="getIcon(block.type)" :size="16"></icon>
+                            <span class="text-xs font-bold uppercase tracking-wider">{{ getLabel(block.type) }}</span>
+                        </div>
+                        <div class="space-y-1.5">
+                            <div v-for="(val, key) in block.params" :key="key" class="flex items-start text-sm">
+                                <span class="text-slate-400 w-24 font-mono text-xs pt-0.5 uppercase">{{ key }}:</span>
+                                <span class="text-slate-700 truncate flex-1 font-medium">{{ val }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            computed: {
+                wrapperClass() {
+                    if (!this.isEditable) return '';
+                    return `relative group cursor-pointer border-2 transition-all rounded-md overflow-hidden ${
+                        this.isSelected 
+                            ? 'border-indigo-500 shadow-md ring-2 ring-indigo-200 ring-offset-2' 
+                            : 'border-transparent hover:border-indigo-300 hover:shadow-sm'
+                    }`;
+                }
+            },
+            methods: {
+                handleClick(e) {
+                    if (this.isEditable) {
+                        e.stopPropagation();
+                        this.$emit('select', this.block.id);
+                    }
+                },
+                handleDragStart(e) {
+                    this.$emit('drag-start', e);
+                },
+                getColumns(block) {
+                    // Logic to extract column parameters dynamically
+                    const cols = [];
+                    for (const key in block.params) {
+                        if (key.startsWith('col')) {
+                            cols.push(block.params[key]);
+                        }
+                    }
+                    // Fallback using the logic from the previous version
+                    return [block.params.col1, block.params.col2, block.params.col3];
+                },
+                // Helpers for Generic Renderer
+                getLabel(type) {
+                    return BLOCK_DEFINITIONS[type]?.label || type;
+                },
+                getIcon(type) {
+                    return BLOCK_DEFINITIONS[type]?.icon || 'code';
+                }
+            }
+        };
+
+        // --- DROP ZONE COMPONENT ---
+        const DropZone = {
+            props: ['title', 'zone', 'blocks', 'isActive', 'selectedId'],
+            components: { BlockRenderer, Icon },
+            template: `
+                <div 
+                    class="relative p-2 transition-colors"
+                    @dragover.prevent="handleDragOver"
+                    @dragleave="handleDragLeave"
+                    @drop="handleDropInternal"
+                >
+                    <!-- Zone Label -->
+                    <div v-if="isActive" class="absolute top-0 left-0 -translate-y-1/2 ml-4 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider z-10 border"
+                         :class="isOver ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'bg-slate-100 text-slate-400 border-slate-200'">
+                        {{ title }}
+                    </div>
+
+                    <!-- Dashed Container -->
+                    <div class="h-full min-h-[120px] rounded-lg transition-all duration-200 p-4 space-y-4"
+                         ref="container"
+                         :class="containerClass">
+                        
+                        <div v-if="blocks.length === 0 && isActive" class="h-full flex flex-col items-center justify-center text-slate-400 pointer-events-none">
+                            <span class="text-sm italic">Empty {{ title }} (Drop blocks here)</span>
+                        </div>
+                        
+                        <!-- Loop through blocks -->
+                        <template v-for="(block, index) in blocks" :key="block.id">
+                            <!-- Placeholder when inserting BEFORE this block -->
+                            <div v-if="isActive && isOver && dragOverIndex === index" 
+                                 class="h-24 bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-lg pointer-events-none opacity-60 transition-all">
+                            </div>
+
+                            <block-renderer 
+                                :block="block" 
+                                :is-selected="selectedId === block.id"
+                                :is-editable="isActive"
+                                @select="$emit('select-block', $event)"
+                                @drag-start="emitDragStart($event, block.id)"
+                            ></block-renderer>
+                        </template>
+
+                        <!-- Placeholder when inserting at END -->
+                        <div v-if="isActive && isOver && dragOverIndex === blocks.length" 
+                             class="h-24 bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-lg pointer-events-none opacity-60 transition-all">
+                        </div>
+                    </div>
+                </div>
+            `,
+            data() {
+                return { 
+                    isOver: false,
+                    dragOverIndex: -1
+                };
+            },
+            computed: {
+                containerClass() {
+                    if (!this.isActive) return '';
+                    return `border-2 border-dashed ${this.isOver ? 'border-indigo-400 bg-indigo-50/50' : 'border-slate-200'}`;
+                }
+            },
+            methods: {
+                handleDragOver(e) {
+                    this.isOver = true;
+                    
+                    const container = this.$refs.container;
+                    if (!container) return;
+
+                    // Filter only the block elements (those with data-block-id)
+                    const children = Array.from(container.children).filter(el => el.hasAttribute('data-block-id'));
+                    
+                    const mouseY = e.clientY;
+                    let foundIndex = children.length; // Default to end
+
+                    for (let i = 0; i < children.length; i++) {
+                        const rect = children[i].getBoundingClientRect();
+                        const midY = rect.top + (rect.height / 2);
+                        
+                        // If mouse is above the midpoint of this element, we insert before it
+                        if (mouseY < midY) {
+                            foundIndex = i;
+                            break;
+                        }
+                    }
+
+                    this.dragOverIndex = foundIndex;
+                },
+                handleDragLeave(e) {
+                    // Check if we are really leaving the zone, or just entering a child
+                    if (e.relatedTarget && this.$el.contains(e.relatedTarget)) {
+                        return;
+                    }
+
+                    this.isOver = false;
+                    this.dragOverIndex = -1;
+                },
+                handleDropInternal(e) {
+                    this.isOver = false;
+                    // Use calculated index if valid, otherwise append to end
+                    let targetIndex = this.dragOverIndex;
+                    if (targetIndex === -1) targetIndex = this.blocks.length;
+                    
+                    this.dragOverIndex = -1;
+                    this.$emit('drop-item', e, this.zone, targetIndex);
+                },
+                emitDragStart(e, blockId) {
+                    this.$emit('drag-start-block', e, blockId, this.zone);
+                }
+            }
+        };
+
+        // --- MAIN APP ---
+        const app = createApp({
+            components: { Icon, BlockRenderer, DropZone },
+            setup() {
+                // STATE
+                const isLoaded = ref(false);
+                const pages = ref([]); // List of pages from API
+                const activePageId = ref(null);
+                const viewMode = ref('editor');
+                const selectedBlockId = ref(null);
+                const sidebarTab = ref('pages'); // pages | blocks | meta
+                
+                // Block Data from API
+                const componentLibrary = ref([]); // Block Definitions from API
+                const siteBlocks = ref({ // Global Blocks from API
+                    header: [],
+                    footer: []
+                });
+                const pageMainBlocks = reactive({}); // Main Blocks per page (loaded dynamically)
+
+                // COMPUTED
+                const activePage = computed(() => pages.value.find(p => p.id === activePageId.value) || {});
+                
+                const activeContent = computed(() => ({
+                    header: siteBlocks.value.header,
+                    main: pageMainBlocks[activePageId.value] || [],
+                    footer: siteBlocks.value.footer
+                }));
+                
+                const selectedBlock = computed(() => {
+                    if (!selectedBlockId.value) return null;
+                    
+                    // Helper to search in lists
+                    const searchBlock = (list) => {
+                         if (!list) return null;
+                         const found = list.find(b => b.id === selectedBlockId.value);
+                         return found;
+                    }
+                    
+                    let foundBlock = searchBlock(siteBlocks.value.header);
+                    if (foundBlock) return { ...foundBlock, zone: 'header', label: BLOCK_DEFINITIONS[foundBlock.type]?.label };
+
+                    foundBlock = searchBlock(activeContent.value.main);
+                    if (foundBlock) return { ...foundBlock, zone: 'main', label: BLOCK_DEFINITIONS[foundBlock.type]?.label };
+
+                    foundBlock = searchBlock(siteBlocks.value.footer);
+                    if (foundBlock) return { ...foundBlock, zone: 'footer', label: BLOCK_DEFINITIONS[foundBlock.type]?.label };
+
+                    return null;
+                });
+
+                // HELPERS
+                const generateId = () => Math.random().toString(36).substr(2, 9);
+                const formatKey = (key) => key.replace(/([A-Z])/g, ' $1').trim();
+
+                const generateConfig = computed(() => {
+                    if (!activePage.value || !activePageId.value) return 'No active page selected.';
+                    
+                    let tagsArray = [];
+                    if (activePage.value.tags) {
+                        if (typeof activePage.value.tags === 'string') {
+                            tagsArray = activePage.value.tags.split(',').map(t => `"${t.trim()}"`).filter(t => t.length > 2);
+                        } else if (Array.isArray(activePage.value.tags)) {
+                            tagsArray = activePage.value.tags.map(t => `"${t.trim()}"`).filter(t => t.length > 2);
+                        }
+                    }
+
+                    let toml = `+++
+title = "${activePage.value.title || ''}"
+layout = "${activePage.value.layout || 'single'}"
+status = "${activePage.value.status || 'draft'}"
+url = "${activePage.value.slug || ''}"
+date = "${activePage.value.date || ''}"
+description = "${activePage.value.description || ''}"
+tags = [${tagsArray.join(', ')}]
++++
+
+`;
+                    const c = activeContent.value;
+                    ['header', 'main', 'footer'].forEach(zone => {
+                        if (c[zone] && c[zone].length > 0) {
+                            toml += `# ${zone.charAt(0).toUpperCase() + zone.slice(1)} Blocks\n`;
+                            c[zone].forEach(b => {
+                                toml += `[[${zone}]]\n  type = "${b.type}"\n`;
+                                Object.entries(b.params).forEach(([k, v]) => {
+                                    // Simple string quoting for TOML compatibility
+                                    const val = String(v).replace(/"/g, '\\"');
+                                    toml += `  ${k} = "${val}"\n`;
+                                });
+                                toml += '\n';
+                            });
+                        }
+                    });
+                    return toml;
+                });
+
+                // --- DATA FETCHING ---
+                const fetchPageContent = async (pageId) => {
+                    try {
+                        const content = await fetchWithRetry(`${API_BASE_URL}pages/${pageId}/content/`);
+                        pageMainBlocks[pageId] = content;
+                    } catch (error) {
+                        console.error('Failed to fetch page content:', error);
+                        pageMainBlocks[pageId] = []; // Fallback to empty
+                    }
+                };
+
+                const initializeData = async () => {
+                    try {
+                        // 1. Fetch Global Config (Definitions, Header, Footer)
+                        const initData = await fetchWithRetry(`${API_BASE_URL}init/`);
+                        
+                        // Map definitions to global object for component lookups
+                        BLOCK_DEFINITIONS = initData.definitions.reduce((acc, def) => {
+                            acc[def.id] = def;
+                            return acc;
+                        }, {});
+                        componentLibrary.value = initData.definitions;
+
+                        siteBlocks.value.header = initData.header;
+                        siteBlocks.value.footer = initData.footer;
+
+                        // 2. Fetch Pages List
+                        const pagesList = await fetchWithRetry(`${API_BASE_URL}pages/`);
+                        pages.value = pagesList;
+
+                        // 3. Set Active Page and Fetch its Content
+                        if (pages.value.length > 0) {
+                            activePageId.value = pages.value[0].id;
+                            await fetchPageContent(activePageId.value);
+                        }
+
+                    } catch (error) {
+                        console.error("Initialization Failed:", error);
+                    } finally {
+                        isLoaded.value = true;
+                    }
+                };
+                
+                onMounted(() => {
+                    initializeData();
+                });
+
+                // Watch activePageId to load new main content
+                watch(activePageId, async (newId) => {
+                    if (newId && !pageMainBlocks[newId]) {
+                        await fetchPageContent(newId);
+                    }
+                });
+
+                // ACTIONS
+                const setActivePage = (id) => {
+                    activePageId.value = id;
+                    selectedBlockId.value = null;
+                };
+                
+                // Existing drag/drop/delete logic remains the same, 
+                // but now operates on the API-fetched reactive data (pages, siteBlocks, pageMainBlocks)
+                const handleDragStartNew = (e, type) => {
+                    e.dataTransfer.setData('type', type);
+                    e.dataTransfer.setData('source', 'sidebar');
+                };
+
+                const handleDragStartExisting = (e, blockId, zone) => {
+                    e.dataTransfer.setData('blockId', blockId);
+                    e.dataTransfer.setData('zone', zone);
+                    e.dataTransfer.setData('source', 'canvas');
+                };
+
+                const handleDrop = (e, targetZone, targetIndex) => {
+                    const source = e.dataTransfer.getData('source');
+                    
+                    const getTargetList = () => {
+                        if (targetZone === 'main') {
+                            if (!pageMainBlocks[activePageId.value]) pageMainBlocks[activePageId.value] = [];
+                            return pageMainBlocks[activePageId.value];
+                        }
+                        return siteBlocks.value[targetZone];
+                    };
+
+                    const insertBlock = (block) => {
+                        const list = getTargetList();
+                        if (targetIndex > -1) {
+                            list.splice(targetIndex, 0, block);
+                        } else {
+                            list.push(block);
+                        }
+                    };
+
+                    if (source === 'sidebar') {
+                        const type = e.dataTransfer.getData('type');
+                        const definition = BLOCK_DEFINITIONS[type];
+                        
+                        const newBlock = {
+                            id: generateId(),
+                            type: type,
+                            params: { ...definition.default_params } // Use default_params from API
+                        };
+                        insertBlock(newBlock);
+                    } 
+                    else if (source === 'canvas') {
+                        const blockId = e.dataTransfer.getData('blockId');
+                        const sourceZone = e.dataTransfer.getData('zone');
+                        
+                        let sourceList;
+                        if (sourceZone === 'main') {
+                            sourceList = pageMainBlocks[activePageId.value];
+                        } else {
+                            sourceList = siteBlocks.value[sourceZone];
+                        }
+                        
+                        const blockIndex = sourceList.findIndex(b => b.id === blockId);
+                        
+                        if (blockIndex > -1) {
+                            const [movedBlock] = sourceList.splice(blockIndex, 1);
+                            
+                            if (sourceZone === targetZone && blockIndex < targetIndex && targetIndex > -1) {
+                                targetIndex--; 
+                            }
+                            
+                            insertBlock(movedBlock);
+                        }
+                    }
+                };
+
+                const updateBlockParams = (blockId, key, value) => {
+                    const zones = [
+                         { name: 'main', list: pageMainBlocks[activePageId.value] },
+                         { name: 'header', list: siteBlocks.value.header },
+                         { name: 'footer', list: siteBlocks.value.footer }
+                    ];
+
+                    for (const z of zones) {
+                        const block = z.list?.find(b => b.id === blockId);
+                        if (block) {
+                            block.params[key] = value;
+                            break;
+                        }
+                    }
+                };
+
+                const deleteBlock = (blockId) => {
+                    if (pageMainBlocks[activePageId.value]) {
+                        pageMainBlocks[activePageId.value] = pageMainBlocks[activePageId.value].filter(b => b.id !== blockId);
+                    }
+                    siteBlocks.value.header = siteBlocks.value.header.filter(b => b.id !== blockId);
+                    siteBlocks.value.footer = siteBlocks.value.footer.filter(b => b.id !== blockId);
+                    
+                    selectedBlockId.value = null;
+                };
+
+                return {
+                    isLoaded,
+                    pages,
+                    activePageId,
+                    viewMode,
+                    activePage,
+                    activeContent,
+                    selectedBlockId,
+                    selectedBlock,
+                    componentLibrary,
+                    generateConfig,
+                    setActivePage,
+                    handleDragStartNew,
+                    handleDragStartExisting,
+                    handleDrop,
+                    updateBlockParams,
+                    deleteBlock,
+                    formatKey,
+                    setSelectedBlockId: (id) => selectedBlockId.value = id,
+                    
+                    sidebarTab
+                };
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+{% endverbatim %}
+</html>
