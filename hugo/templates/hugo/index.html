@@ -115,7 +115,7 @@
                             </div>
                         </div>
 
-                        <button
+                        <button @click="createNewPage"
                             class="mt-4 w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
                             <icon name="plus" :size="12"></icon>
                             <span>Create New Page</span>
@@ -1345,6 +1345,26 @@ layout = "${activePage.value.layout}"
                     selectedBlockId.value = null;
                 };
 
+                const createNewPage = async () => {
+                    try {
+                        const newPage = {
+                            title: 'New Page',
+                            slug: 'new-page-' + Date.now(),
+                            layout: 'single',
+                            status: 'draft',
+                            date: new Date().toISOString().split('T')[0],
+                            description: '',
+                            tags: []
+                        };
+
+                        const response = await fetchApi(`${API_BASE_URL}pages/`, 'POST', newPage);
+                        pages.value.push(response);
+                        activePageId.value = response.id;
+                    } catch(error) {
+                        console.error('Error creating page:', error);
+                        alert('Failed to create new page. Please try again.');
+                    }
+                };
                 const savePageContent = async () => {
                     if(!activePage.value) return;
 
@@ -1547,6 +1567,7 @@ layout = "${activePage.value.layout}"
                     componentLibrary,
                     generateConfig,
                     setActivePage,
+                    createNewPage,
                     savePageContent,
                     handleDragStartNew,
                     handleDragStartExisting,
