@@ -5,7 +5,7 @@ import uuid
 import toml
 from datetime import date
 from django.db import transaction
-from .models import Page, BlockDefinition, BlockInstance
+from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate
 
 # --- MOCK HUGO ENVIRONMENT ---
 
@@ -34,6 +34,49 @@ def import_hugo_theme_structure(theme_name="mock-theme"):
     BlockDefinition.objects.all().delete()
     Page.objects.all().delete()
     BlockInstance.objects.all().delete()
+    LayoutTemplate.objects.all().delete()
+
+    # 2. CREATE DEFAULT LAYOUT TEMPLATES
+    LayoutTemplate.objects.create(
+        id='home',
+        label='Home Page',
+        zones=[
+            {'name': 'header', 'width': 'w-full', 'order': 0, 'cssClasses': 'bg-slate-50/50'},
+            {'name': 'main', 'width': 'flex-1', 'order': 1, 'cssClasses': 'min-h-[400px]'},
+            {'name': 'footer', 'width': 'w-full', 'order': 2, 'cssClasses': 'bg-slate-50/50'},
+        ],
+        description='Standard layout with header, main content, and footer'
+    )
+    LayoutTemplate.objects.create(
+        id='single',
+        label='Standard Page',
+        zones=[
+            {'name': 'header', 'width': 'w-full', 'order': 0, 'cssClasses': 'bg-slate-50/50'},
+            {'name': 'main', 'width': 'flex-1', 'order': 1, 'cssClasses': 'min-h-[400px]'},
+            {'name': 'footer', 'width': 'w-full', 'order': 2, 'cssClasses': 'bg-slate-50/50'},
+        ],
+        description='Standard layout for single pages'
+    )
+    LayoutTemplate.objects.create(
+        id='list',
+        label='Sidebar Layout (Left)',
+        zones=[
+            {'name': 'header', 'width': 'w-full', 'order': 0, 'cssClasses': 'bg-slate-50/50'},
+            {'name': 'sidebar', 'width': 'w-64', 'order': 1, 'cssClasses': 'border-r border-slate-100 bg-slate-50/30'},
+            {'name': 'main', 'width': 'flex-1', 'order': 2, 'cssClasses': 'min-h-[400px]'},
+            {'name': 'footer', 'width': 'w-full', 'order': 3, 'cssClasses': 'bg-slate-50/50'},
+        ],
+        description='Layout with sidebar on the left for list pages'
+    )
+    LayoutTemplate.objects.create(
+        id='contact',
+        label='Minimal / Contact',
+        zones=[
+            {'name': 'header', 'width': 'w-full', 'order': 0, 'cssClasses': 'bg-slate-50/50'},
+            {'name': 'main', 'width': 'flex-1', 'order': 1, 'cssClasses': 'min-h-[400px]'},
+        ],
+        description='Minimal layout without footer'
+    )
 
     definitions_map = {}
     
@@ -44,7 +87,7 @@ def import_hugo_theme_structure(theme_name="mock-theme"):
         {'id': 'hero', 'label': 'Hero Section', 'icon': 'layout', 'has_visual_preview': True, 'default_params': {'title': 'Welcome Home', 'subtitle': 'Start your journey here', 'bgImage': 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80'}},
         {'id': 'text', 'label': 'Text Block', 'icon': 'type', 'has_visual_preview': True, 'default_params': {'content': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'}},
         {'id': 'image', 'label': 'Image', 'icon': 'image', 'has_visual_preview': True, 'default_params': {'src': 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80', 'caption': 'A beautiful view'}},
-        {'id': 'flex_columns', 'label': 'Flexible Columns', 'icon': 'columns', 'has_visual_preview': True, 'default_params': {}},
+        {'id': 'flex_columns', 'label': 'Flexible Columns', 'icon': 'columns', 'has_visual_preview': True, 'default_params': {'col_widths': '50.0, 50.0'}},
         {'id': 'markdown', 'label': 'Markdown', 'icon': 'file-text', 'has_visual_preview': True, 'default_params': {'md': '## Hello World\nThis is **markdown** content.'}},
         {'id': 'youtube', 'label': 'YouTube Embed', 'icon': 'video', 'has_visual_preview': False, 'default_params': {'videoId': 'dQw4w9WgXcQ', 'title': 'My Video'}},
         {'id': 'alert', 'label': 'Alert Box', 'icon': 'alert-triangle', 'has_visual_preview': False, 'default_params': {'type': 'warning', 'message': 'This is an important alert message.'}},

@@ -42,6 +42,27 @@ class Page(models.Model):
     def __str__(self):
         return f"{self.title} ({self.slug})"
 
+class LayoutTemplate(models.Model):
+    """
+    Defines a page layout template (e.g., 'home', 'single', 'list').
+    Controls which zones are available for a given page.
+    """
+    id = models.CharField(max_length=50, primary_key=True, help_text="Unique key like 'home' or 'list'")
+    label = models.CharField(max_length=100, help_text="Human-readable name like 'Home Page'")
+    zones = JSONField(
+        default=list, 
+        help_text="Array of zone configs: [{'name': 'header', 'width': 'w-full', 'order': 0, 'cssClasses': ''}]. "
+                  "Supported widths: 'w-64' (fixed), 'flex-1' (flexible), 'w-full' (full width). "
+                  "Order controls display sequence in flex container."
+    )
+    description = models.TextField(blank=True, help_text="Optional description for admin UI")
+    
+    class Meta:
+        ordering = ['label']
+    
+    def __str__(self):
+        return self.label
+
 class BlockInstance(models.Model):
     """
     A unified model for all blocks (top-level and nested).

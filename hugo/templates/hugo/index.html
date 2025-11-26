@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hugo CMS Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    
+
     <!-- CSRF Token for future API requests -->
     {% csrf_token %}
     <script>
@@ -21,29 +22,42 @@
             width: 6px;
             height: 6px;
         }
+
         ::-webkit-scrollbar-track {
             background: transparent;
         }
+
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 3px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
+        }
+
+        /* Custom Resizer Handle */
+        .resize-handle {
+            cursor: ew-resize;
+            touch-action: none;
         }
     </style>
 </head>
 {% verbatim %}
+
 <body class="bg-slate-50 text-slate-800 font-sans overflow-hidden">
     <div id="app" class="flex h-screen w-full">
-        
+
         <!-- Loading Spinner while fetching initial data -->
         <div v-if="!isLoaded" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center flex-col">
-            <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
             </svg>
-            <p class="mt-4 text-lg text-slate-700">Loading CMS Data...</p>
+            <p class="mt-4 text-lg text-slate-700">Loading CMS Data from Django...</p>
         </div>
 
         <!-- CMS Editor UI (Visible when loaded) -->
@@ -63,21 +77,18 @@
 
                 <!-- Sidebar Tabs -->
                 <div class="flex items-center border-b border-slate-200 bg-slate-50/50">
-                    <button 
-                        v-for="tab in ['pages', 'blocks', 'meta']" 
-                        :key="tab"
-                        @click="sidebarTab = tab"
+                    <button v-for="tab in ['pages', 'blocks', 'meta']" :key="tab" @click="sidebarTab = tab"
                         class="flex-1 py-3 text-xs font-bold uppercase tracking-wide transition-colors relative"
-                        :class="sidebarTab === tab ? 'text-indigo-600 bg-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'"
-                    >
+                        :class="sidebarTab === tab ? 'text-indigo-600 bg-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'">
                         {{ tab }}
-                        <div v-if="sidebarTab === tab" class="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600"></div>
+                        <div v-if="sidebarTab === tab" class="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600">
+                        </div>
                     </button>
                 </div>
 
                 <!-- Sidebar Content Area -->
                 <div class="flex-1 overflow-y-auto bg-white">
-                    
+
                     <!-- PAGES TAB -->
                     <div v-if="sidebarTab === 'pages'" class="p-4">
                         <div class="flex items-center justify-between mb-3">
@@ -87,25 +98,25 @@
                             </button>
                         </div>
                         <div class="space-y-1">
-                            <div 
-                                v-for="page in pages" 
-                                :key="page.id"
-                                @click="setActivePage(page.id)"
+                            <div v-for="page in pages" :key="page.id" @click="setActivePage(page.id)"
                                 class="group flex items-center justify-between px-3 py-2 rounded-md cursor-pointer text-sm transition-all"
-                                :class="activePageId === page.id ? 'bg-indigo-50 text-indigo-700 font-medium border border-indigo-100' : 'hover:bg-slate-50 text-slate-600 border border-transparent'"
-                            >
+                                :class="activePageId === page.id ? 'bg-indigo-50 text-indigo-700 font-medium border border-indigo-100' : 'hover:bg-slate-50 text-slate-600 border border-transparent'">
                                 <div class="flex items-center space-x-3 truncate">
-                                    <icon name="file-text" :size="16" :class="activePageId === page.id ? 'text-indigo-500' : 'text-slate-400'"></icon>
+                                    <icon name="file-text" :size="16"
+                                        :class="activePageId === page.id ? 'text-indigo-500' : 'text-slate-400'"></icon>
                                     <span class="truncate">{{ page.title }}</span>
                                 </div>
                                 <div class="flex items-center space-x-2">
-                                    <span class="w-2 h-2 rounded-full" :class="page.status === 'published' ? 'bg-emerald-400' : 'bg-amber-400'"></span>
-                                    <icon name="more-vertical" :size="14" class="opacity-0 group-hover:opacity-100 text-slate-400"></icon>
+                                    <span class="w-2 h-2 rounded-full"
+                                        :class="page.status === 'published' ? 'bg-emerald-400' : 'bg-amber-400'"></span>
+                                    <icon name="more-vertical" :size="14"
+                                        class="opacity-0 group-hover:opacity-100 text-slate-400"></icon>
                                 </div>
                             </div>
                         </div>
-                        
-                        <button class="mt-4 w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
+
+                        <button
+                            class="mt-4 w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
                             <icon name="plus" :size="12"></icon>
                             <span>Create New Page</span>
                         </button>
@@ -114,17 +125,15 @@
                     <!-- BLOCKS TAB -->
                     <div v-if="sidebarTab === 'blocks'" class="p-4">
                         <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Component Library</h3>
-                            <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Drag to Canvas</span>
+                            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Component Library
+                            </h3>
+                            <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Drag to
+                                Canvas</span>
                         </div>
                         <div class="space-y-2">
-                            <div
-                                v-for="comp in componentLibrary"
-                                :key="comp.id"
-                                draggable="true"
+                            <div v-for="comp in componentLibrary" :key="comp.id" draggable="true"
                                 @dragstart="handleDragStartNew($event, comp.id)"
-                                class="bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-sm p-3 rounded-md cursor-grab active:cursor-grabbing flex items-center space-x-3 transition-all group"
-                            >
+                                class="bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-sm p-3 rounded-md cursor-grab active:cursor-grabbing flex items-center space-x-3 transition-all group">
                                 <div class="text-slate-400 group-hover:text-indigo-500 transition-colors">
                                     <icon :name="comp.icon" :size="20"></icon>
                                 </div>
@@ -146,54 +155,65 @@
                     <!-- META TAB -->
                     <div v-if="sidebarTab === 'meta'" class="p-4 space-y-5">
                         <div v-if="activePage">
-                            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Frontmatter & SEO</h3>
-                            
+                            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Frontmatter &
+                                SEO</h3>
+
                             <!-- Title -->
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-slate-600">Page Title</label>
-                                <input v-model="activePage.title" type="text" class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow" />
+                                <input v-model="activePage.title" type="text"
+                                    class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow" />
                             </div>
 
                             <!-- Slug -->
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-slate-600">URL Slug</label>
                                 <div class="flex items-center">
-                                    <span class="bg-slate-50 border border-r-0 border-slate-200 text-slate-400 text-xs px-2 py-2 rounded-l-md font-mono">/</span>
-                                    <input v-model="activePage.slug" type="text" class="flex-1 w-full text-sm border border-slate-200 rounded-r-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow font-mono text-slate-600" />
+                                    <span
+                                        class="bg-slate-50 border border-r-0 border-slate-200 text-slate-400 text-xs px-2 py-2 rounded-l-md font-mono">/</span>
+                                    <input v-model="activePage.slug" type="text"
+                                        class="flex-1 w-full text-sm border border-slate-200 rounded-r-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow font-mono text-slate-600" />
                                 </div>
                             </div>
 
                             <!-- Date -->
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-slate-600">Publish Date</label>
-                                <input v-model="activePage.date" type="date" class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-slate-600" />
+                                <input v-model="activePage.date" type="date"
+                                    class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-slate-600" />
                             </div>
 
                             <!-- Description -->
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-slate-600">Description</label>
-                                <textarea v-model="activePage.description" rows="3" class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow resize-none"></textarea>
+                                <textarea v-model="activePage.description" rows="3"
+                                    class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow resize-none"></textarea>
                             </div>
 
                             <!-- Tags -->
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-slate-600">Tags (comma separated)</label>
-                                <input v-model="activePage.tags" type="text" placeholder="e.g. news, tech" class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow" />
+                                <input :value="activePage.tags ? activePage.tags.join(', ') : ''"
+                                    @input="e => activePage.tags = e.target.value.split(',').map(t => t.trim()).filter(t => t.length > 0)"
+                                    type="text" placeholder="e.g. news, tech"
+                                    class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow" />
                             </div>
-                            
+
                             <div class="border-t border-slate-100 my-4"></div>
 
                             <!-- Layout -->
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-slate-600">Layout Template</label>
                                 <div class="relative">
-                                    <select v-model="activePage.layout" class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 pr-8 appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white">
-                                        <option value="home">home.html</option>
-                                        <option value="single">single.html</option>
-                                        <option value="list">list.html</option>
-                                        <option value="contact">contact.html</option>
+                                    <select v-model="activePage.layout"
+                                        class="w-full text-sm border border-slate-200 rounded-md px-3 py-2 pr-8 appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white">
+                                        <option v-for="layout in layoutTemplates" :key="layout.id" :value="layout.id">
+                                            {{ layout.label }}
+                                        </option>
                                     </select>
-                                    <icon name="chevron-down" :size="14" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></icon>
+                                    <icon name="chevron-down" :size="14"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                    </icon>
                                 </div>
                             </div>
 
@@ -201,20 +221,18 @@
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-slate-600">Status</label>
                                 <div class="flex space-x-2">
-                                    <button 
-                                        @click="activePage.status = 'published'"
+                                    <button @click="activePage.status = 'published'"
                                         class="flex-1 py-1.5 text-xs rounded border transition-colors flex items-center justify-center space-x-1"
-                                        :class="activePage.status === 'published' ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-medium' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'"
-                                    >
-                                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-500" v-if="activePage.status === 'published'"></div>
+                                        :class="activePage.status === 'published' ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-medium' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"
+                                            v-if="activePage.status === 'published'"></div>
                                         <span>Published</span>
                                     </button>
-                                    <button 
-                                        @click="activePage.status = 'draft'"
+                                    <button @click="activePage.status = 'draft'"
                                         class="flex-1 py-1.5 text-xs rounded border transition-colors flex items-center justify-center space-x-1"
-                                        :class="activePage.status === 'draft' ? 'bg-amber-50 border-amber-200 text-amber-700 font-medium' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'"
-                                    >
-                                        <div class="w-1.5 h-1.5 rounded-full bg-amber-500" v-if="activePage.status === 'draft'"></div>
+                                        :class="activePage.status === 'draft' ? 'bg-amber-50 border-amber-200 text-amber-700 font-medium' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-amber-500"
+                                            v-if="activePage.status === 'draft'"></div>
                                         <span>Draft</span>
                                     </button>
                                 </div>
@@ -231,23 +249,26 @@
                 <!-- Bottom User Profile -->
                 <div class="p-4 border-t border-slate-200 bg-slate-50">
                     <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
                             JD
                         </div>
                         <div class="flex-1">
                             <div class="text-sm font-medium text-slate-900">John Doe</div>
                             <div class="text-xs text-slate-500">Admin</div>
                         </div>
-                        <icon name="settings" :size="16" class="text-slate-400 cursor-pointer hover:text-slate-600"></icon>
+                        <icon name="settings" :size="16" class="text-slate-400 cursor-pointer hover:text-slate-600">
+                        </icon>
                     </div>
                 </div>
             </aside>
 
             <!-- MAIN CONTENT AREA -->
             <main class="flex-1 flex flex-col h-screen min-w-0 bg-slate-100">
-                
+
                 <!-- Top Bar -->
-                <header class="relative h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm z-10">
+                <header
+                    class="relative h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm z-10">
                     <!-- LEFT SECTION -->
                     <div v-if="activePage" class="flex items-center space-x-4 z-20">
                         <div class="flex flex-col">
@@ -262,28 +283,23 @@
                     </div>
 
                     <!-- CENTER SECTION (Absolute Positioned) -->
-                    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center bg-slate-100 rounded-lg p-1">
-                        <button 
-                            @click="viewMode = 'editor'"
+                    <div
+                        class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center bg-slate-100 rounded-lg p-1">
+                        <button @click="viewMode = 'editor'"
                             class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
-                            :class="viewMode === 'editor' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-                        >
+                            :class="viewMode === 'editor' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
                             <icon name="edit-3" :size="14"></icon>
                             <span>Editor</span>
                         </button>
-                        <button 
-                            @click="viewMode = 'preview'"
+                        <button @click="viewMode = 'preview'"
                             class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
-                            :class="viewMode === 'preview' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-                        >
+                            :class="viewMode === 'preview' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
                             <icon name="eye" :size="14"></icon>
                             <span>Preview</span>
                         </button>
-                        <button 
-                            @click="viewMode = 'code'"
+                        <button @click="viewMode = 'code'"
                             class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
-                            :class="viewMode === 'code' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
-                        >
+                            :class="viewMode === 'code' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
                             <icon name="code" :size="14"></icon>
                             <span>Code</span>
                         </button>
@@ -291,11 +307,13 @@
 
                     <!-- RIGHT SECTION -->
                     <div class="flex items-center space-x-3 z-20">
-                        <button class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-md text-sm font-medium hover:bg-slate-50 transition-colors flex items-center space-x-2">
+                        <button @click="savePageContent"
+                            class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-md text-sm font-medium hover:bg-slate-50 transition-colors flex items-center space-x-2">
                             <icon name="save" :size="16"></icon>
                             <span>Save Draft</span>
                         </button>
-                        <button class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors flex items-center space-x-2">
+                        <button
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors flex items-center space-x-2">
                             <icon name="send" :size="16"></icon>
                             <span>Publish</span>
                         </button>
@@ -304,9 +322,10 @@
 
                 <!-- Canvas Area -->
                 <div class="flex-1 overflow-auto p-8 relative">
-                    
+
                     <!-- Code View -->
-                    <div v-if="viewMode === 'code'" class="max-w-4xl mx-auto bg-slate-800 rounded-lg shadow-xl overflow-hidden text-slate-300 font-mono text-sm">
+                    <div v-if="viewMode === 'code'"
+                        class="max-w-4xl mx-auto bg-slate-800 rounded-lg shadow-xl overflow-hidden text-slate-300 font-mono text-sm">
                         <div class="bg-slate-900 px-4 py-2 border-b border-slate-700 flex justify-between">
                             <span>config.toml</span>
                             <span class="text-xs text-slate-500">Read-only generated view</span>
@@ -315,95 +334,136 @@
                     </div>
 
                     <!-- Editor/Preview View -->
-                    <div v-else class="max-w-5xl mx-auto min-h-[800px] bg-white shadow-xl rounded-lg border border-slate-200 flex flex-col transition-all duration-300" :class="viewMode === 'preview' ? 'scale-[1.02]' : ''">
-                        
-                        <!-- Header Zone (Global) -->
-                        <drop-zone 
-                            title="Site Header (Global)" 
-                            zone="header" 
-                            :blocks="activeContent.header" 
-                            :is-active="viewMode === 'editor'"
-                            :selected-id="selectedBlockId"
-                            @drop-item="handleDrop"
-                            @select-block="setSelectedBlockId"
-                            @drag-start-block="handleDragStartExisting"
-                            class="bg-slate-50/50"
-                        ></drop-zone>
+                    <div v-else
+                        class="max-w-5xl mx-auto min-h-[800px] bg-white shadow-xl rounded-lg border border-slate-200 flex flex-col transition-all duration-300"
+                        :class="viewMode === 'preview' ? 'scale-[1.02]' : ''">
 
-                        <!-- Main Content Zone (Page Specific) -->
-                        <drop-zone 
-                            title="Page Content" 
-                            zone="main" 
-                            :blocks="activeContent.main" 
-                            :is-active="viewMode === 'editor'"
-                            :selected-id="selectedBlockId"
-                            class="flex-1 min-h-[400px]"
-                            @drop-item="handleDrop"
-                            @select-block="setSelectedBlockId"
+                        <!-- Header Zone (Global) - Render if layout allows -->
+                        <drop-zone v-if="getZoneConfig('header')" :title="'Site Header (Global)'" zone="header"
+                            :blocks="activeContent.header" :is-active="viewMode === 'editor'"
+                            :selected-id="selectedBlockId" @drop-item="handleDrop" @select-block="setSelectedBlockId"
                             @drag-start-block="handleDragStartExisting"
-                        ></drop-zone>
+                            :class="getZoneConfig('header')?.cssClasses || ''"
+                            :style="{ order: getZoneConfig('header')?.order || 0 }"></drop-zone>
 
-                        <!-- Footer Zone (Global) -->
-                        <drop-zone 
-                            title="Site Footer (Global)" 
-                            zone="footer" 
-                            :blocks="activeContent.footer" 
-                            :is-active="viewMode === 'editor'"
-                            :selected-id="selectedBlockId"
-                            @drop-item="handleDrop"
-                            @select-block="setSelectedBlockId"
+                        <!-- Main Content Canvas -->
+                        <div class="flex flex-1" style="display: flex;">
+                            <!-- Sidebar Zone (Page Specific) - Render if layout has sidebar -->
+                            <div v-if="getZoneConfig('sidebar')"
+                                :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
+                                :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
+                                <drop-zone title="Sidebar" zone="sidebar" :blocks="activeContent.sidebar"
+                                    :is-active="viewMode === 'editor'" :selected-id="selectedBlockId"
+                                    class="h-full min-h-[400px]" @drop-item="handleDrop"
+                                    @select-block="setSelectedBlockId"
+                                    @drag-start-block="handleDragStartExisting"></drop-zone>
+                            </div>
+
+                            <!-- Page Content Zone (Main) -->
+                            <div class="flex-1 min-h-[400px]" :style="{ order: getZoneConfig('main')?.order || 2 }">
+                                <drop-zone title="Page Content" zone="main" :blocks="activeContent.main"
+                                    :is-active="viewMode === 'editor'" :selected-id="selectedBlockId" class="h-full"
+                                    @drop-item="handleDrop" @select-block="setSelectedBlockId"
+                                    @drag-start-block="handleDragStartExisting"></drop-zone>
+                            </div>
+                        </div>
+
+                        <!-- Footer Zone (Global) - Render if layout allows -->
+                        <drop-zone v-if="getZoneConfig('footer')" :title="'Site Footer (Global)'" zone="footer"
+                            :blocks="activeContent.footer" :is-active="viewMode === 'editor'"
+                            :selected-id="selectedBlockId" @drop-item="handleDrop" @select-block="setSelectedBlockId"
                             @drag-start-block="handleDragStartExisting"
-                            class="bg-slate-50/50"
-                        ></drop-zone>
+                            :class="getZoneConfig('footer')?.cssClasses || ''"
+                            :style="{ order: getZoneConfig('footer')?.order || 0 }"></drop-zone>
                     </div>
                 </div>
             </main>
 
             <!-- RIGHT PROPERTY SIDEBAR -->
-            <aside v-if="viewMode === 'editor' && selectedBlock" class="w-80 bg-white border-l border-slate-200 shadow-xl z-30 flex flex-col transition-all">
+            <aside v-if="viewMode === 'editor' && selectedBlock"
+                class="w-80 bg-white border-l border-slate-200 shadow-xl z-30 flex flex-col transition-all">
                 <div class="p-4 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h3 class="font-bold text-slate-800">Edit Component</h3>
-                        <span class="text-xs text-slate-500 uppercase tracking-wide">{{ selectedBlock.label || selectedBlock.type }}</span>
+                        <span class="text-xs text-slate-500 uppercase tracking-wide">{{ selectedBlock.label ||
+                            selectedBlock.type }}</span>
                     </div>
-                    <button 
-                        @click="deleteBlock(selectedBlock.id)"
+                    <button @click="deleteBlock(selectedBlock.id)"
                         class="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-md transition-colors"
-                        title="Delete Block"
-                    >
+                        title="Delete Block">
                         <icon name="trash-2" :size="16"></icon>
                     </button>
                 </div>
-                
+
                 <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+                    <!-- Column Resizer Parameters for flex_columns -->
+                    <div v-if="selectedBlock.type === 'flex_columns'">
+                        <div class="space-y-4">
+                            <h4 class="text-sm font-semibold text-slate-700">Settings</h4>
+
+                            <!-- Column Count Control (Slider replacement for UX) -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Count</label>
+                                <div class="flex items-center space-x-3">
+                                    <input type="number" min="1" max="6"
+                                        :value="getColWidths(selectedBlock.children).length"
+                                        @input="e => updateColCount(selectedBlock.id, parseInt(e.target.value))"
+                                        class="w-16 text-sm border border-slate-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-center" />
+                                    <div class="flex-1 h-2 bg-indigo-100 rounded-full">
+                                        <div class="h-full bg-indigo-500 rounded-full"
+                                            :style="{ width: ((getColWidths(selectedBlock.children).length / 6) * 100) + '%' }">
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-slate-500">6</span>
+                                </div>
+                            </div>
+
+                            <!-- Individual Width Controls -->
+                            <div class="space-y-2">
+                                <h4 class="text-sm font-semibold text-slate-700 mt-4">Widths</h4>
+                                <div v-for="(width, index) in getColWidths(selectedBlock.children)" :key="index"
+                                    class="flex items-center space-x-3">
+                                    <label class="w-12 text-xs font-mono text-slate-600">Col {{ index + 1 }}</label>
+                                    <div class="flex-1 relative">
+                                        <input type="range" min="5" max="100" :value="width"
+                                            @input="e => updateSingleWidth(selectedBlock.id, index, parseFloat(e.target.value))"
+                                            class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer range-sm" />
+                                        <span
+                                            class="absolute right-0 top-1/2 transform -translate-y-1/2 text-xs font-mono text-slate-500">{{
+                                            width.toFixed(1) }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- General Block Parameters -->
                     <div v-for="(value, key) in selectedBlock.params" :key="key">
                         <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">
                             {{ formatKey(key) }}
                         </label>
-                        
-                        <textarea 
-                            v-if="key === 'content' || key === 'md' || key.toLowerCase().includes('text') && value.length > 50"
-                            :value="value"
-                            @input="updateBlockParams(selectedBlock.id, key, $event.target.value)"
-                            rows="6"
-                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none font-mono"
-                        ></textarea>
-                        
-                        <input 
-                            v-else
-                            type="text" 
-                            :value="value"
-                            @input="updateBlockParams(selectedBlock.id, key, $event.target.value)"
-                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                        />
 
-                        <div v-if="key.includes('Image')" class="mt-2 rounded-md overflow-hidden h-24 bg-slate-100 border border-slate-200 flex items-center justify-center relative group">
-                            <img :src="value" alt="Preview" class="h-full w-full object-cover" @error="$event.target.style.display = 'none'" />
-                            <div class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white text-xs">Preview</div>
+                        <textarea
+                            v-if="['content', 'md'].includes(key) || (typeof value === 'string' && value.length > 50)"
+                            :value="value" @input="updateBlockParams(selectedBlock.id, key, $event.target.value)"
+                            rows="6"
+                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:focus:border-indigo-500 outline-none resize-none font-mono"></textarea>
+
+                        <input v-else type="text" :value="value"
+                            @input="updateBlockParams(selectedBlock.id, key, $event.target.value)"
+                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+
+                        <div v-if="key.includes('Image')"
+                            class="mt-2 rounded-md overflow-hidden h-24 bg-slate-100 border border-slate-200 flex items-center justify-center relative group">
+                            <img :src="value" alt="Preview" class="h-full w-full object-cover"
+                                @error="$event.target.style.display = 'none'" />
+                            <div
+                                class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white text-xs">
+                                Preview</div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="p-4 border-t border-slate-100 bg-slate-50 text-xs text-slate-500 text-center">
                     Changes are synced to local state
                 </div>
@@ -413,27 +473,22 @@
 
     <!-- Scripts -->
     <script>
-        const { createApp, ref, computed, reactive, onMounted, watch } = Vue;
-        
-        // --- API HELPERS ---
-        const fetchWithRetry = async (url, options = {}, retries = 3, delay = 1000) => {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) {
-                        const errorBody = await response.json().catch(() => ({}));
-                        throw new Error(`HTTP error! status: ${response.status} - ${JSON.stringify(errorBody)}`);
-                    }
-                    return response.json();
-                } catch (error) {
-                    if (i === retries - 1) throw error;
-                    await new Promise(resolve => setTimeout(resolve, delay * (2 ** i)));
+        // --- UUID Polyfill ---
+        const uuid = {
+            v4: () => {
+                let d = Date.now();
+                if(typeof performance !== 'undefined' && typeof performance.now === 'function') {
+                    d += performance.now(); //use high-precision timer if available
                 }
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    let r = (d + Math.random() * 16) % 16 | 0;
+                    d = Math.floor(d / 16);
+                    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+                });
             }
         };
 
-        // --- BLOCK DEFINITIONS (Will be overridden by API data) ---
-        let BLOCK_DEFINITIONS = {};
+        const {createApp, ref, computed, onMounted, watch, nextTick} = Vue;
 
         // --- ICON COMPONENT ---
         const ICONS = {
@@ -446,7 +501,7 @@
             'send': '<line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
             'more-vertical': '<circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>',
             'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>',
-            'settings': '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+            'settings': '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l-.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
             'code': '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
             'eye': '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
             'edit-3': '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
@@ -481,10 +536,171 @@
             }
         };
 
+        // --- FORWARD DECLARATIONS (Required due to mutual recursion) ---
+        let DropZone;
+        let BlockRenderer;
+
+        // --- DROP ZONE COMPONENT ---
+        DropZone = {
+            name: 'DropZone',
+            props: ['title', 'zone', 'blocks', 'isActive', 'selectedId', 'isNested', 'parentBlockId'],
+            components: {}, // Will be populated after BlockRenderer is defined
+            template: `
+                <div 
+                    class="relative transition-colors"
+                    :class="{ 'p-4': !isNested, 'p-1': isNested }"
+                    @dragover.prevent="handleDragOver"
+                    @dragleave="handleDragLeave"
+                    @drop="handleDropInternal"
+                >
+                    <!-- Zone Label -->
+                    <div v-if="isActive && !isNested" class="absolute top-0 left-0 -translate-y-1/2 ml-4 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider z-10 border"
+                         :class="isOver ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'bg-slate-100 text-slate-400 border-slate-200'">
+                        {{ title }}
+                    </div>
+
+                    <!-- Dashed Container -->
+                    <div class="h-full min-h-[120px] rounded-lg transition-all duration-200 space-y-4"
+                         ref="container"
+                         :class="containerClass">
+                        
+                        <!-- Empty Message / Drop Target (Only visible if blocks is empty) -->
+                        <div v-if="blocks.length === 0 && isActive && isNested" 
+                            class="h-full min-h-[80px] flex flex-col items-center justify-center text-slate-400 p-4 border-2 border-dashed border-transparent transition-colors"
+                            :class="{ 'border-indigo-400 bg-indigo-50/50': isOver && blocks.length === 0 }">
+                            <span class="text-sm italic">Select</span>
+                        </div>
+                        
+                        <!-- Loop through blocks -->
+                        <template v-for="(block, index) in blocks" :key="block.id">
+                            <!-- Placeholder when inserting BEFORE this block -->
+                            <div v-if="isActive && isOver && dragOverIndex === index" 
+                                 class="h-16 bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-lg pointer-events-none opacity-60 transition-all">
+                            </div>
+
+                            <block-renderer 
+                                :block="block" 
+                                :is-selected="selectedId === block.id"
+                                :is-editable="isActive"
+                                :col-index="isNested ? getColIndex(zone) : null"
+                                @select="$emit('select-block', $event)"
+                                @drag-start="emitDragStart($event, block.id)"
+                                @drag-start-block="handleNestedDragStartReemit"
+                                @nested-drop="handleNestedDropReemit"
+                            ></block-renderer>
+                        </template>
+
+                        <!-- Placeholder when inserting at END -->
+                        <div v-if="isActive && isOver && blocks.length > 0 && dragOverIndex === blocks.length" 
+                             class="h-16 bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-lg pointer-events-none opacity-60 transition-all">
+                        </div>
+
+                        <!-- Main Drop Zone empty state (Non-nested only) -->
+                         <div v-if="blocks.length === 0 && isActive && !isNested" class="h-full flex flex-col items-center justify-center text-slate-400 pointer-events-none">
+                            <span class="text-sm italic">Empty {{ title }} (Drop blocks here)</span>
+                        </div>
+                    </div>
+                </div>
+            `,
+            data() {
+                return {
+                    isOver: false,
+                    dragOverIndex: -1
+                };
+            },
+            computed: {
+                containerClass() {
+                    if(!this.isActive) return '';
+                    // The dashed border styling for the container is only applied when blocks are empty OR it's a nested dropzone (to make the border always visible)
+                    const isGlobalDropTarget = this.blocks.length === 0 && !this.isNested;
+                    const isNestedDropTarget = this.isNested;
+
+                    const base = this.isNested ? 'p-2' : 'p-4';
+
+                    return `${base} ${isGlobalDropTarget || isNestedDropTarget ? 'border-2 border-dashed' : ''} 
+                            ${this.isOver && (isGlobalDropTarget || isNestedDropTarget) ? 'border-indigo-400 bg-indigo-50/50' : (isGlobalDropTarget ? 'border-slate-200' : (isNestedDropTarget ? 'border-slate-300' : ''))}`;
+                }
+            },
+            methods: {
+                handleDragOver(e) {
+                    // Stop propagation if this is a nested zone to prevent parent zones from showing placeholders
+                    if(this.isNested) {
+                        e.stopPropagation();
+                    }
+
+                    this.isOver = true;
+
+                    const container = this.$refs.container;
+                    if(!container) return;
+
+                    // Filter only the block elements (those with data-block-id)
+                    const children = Array.from(container.children).filter(el => el.hasAttribute('data-block-id'));
+
+                    const mouseY = e.clientY;
+                    let foundIndex = children.length; // Default to end
+
+                    for(let i = 0; i < children.length; i++) {
+                        const rect = children[i].getBoundingClientRect();
+                        const midY = rect.top + (rect.height / 2);
+
+                        if(mouseY < midY) {
+                            foundIndex = i;
+                            break;
+                        }
+                    }
+                    this.dragOverIndex = foundIndex;
+                },
+                handleDragLeave(e) {
+                    // Stop propagation if this is a nested zone
+                    if(this.isNested) {
+                        e.stopPropagation();
+                    }
+
+                    if(e.relatedTarget && this.$el.contains(e.relatedTarget)) {
+                        return;
+                    }
+                    this.isOver = false;
+                    this.dragOverIndex = -1;
+                },
+                handleDropInternal(e) {
+                    e.preventDefault();
+                    e.stopPropagation(); // Prevent event from bubbling to parent drop zones
+
+                    this.isOver = false;
+                    let targetIndex = this.dragOverIndex;
+                    if(targetIndex === -1) targetIndex = this.blocks.length;
+
+                    this.dragOverIndex = -1;
+
+                    // Main drop re-emits to main Vue instance
+                    this.$emit('drop-item', e, this.zone, targetIndex, this.parentBlockId);
+                },
+                emitDragStart(e, blockId) {
+                    this.$emit('drag-start-block', e, blockId, this.zone, this.parentBlockId);
+                },
+                handleNestedDragStartReemit(e, blockId, zone, parentBlockId) {
+                    // If zone/parent are missing (from direct child), use this DropZone's info.
+                    // If they are present (bubbled up), preserve them.
+                    const finalZone = zone || this.zone;
+                    const finalParentId = parentBlockId !== undefined ? parentBlockId : this.parentBlockId;
+                    this.$emit('drag-start-block', e, blockId, finalZone, finalParentId);
+                },
+                handleNestedDropReemit(e, targetZone, targetIndex, parentBlockId) {
+                    this.$emit('drop-item', e, targetZone, targetIndex, parentBlockId);
+                },
+                getColIndex(zone) {
+                    const match = zone.match(/col_(\d+)/);
+                    return match ? parseInt(match[1]) : null;
+                }
+            }
+        };
+
+
         // --- BLOCK RENDERER COMPONENT ---
-        const BlockRenderer = {
-            props: ['block', 'isSelected', 'isEditable'],
-            components: { Icon },
+        BlockRenderer = {
+            name: 'BlockRenderer',
+            props: ['block', 'isSelected', 'isEditable', 'colIndex'],
+            components: {}, // Will be populated after definition
             template: `
                 <div 
                     :class="wrapperClass"
@@ -498,10 +714,10 @@
                         <icon name="move" :size="14"></icon>
                     </div>
                     
-                    <!-- Overlay -->
+                    <!-- Overlay to capture click/drag -->
                     <div v-if="isEditable" class="absolute inset-0 z-0"></div>
                     
-                    <!-- Specific Renderers (Visual) -->
+                    <!-- Content Rendering -->
                     <div v-if="block.type === 'hero'" class="relative h-64 w-full flex items-center justify-center text-center text-white overflow-hidden rounded-sm">
                         <div class="absolute inset-0 bg-slate-900/40 z-10"></div>
                         <img :src="block.params.bgImage" alt="Hero" class="absolute inset-0 w-full h-full object-cover" />
@@ -511,20 +727,66 @@
                         </div>
                     </div>
 
-                    <div v-else-if="block.type === 'text'" class="prose max-w-none text-slate-600 p-4">
-                        <p>{{ block.params.content }}</p>
-                    </div>
-
-                    <div v-else-if="block.type === 'columns'" class="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
-                        <div v-for="(col, i) in getColumns(block)" :key="i" class="bg-slate-50 p-6 rounded-lg text-center border border-slate-100">
-                            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mx-auto mb-3">
-                                {{ i + 1 }}
+                    <div v-else-if="block.type === 'flex_columns'">
+                        <!-- Editor Mode: Show container with labels and borders -->
+                        <div v-if="isEditable" class="p-4 bg-slate-50 border border-slate-200 rounded-md">
+                            <div class="text-xs font-semibold text-slate-400 uppercase mb-2">Flexible Columns Container</div>
+                            <div class="flex" :style="{ height: '300px', minHeight: '100px' }">
+                                <template v-for="(col, index) in getColumnStructure(block)" :key="index">
+                                    <!-- Column -->
+                                    <div class="relative p-2 h-full" :style="{ width: col.width_percent + '%' }">
+                                        <div class="h-full bg-white border border-dashed border-slate-300 rounded-lg overflow-y-auto">
+                                            <div class="text-[10px] text-slate-400 bg-slate-100 p-1 text-center border-b font-mono">Column {{ index + 1 }} ({{ col.width_percent }}%)</div>
+                                            
+                                            <!-- Nested Drop Zone -->
+                                            <drop-zone 
+                                                :title="'Column ' + (index + 1) + ' Content'" 
+                                                :zone="'col_' + index" 
+                                                :blocks="col.blocks" 
+                                                :is-active="isEditable"
+                                                :selected-id="null" 
+                                                :is-nested="true"
+                                                :parent-block-id="block.id"
+                                                @drop-item="handleNestedDrop"
+                                                @select-block="$emit('select-block', $event)"
+                                                @drag-start-block="handleNestedDragStart"
+                                                class="p-0 border-0"
+                                            ></drop-zone>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Resizer Handle -->
+                                    <div v-if="index < getColumnStructure(block).length - 1"
+                                         class="resize-handle w-2 h-full bg-slate-300 hover:bg-indigo-400 transition-colors relative z-10"
+                                         @mousedown="startResize($event, index)"
+                                         @touchstart="startResize($event, index)"
+                                    ></div>
+                                </template>
                             </div>
-                            <h3 class="font-semibold text-slate-800">{{ col }}</h3>
-                            <p class="text-sm text-slate-500 mt-2">Column content goes here.</p>
+                        </div>
+                        
+                        <!-- Preview Mode: Clean flex layout without editor decorations -->
+                        <div v-else class="flex">
+                            <template v-for="(col, index) in getColumnStructure(block)" :key="index">
+                                <div :style="{ width: col.width_percent + '%' }" class="px-2">
+                                    <!-- Render blocks directly without drop-zone wrapper in preview -->
+                                    <template v-for="childBlock in col.blocks" :key="childBlock.id">
+                                        <block-renderer 
+                                            :block="childBlock" 
+                                            :is-selected="false"
+                                            :is-editable="false"
+                                            @select="$emit('select-block', $event)"
+                                        ></block-renderer>
+                                    </template>
+                                </div>
+                            </template>
                         </div>
                     </div>
 
+                    <div v-else-if="block.type === 'text'" class="prose max-w-none text-slate-600 p-4">
+                        <p>{{ block.params.content }}</p>
+                    </div>
+                    
                     <div v-else-if="block.type === 'image'" class="p-4">
                         <figure>
                             <img :src="block.params.src" :alt="block.params.caption" class="w-full rounded-lg shadow-sm" />
@@ -536,11 +798,82 @@
                         <div class="font-mono text-sm text-slate-800 whitespace-pre-wrap">{{ block.params.md }}</div>
                     </div>
 
-                    <!-- GENERIC RENDERER (For unknown/arbitrary blocks) -->
+                    <!-- YouTube Embed -->
+                    <div v-else-if="block.type === 'youtube'" class="p-4">
+                        <div class="relative w-full" style="padding-bottom: 56.25%;">
+                            <iframe 
+                                :src="'https://www.youtube.com/embed/' + block.params.videoId" 
+                                :title="block.params.title || 'YouTube video'"
+                                class="absolute inset-0 w-full h-full rounded-lg shadow-lg"
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                    </div>
+
+                    <!-- Theme Hero -->
+                    <div v-else-if="block.type === 'theme_hero'" class="relative h-80 w-full flex items-center justify-center text-center text-white overflow-hidden rounded-lg shadow-xl">
+                        <div class="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 z-10"></div>
+                        <div v-if="block.params.background_url" class="absolute inset-0 z-0">
+                            <img :src="block.params.background_url" alt="Background" class="w-full h-full object-cover opacity-30" />
+                        </div>
+                        <div class="relative z-20 p-8 max-w-3xl">
+                            <h1 class="text-5xl font-extrabold mb-4 drop-shadow-lg">{{ block.params.title }}</h1>
+                            <p class="text-xl opacity-95 drop-shadow">{{ block.params.subtitle }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Theme Features -->
+                    <div v-else-if="block.type === 'theme_features'" class="p-8 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
+                        <h2 class="text-3xl font-bold text-center text-slate-800 mb-8">{{ block.params.title || 'Features' }}</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div v-for="(item, index) in (block.params.items || [])" :key="index" 
+                                class="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                                <div class="flex items-center space-x-3 mb-3">
+                                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                        <icon :name="item.icon || 'box'" :size="20" class="text-indigo-600"></icon>
+                                    </div>
+                                    <h3 class="font-semibold text-slate-800">{{ item.text }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alert Box -->
+                    <div v-else-if="block.type === 'alert'" class="p-4">
+                        <div :class="[
+                            'p-4 rounded-lg border-l-4',
+                            block.params.type === 'warning' ? 'bg-amber-50 border-amber-500 text-amber-900' :
+                            block.params.type === 'error' ? 'bg-red-50 border-red-500 text-red-900' :
+                            block.params.type === 'success' ? 'bg-emerald-50 border-emerald-500 text-emerald-900' :
+                            'bg-blue-50 border-blue-500 text-blue-900'
+                        ]">
+                            <div class="flex items-start space-x-3">
+                                <icon :name="block.params.type === 'warning' ? 'alert-triangle' : 
+                                            block.params.type === 'error' ? 'x-circle' :
+                                            block.params.type === 'success' ? 'check-circle' : 'info'"
+                                      :size="20" class="mt-0.5 flex-shrink-0"></icon>
+                                <p class="flex-1 font-medium">{{ block.params.message }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Blockquote -->
+                    <div v-else-if="block.type === 'quote'" class="p-6">
+                        <blockquote class="border-l-4 border-indigo-500 pl-6 py-4 bg-slate-50 rounded-r-lg">
+                            <p class="text-lg italic text-slate-700 mb-3">"{{ block.params.text }}"</p>
+                            <footer class="text-sm text-slate-500">
+                                <cite class="font-semibold not-italic">— {{ block.params.author }}</cite>
+                            </footer>
+                        </blockquote>
+                    </div>
+
+                    <!-- GENERIC RENDERER (For unknown blocks) -->
                     <div v-else class="p-4 bg-white border border-slate-100 rounded-lg shadow-sm m-1">
                         <div class="flex items-center space-x-2 text-slate-500 mb-3 border-b border-slate-100 pb-2">
-                            <icon :name="getIcon(block.type)" :size="16"></icon>
-                            <span class="text-xs font-bold uppercase tracking-wider">{{ getLabel(block.type) }}</span>
+                            <icon :name="getDefinition(block.type).icon || 'code'" :size="16"></icon>
+                            <span class="text-xs font-bold uppercase tracking-wider">{{ getDefinition(block.type).label || block.type }}</span>
                         </div>
                         <div class="space-y-1.5">
                             <div v-for="(val, key) in block.params" :key="key" class="flex items-start text-sm">
@@ -551,408 +884,655 @@
                     </div>
                 </div>
             `,
-            computed: {
-                wrapperClass() {
-                    if (!this.isEditable) return '';
-                    return `relative group cursor-pointer border-2 transition-all rounded-md overflow-hidden ${
-                        this.isSelected 
-                            ? 'border-indigo-500 shadow-md ring-2 ring-indigo-200 ring-offset-2' 
-                            : 'border-transparent hover:border-indigo-300 hover:shadow-sm'
-                    }`;
-                }
-            },
-            methods: {
-                handleClick(e) {
-                    if (this.isEditable) {
-                        e.stopPropagation();
-                        this.$emit('select', this.block.id);
-                    }
-                },
-                handleDragStart(e) {
-                    this.$emit('drag-start', e);
-                },
-                getColumns(block) {
-                    // Logic to extract column parameters dynamically
-                    const cols = [];
-                    for (const key in block.params) {
-                        if (key.startsWith('col')) {
-                            cols.push(block.params[key]);
+            setup(props, {emit}) {
+                // Fix: Explicitly inject required functions
+                const {findBlockAndParent, updateBlock, componentLibrary, getColWidths, updateSingleWidth} = Vue.inject('cmsState');
+
+                // --- Column Structure Helper (Flex Columns) ---
+                const getColumnStructure = (block) => {
+                    const widthsStr = block.params.col_widths || '50.0, 50.0';
+                    const widths = widthsStr.split(',').map(w => parseFloat(w.trim()));
+
+                    // Group children blocks by their column placement_key (col_0, col_1, etc.)
+                    const columnChildrenMap = {};
+                    // Group all children from the Django API response
+                    (block.children || []).forEach(c => {
+                        if(!columnChildrenMap[c.placement_key]) {
+                            columnChildrenMap[c.placement_key] = [];
                         }
+                        columnChildrenMap[c.placement_key].push(c);
+                    });
+
+                    // Ensure structure always returns the number of columns defined by col_widths
+                    const structure = widths.map((width, index) => {
+                        const placement_key = `col_${index}`;
+                        return {
+                            width_percent: width,
+                            // Ensure blocks are sorted by sort_order
+                            blocks: columnChildrenMap[placement_key] ? columnChildrenMap[placement_key].sort((a, b) => a.sort_order - b.sort_order) : []
+                        };
+                    });
+
+                    return structure;
+                };
+
+                // --- Drag and Drop Handlers for Nested Content ---
+                const handleNestedDrop = (e, targetZone, targetIndex, parentBlockId) => {
+                    // Stop propagation to prevent parent drop zones from also handling this event
+                    e.stopPropagation();
+                    // Re-emit the drop event with parent context
+                    emit('nested-drop', e, targetZone, targetIndex, parentBlockId);
+                };
+
+                // --- Resizer Logic ---
+                const startResize = (e, colIndex) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    const widthsStr = props.block.params.col_widths || '50.0, 50.0';
+                    const currentWidths = widthsStr.split(',').map(w => parseFloat(w.trim()));
+
+                    if(colIndex >= currentWidths.length - 1) return; // Cannot resize the last column
+
+                    const container = e.currentTarget.parentElement;
+                    const containerRect = container.getBoundingClientRect();
+                    const startX = e.clientX || e.touches[0].clientX;
+
+                    // Get the initial widths of the columns involved in the resize
+                    const col1El = container.children[colIndex * 2];
+                    const col2El = container.children[colIndex * 2 + 2];
+                    const col1StartWidth = col1El.offsetWidth;
+                    const col2StartWidth = col2El.offsetWidth;
+                    const totalWidth = col1StartWidth + col2StartWidth;
+
+                    const mouseMove = (e) => {
+                        const currentX = e.clientX || e.touches[0].clientX;
+                        const deltaX = currentX - startX;
+
+                        // Calculate new pixel widths
+                        let newCol1Width = col1StartWidth + deltaX;
+                        let newCol2Width = col2StartWidth - deltaX;
+
+                        // Prevent columns from shrinking too much (min width limit)
+                        const MIN_WIDTH = 50;
+                        if(newCol1Width < MIN_WIDTH) {
+                            newCol1Width = MIN_WIDTH;
+                        }
+                        if(newCol2Width < MIN_WIDTH) {
+                            newCol2Width = MIN_WIDTH;
+                        }
+
+                        // Recalculate based on total width to ensure sum is stable
+                        if(newCol1Width + newCol2Width > totalWidth) {
+                            newCol1Width = totalWidth - newCol2Width;
+                        } else if(newCol1Width + newCol2Width < totalWidth) {
+                            newCol2Width = totalWidth - newCol1Width;
+                        }
+
+                        // Convert back to percentages
+                        let finalCol1Percent = Math.round((newCol1Width / containerRect.width) * 1000) / 10;
+                        let finalCol2Percent = Math.round((newCol2Width / containerRect.width) * 1000) / 10;
+
+                        // Use the injected helper function to update and normalize widths
+
+                        // 1. Update colIndex
+                        updateSingleWidth(props.block.id, colIndex, finalCol1Percent);
+                        // 2. Update colIndex + 1
+                        updateSingleWidth(props.block.id, colIndex + 1, finalCol2Percent);
+
+                    };
+
+                    const mouseUp = () => {
+                        document.removeEventListener('mousemove', mouseMove);
+                        document.removeEventListener('mouseup', mouseUp);
+                        document.removeEventListener('touchmove', mouseMove);
+                        document.removeEventListener('touchend', mouseUp);
+                    };
+
+                    document.addEventListener('mousemove', mouseMove);
+                    document.addEventListener('mouseup', mouseUp);
+                    document.addEventListener('touchmove', mouseMove);
+                    document.addEventListener('touchend', mouseUp);
+                };
+
+                // --- General Handlers ---
+                const handleClick = (e) => {
+                    if(props.isEditable) {
+                        e.stopPropagation();
+                        emit('select', props.block.id);
                     }
-                    // Fallback using the logic from the previous version
-                    return [block.params.col1, block.params.col2, block.params.col3];
-                },
-                // Helpers for Generic Renderer
-                getLabel(type) {
-                    return BLOCK_DEFINITIONS[type]?.label || type;
-                },
-                getIcon(type) {
-                    return BLOCK_DEFINITIONS[type]?.icon || 'code';
-                }
+                };
+
+                const handleDragStart = (e) => {
+                    e.stopPropagation();
+                    emit('drag-start', e);
+                };
+
+                const handleNestedDragStart = (e, blockId, zone, parentBlockId) => {
+                    emit('drag-start-block', e, blockId, zone, parentBlockId);
+                };
+
+                const getDefinition = (type) => {
+                    return componentLibrary.value.find(def => def.id === type) || {};
+                };
+
+                return {
+                    wrapperClass: computed(() => {
+                        if(!props.isEditable) return '';
+                        return `relative group cursor-pointer border-2 transition-all rounded-md overflow-hidden ${props.isSelected
+                            ? 'border-indigo-500 shadow-md ring-2 ring-indigo-200 ring-offset-2'
+                            : 'border-transparent hover:border-indigo-300 hover:shadow-sm'
+                            }`;
+                    }),
+                    getColumnStructure,
+                    handleNestedDrop,
+                    startResize,
+                    handleClick,
+                    handleDragStart,
+                    handleNestedDragStart,
+                    getDefinition,
+                };
             }
         };
 
-        // --- DROP ZONE COMPONENT ---
-        const DropZone = {
-            props: ['title', 'zone', 'blocks', 'isActive', 'selectedId'],
-            components: { BlockRenderer, Icon },
-            template: `
-                <div 
-                    class="relative p-2 transition-colors"
-                    @dragover.prevent="handleDragOver"
-                    @dragleave="handleDragLeave"
-                    @drop="handleDropInternal"
-                >
-                    <!-- Zone Label -->
-                    <div v-if="isActive" class="absolute top-0 left-0 -translate-y-1/2 ml-4 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider z-10 border"
-                         :class="isOver ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'bg-slate-100 text-slate-400 border-slate-200'">
-                        {{ title }}
-                    </div>
+        // --- RESOLVE CIRCULAR DEPENDENCY ---
+        // Now that both components are defined, populate their components objects
+        DropZone.components = {
+            'block-renderer': BlockRenderer,
+            'Icon': Icon
+        };
 
-                    <!-- Dashed Container -->
-                    <div class="h-full min-h-[120px] rounded-lg transition-all duration-200 p-4 space-y-4"
-                         ref="container"
-                         :class="containerClass">
-                        
-                        <div v-if="blocks.length === 0 && isActive" class="h-full flex flex-col items-center justify-center text-slate-400 pointer-events-none">
-                            <span class="text-sm italic">Empty {{ title }} (Drop blocks here)</span>
-                        </div>
-                        
-                        <!-- Loop through blocks -->
-                        <template v-for="(block, index) in blocks" :key="block.id">
-                            <!-- Placeholder when inserting BEFORE this block -->
-                            <div v-if="isActive && isOver && dragOverIndex === index" 
-                                 class="h-24 bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-lg pointer-events-none opacity-60 transition-all">
-                            </div>
-
-                            <block-renderer 
-                                :block="block" 
-                                :is-selected="selectedId === block.id"
-                                :is-editable="isActive"
-                                @select="$emit('select-block', $event)"
-                                @drag-start="emitDragStart($event, block.id)"
-                            ></block-renderer>
-                        </template>
-
-                        <!-- Placeholder when inserting at END -->
-                        <div v-if="isActive && isOver && dragOverIndex === blocks.length" 
-                             class="h-24 bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-lg pointer-events-none opacity-60 transition-all">
-                        </div>
-                    </div>
-                </div>
-            `,
-            data() {
-                return { 
-                    isOver: false,
-                    dragOverIndex: -1
-                };
-            },
-            computed: {
-                containerClass() {
-                    if (!this.isActive) return '';
-                    return `border-2 border-dashed ${this.isOver ? 'border-indigo-400 bg-indigo-50/50' : 'border-slate-200'}`;
-                }
-            },
-            methods: {
-                handleDragOver(e) {
-                    this.isOver = true;
-                    
-                    const container = this.$refs.container;
-                    if (!container) return;
-
-                    // Filter only the block elements (those with data-block-id)
-                    const children = Array.from(container.children).filter(el => el.hasAttribute('data-block-id'));
-                    
-                    const mouseY = e.clientY;
-                    let foundIndex = children.length; // Default to end
-
-                    for (let i = 0; i < children.length; i++) {
-                        const rect = children[i].getBoundingClientRect();
-                        const midY = rect.top + (rect.height / 2);
-                        
-                        // If mouse is above the midpoint of this element, we insert before it
-                        if (mouseY < midY) {
-                            foundIndex = i;
-                            break;
-                        }
-                    }
-
-                    this.dragOverIndex = foundIndex;
-                },
-                handleDragLeave(e) {
-                    // Check if we are really leaving the zone, or just entering a child
-                    if (e.relatedTarget && this.$el.contains(e.relatedTarget)) {
-                        return;
-                    }
-
-                    this.isOver = false;
-                    this.dragOverIndex = -1;
-                },
-                handleDropInternal(e) {
-                    this.isOver = false;
-                    // Use calculated index if valid, otherwise append to end
-                    let targetIndex = this.dragOverIndex;
-                    if (targetIndex === -1) targetIndex = this.blocks.length;
-                    
-                    this.dragOverIndex = -1;
-                    this.$emit('drop-item', e, this.zone, targetIndex);
-                },
-                emitDragStart(e, blockId) {
-                    this.$emit('drag-start-block', e, blockId, this.zone);
-                }
-            }
+        BlockRenderer.components = {
+            'drop-zone': DropZone,
+            'Icon': Icon
         };
 
         // --- MAIN APP ---
         const app = createApp({
-            components: { Icon, BlockRenderer, DropZone },
+            components: {Icon, DropZone, BlockRenderer},
             setup() {
-                // STATE
-                const isLoaded = ref(false);
-                const pages = ref([]); // List of pages from API
+                const componentLibrary = ref([]);
+                const layoutTemplates = ref([]);
+                const pages = ref([]);
                 const activePageId = ref(null);
                 const viewMode = ref('editor');
                 const selectedBlockId = ref(null);
                 const sidebarTab = ref('pages'); // pages | blocks | meta
-                
-                // Block Data from API
-                const componentLibrary = ref([]); // Block Definitions from API
-                const siteBlocks = ref({ // Global Blocks from API
-                    header: [],
-                    footer: []
+
+                // UNIFIED STATE: All content zones (global and page-specific) in one place
+                const contentZones = ref({
+                    header: [],   // Global zone
+                    footer: [],   // Global zone
+                    main: [],     // Page-specific zone
+                    sidebar: []   // Page-specific zone
                 });
-                const pageMainBlocks = reactive({}); // Main Blocks per page (loaded dynamically)
 
-                // COMPUTED
-                const activePage = computed(() => pages.value.find(p => p.id === activePageId.value) || {});
-                
-                const activeContent = computed(() => ({
-                    header: siteBlocks.value.header,
-                    main: pageMainBlocks[activePageId.value] || [],
-                    footer: siteBlocks.value.footer
-                }));
-                
-                const selectedBlock = computed(() => {
-                    if (!selectedBlockId.value) return null;
-                    
-                    // Helper to search in lists
-                    const searchBlock = (list) => {
-                         if (!list) return null;
-                         const found = list.find(b => b.id === selectedBlockId.value);
-                         return found;
+                const isLoaded = ref(false);
+
+                // --- STATE MANAGEMENT HELPERS ---
+
+                // Central function to find a block anywhere in the structure (top-level or nested)
+                const findBlockAndParent = (blockId) => {
+                    // Helper to search a list recursively
+                    const searchList = (list, parent = null, zone = null) => {
+                        for(let i = 0; i < list.length; i++) {
+                            const block = list[i];
+                            if(block.id === blockId) {
+                                return {block, parent, list, index: i, zone};
+                            }
+                            if(block.children) {
+                                // Check children (nested columns)
+                                const result = searchList(block.children, block, zone);
+                                if(result) return result;
+                            }
+                        }
+                        return null;
+                    };
+
+                    // Search all zones in contentZones
+                    for(const [zoneName, blocks] of Object.entries(contentZones.value)) {
+                        const result = searchList(blocks, null, zoneName);
+                        if(result) return result;
                     }
-                    
-                    let foundBlock = searchBlock(siteBlocks.value.header);
-                    if (foundBlock) return { ...foundBlock, zone: 'header', label: BLOCK_DEFINITIONS[foundBlock.type]?.label };
-
-                    foundBlock = searchBlock(activeContent.value.main);
-                    if (foundBlock) return { ...foundBlock, zone: 'main', label: BLOCK_DEFINITIONS[foundBlock.type]?.label };
-
-                    foundBlock = searchBlock(siteBlocks.value.footer);
-                    if (foundBlock) return { ...foundBlock, zone: 'footer', label: BLOCK_DEFINITIONS[foundBlock.type]?.label };
 
                     return null;
-                });
+                };
 
-                // HELPERS
-                const generateId = () => Math.random().toString(36).substr(2, 9);
-                const formatKey = (key) => key.replace(/([A-Z])/g, ' $1').trim();
-
-                const generateConfig = computed(() => {
-                    if (!activePage.value || !activePageId.value) return 'No active page selected.';
-                    
-                    let tagsArray = [];
-                    if (activePage.value.tags) {
-                        if (typeof activePage.value.tags === 'string') {
-                            tagsArray = activePage.value.tags.split(',').map(t => `"${t.trim()}"`).filter(t => t.length > 2);
-                        } else if (Array.isArray(activePage.value.tags)) {
-                            tagsArray = activePage.value.tags.map(t => `"${t.trim()}"`).filter(t => t.length > 2);
-                        }
-                    }
-
-                    let toml = `+++
-title = "${activePage.value.title || ''}"
-layout = "${activePage.value.layout || 'single'}"
-status = "${activePage.value.status || 'draft'}"
-url = "${activePage.value.slug || ''}"
-date = "${activePage.value.date || ''}"
-description = "${activePage.value.description || ''}"
-tags = [${tagsArray.join(', ')}]
-+++
-
-`;
-                    const c = activeContent.value;
-                    ['header', 'main', 'footer'].forEach(zone => {
-                        if (c[zone] && c[zone].length > 0) {
-                            toml += `# ${zone.charAt(0).toUpperCase() + zone.slice(1)} Blocks\n`;
-                            c[zone].forEach(b => {
-                                toml += `[[${zone}]]\n  type = "${b.type}"\n`;
-                                Object.entries(b.params).forEach(([k, v]) => {
-                                    // Simple string quoting for TOML compatibility
-                                    const val = String(v).replace(/"/g, '\\"');
-                                    toml += `  ${k} = "${val}"\n`;
-                                });
-                                toml += '\n';
-                            });
-                        }
-                    });
-                    return toml;
-                });
-
-                // --- DATA FETCHING ---
-                const fetchPageContent = async (pageId) => {
-                    try {
-                        const content = await fetchWithRetry(`${API_BASE_URL}pages/${pageId}/content/`);
-                        pageMainBlocks[pageId] = content;
-                    } catch (error) {
-                        console.error('Failed to fetch page content:', error);
-                        pageMainBlocks[pageId] = []; // Fallback to empty
+                const updateBlock = (blockId, key, value) => {
+                    const result = findBlockAndParent(blockId);
+                    if(result) {
+                        result.block.params[key] = value;
                     }
                 };
 
-                const initializeData = async () => {
+                const getColWidths = (children) => {
+                    const parentResult = findBlockAndParent(children[0]?.parent_id);
+                    // Determine widths based on saved params, or calculate equal widths if no saved param exists
+                    const widthsStr = parentResult?.block?.params?.col_widths ||
+                        (children.length > 0 ? (100 / children.length).toFixed(1).repeat(children.length).split('.').join(', ') : '50.0, 50.0');
+
+                    return widthsStr.split(',').map(w => parseFloat(w.trim()));
+                };
+
+                // New logic to handle setting column count and normalizing widths
+                const updateColCount = (parentId, count) => {
+                    if(count < 1 || count > 6) return;
+
+                    const result = findBlockAndParent(parentId);
+                    if(result) {
+                        const newWidth = (100 / count).toFixed(1);
+                        const newWidths = Array(count).fill(newWidth).join(', ');
+
+                        result.block.params.col_widths = newWidths;
+
+                        // OPTIONAL: Prune children if count decreases, but safer to let user delete manually
+                        // (We only update the visual layout here; relational pruning happens on save)
+                    }
+                };
+
+                // New logic to handle single width adjustment
+                const updateSingleWidth = (parentId, index, newPercent) => {
+                    const result = findBlockAndParent(parentId);
+                    if(result) {
+                        const currentWidths = result.block.params.col_widths.split(',').map(w => parseFloat(w.trim()));
+
+                        // Limit percentage changes to sane values
+                        newPercent = Math.max(5, Math.min(100, newPercent));
+
+                        // Simple approach: Apply change directly, then normalize the *entire* list to 100%
+                        currentWidths[index] = newPercent;
+
+                        const total = currentWidths.reduce((sum, w) => sum + w, 0);
+
+                        // Normalize all widths to sum exactly to 100%
+                        const normalized = currentWidths.map(w => Math.round((w / total * 100) * 10) / 10);
+
+                        // Store back as string
+                        result.block.params.col_widths = normalized.map(w => w.toFixed(1)).join(', ');
+                    }
+                };
+
+                Vue.provide('cmsState', {findBlockAndParent, updateBlock, componentLibrary, getColWidths, updateColWidths: updateBlock, updateColCount, updateSingleWidth});
+
+                // --- COMPUTED PROPERTIES ---
+                const activePage = computed(() => pages.value.find(p => p.id === activePageId.value));
+
+                const currentLayout = computed(() => {
+                    if(!activePage.value || layoutTemplates.value.length === 0) {
+                        return {label: 'Standard Page', zones: []};
+                    }
+                    const layout = layoutTemplates.value.find(l => l.id === activePage.value.layout);
+                    return layout || layoutTemplates.value.find(l => l.id === 'single') || {label: 'Standard Page', zones: []};
+                });
+
+                // Helper to get zone config by name
+                const getZoneConfig = (zoneName) => {
+                    if(!currentLayout.value || !currentLayout.value.zones) return null;
+                    return currentLayout.value.zones.find(z => z.name === zoneName);
+                };
+
+                // Combine global + page specific for viewing
+                const activeContent = computed(() => contentZones.value);
+
+                const selectedBlock = computed(() => {
+                    if(!selectedBlockId.value) return null;
+                    const result = findBlockAndParent(selectedBlockId.value);
+                    if(!result) return null;
+
+                    const definition = componentLibrary.value.find(def => def.id === result.block.type);
+                    return {...result.block, label: definition?.label, zone: result.zone};
+                });
+
+                // Simplified (and potentially buggy for deep nesting) TOML generator for display only
+                const generateConfig = computed(() => {
+                    if(!activePage.value) return '';
+
+                    let toml = `+++
+title = "${activePage.value.title}"
+layout = "${activePage.value.layout}"
+                    status = "${activePage.value.status}"
+                    url = "${activePage.value.slug}"
+                    date = "${activePage.value.date || ''}"
+                    description = "${activePage.value.description || ''}"
+                    tags = [${activePage.value.tags ? activePage.value.tags.map(t => `"${t}"`).join(', ') : ''}]
+                    +++
+
+`;
+                    // Recursive function to render block TOML
+                    const renderBlockToml = (blocks, zoneName, depth = 0) => {
+                        let output = '';
+                        const indent = "  ".repeat(depth);
+
+                        blocks.forEach(b => {
+                            output += `${indent}[[${zoneName}]]\n`;
+                            output += `${indent}  type = "${b.type}"\n`;
+
+                            // 1. Render immediate params
+                            Object.entries(b.params).forEach(([k, v]) => {
+                                output += `${indent}  ${k} = "${v}"\n`;
+                            });
+
+                            // 2. Render nested children (e.g., columns)
+                            if(b.type === 'flex_columns') {
+
+                                output += `${indent}  widths = [${b.params.col_widths}]\n`; // Use col_widths from parent params
+
+                                // Group children blocks by column (col_0, col_1, etc.)
+                                const widthsStr = b.params.col_widths || '';
+                                const numCols = widthsStr.split(',').length;
+
+                                for(let colIndex = 0; colIndex < numCols; colIndex++) {
+                                    const placement_key = `col_${colIndex}`;
+                                    const colBlocks = b.children.filter(c => c.placement_key === placement_key).sort((a, b) => a.sort_order - b.sort_order);
+
+                                    if(colBlocks.length > 0) {
+                                        output += `${indent}  [${placement_key}]\n`;
+                                        // Render blocks inside this column structure
+                                        output += renderBlockToml(colBlocks, 'block', depth + 2);
+                                    }
+                                }
+                            }
+                            output += '\n';
+                        });
+                        return output;
+                    };
+
+                    // Render Global Zones
+                    if(contentZones.value.header.length > 0) {
+                        toml += `# Site Header Blocks (Global)\n`;
+                        toml += renderBlockToml(contentZones.value.header, 'header');
+                    }
+                    if(contentZones.value.footer.length > 0) {
+                        toml += `# Site Footer Blocks (Global)\n`;
+                        toml += renderBlockToml(contentZones.value.footer, 'footer');
+                    }
+
+                    // Render Main Page Content
+                    if(activeContent.value.main.length > 0) {
+                        toml += `# Page Content Blocks (Main)\n`;
+                        toml += renderBlockToml(activeContent.value.main, 'main');
+                    }
+
+                    // Render Sidebar Content
+                    if(activeContent.value.sidebar.length > 0) {
+                        toml += `\n# Sidebar Blocks\n`;
+                        toml += renderBlockToml(activeContent.value.sidebar, 'sidebar');
+                    }
+
+                    return toml;
+                });
+
+                // --- API & DATA FETCHING ---
+
+                const fetchApi = async (url, method = 'GET', data = null) => {
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken(),
+                    };
+
+                    const config = {
+                        method,
+                        headers,
+                    };
+                    if(data) {
+                        config.body = JSON.stringify(data);
+                    }
+
+                    const response = await fetch(url, config);
+                    if(!response.ok) {
+                        throw new Error(`API Error: ${response.statusText}`);
+                    }
+                    return response.json();
+                };
+
+                const fetchContent = async (pageId) => {
+                    const url = `${API_BASE_URL}pages/${pageId}/content/`;
+                    const blocks = await fetchApi(url) || [];
+
+                    // Populate page-specific zones in contentZones
+                    contentZones.value.main = blocks.filter(b => b.placement_key === 'main' || !b.placement_key).sort((a, b) => a.sort_order - b.sort_order);
+                    contentZones.value.sidebar = blocks.filter(b => b.placement_key === 'sidebar').sort((a, b) => a.sort_order - b.sort_order);
+                };
+
+                const initialLoad = async () => {
                     try {
-                        // 1. Fetch Global Config (Definitions, Header, Footer)
-                        const initData = await fetchWithRetry(`${API_BASE_URL}init/`);
-                        
-                        // Map definitions to global object for component lookups
-                        BLOCK_DEFINITIONS = initData.definitions.reduce((acc, def) => {
-                            acc[def.id] = def;
-                            return acc;
-                        }, {});
-                        componentLibrary.value = initData.definitions;
+                        const response = await fetchApi(`${API_BASE_URL}init/`);
+                        componentLibrary.value = response.definitions;
+                        layoutTemplates.value = response.layouts;
 
-                        siteBlocks.value.header = initData.header;
-                        siteBlocks.value.footer = initData.footer;
+                        // Populate global zones in contentZones
+                        contentZones.value.header = response.header;
+                        contentZones.value.footer = response.footer;
 
-                        // 2. Fetch Pages List
-                        const pagesList = await fetchWithRetry(`${API_BASE_URL}pages/`);
-                        pages.value = pagesList;
+                        const pagesResponse = await fetchApi(`${API_BASE_URL}pages/`);
+                        pages.value = pagesResponse;
 
-                        // 3. Set Active Page and Fetch its Content
-                        if (pages.value.length > 0) {
+                        if(pages.value.length > 0) {
                             activePageId.value = pages.value[0].id;
-                            await fetchPageContent(activePageId.value);
+                            await fetchContent(activePageId.value);
                         }
-
-                    } catch (error) {
-                        console.error("Initialization Failed:", error);
+                    } catch(error) {
+                        console.error('Failed to load CMS data:', error);
                     } finally {
                         isLoaded.value = true;
                     }
                 };
-                
+
+                // --- LIFECYCLE ---
                 onMounted(() => {
-                    initializeData();
+                    initialLoad();
                 });
 
                 // Watch activePageId to load new main content
                 watch(activePageId, async (newId) => {
-                    if (newId && !pageMainBlocks[newId]) {
-                        await fetchPageContent(newId);
+                    if(newId) {
+                        // Fetch content to populate page-specific zones in contentZones
+                        await fetchContent(newId);
                     }
                 });
 
-                // ACTIONS
+                // --- ACTIONS ---
                 const setActivePage = (id) => {
                     activePageId.value = id;
                     selectedBlockId.value = null;
                 };
-                
-                // Existing drag/drop/delete logic remains the same, 
-                // but now operates on the API-fetched reactive data (pages, siteBlocks, pageMainBlocks)
+
+                const savePageContent = async () => {
+                    if(!activePage.value) return;
+
+                    try {
+                        const pageId = activePage.value.id;
+                        const metadataPayload = {
+                            title: activePage.value.title,
+                            slug: activePage.value.slug,
+                            layout: activePage.value.layout,
+                            status: activePage.value.status,
+                            date: activePage.value.date,
+                            description: activePage.value.description,
+                            tags: activePage.value.tags,
+                        };
+
+                        // 1. Save Page Metadata (PUT)
+                        await fetchApi(`${API_BASE_URL}pages/${pageId}/`, 'PUT', metadataPayload);
+
+                        // 2. Save Block Content (POST to custom action)
+                        // Collect page-specific blocks from contentZones
+                        const allPageBlocks = [
+                            ...contentZones.value.main.map(b => ({...b, placement_key: 'main'})),
+                            ...contentZones.value.sidebar.map(b => ({...b, placement_key: 'sidebar'}))
+                        ];
+                        const contentPayload = {blocks: allPageBlocks};
+                        await fetchApi(`${API_BASE_URL}pages/${pageId}/save_content/`, 'POST', contentPayload);
+
+                        // 3. Save Global Content (POST to init action)
+                        const globalPayload = {
+                            header: contentZones.value.header,
+                            footer: contentZones.value.footer
+                        };
+                        await fetchApi(`${API_BASE_URL}init/save_globals/`, 'POST', globalPayload);
+
+                        console.log('Content saved successfully to Django!');
+                        // Implement custom message box instead of alert
+                    } catch(error) {
+                        console.error("Save Error:", error);
+                        // Implement custom message box instead of alert
+                    }
+                };
+
+                // Helper to generate UUIDs
+                const generateId = () => uuid.v4();
+
+                // Helper to find the mutable array reference for blocks within a zone/column
+                const findMutableBlockArray = (zone, parentBlockId) => {
+                    if(parentBlockId) {
+                        // Handle nested blocks (columns)
+                        const parentResult = findBlockAndParent(parentBlockId);
+                        if(parentResult && parentResult.block.type === 'flex_columns') {
+                            if(!parentResult.block.children) parentResult.block.children = [];
+                            return parentResult.block.children;
+                        }
+                        return null;
+                    }
+
+                    // All top-level zones work the same way now
+                    if(contentZones.value[zone]) {
+                        return contentZones.value[zone];
+                    }
+
+                    console.error("Could not find mutable array for zone:", zone);
+                    return null;
+                };
+
                 const handleDragStartNew = (e, type) => {
                     e.dataTransfer.setData('type', type);
                     e.dataTransfer.setData('source', 'sidebar');
                 };
 
-                const handleDragStartExisting = (e, blockId, zone) => {
+                const handleDragStartExisting = (e, blockId, zone, parentBlockId) => {
                     e.dataTransfer.setData('blockId', blockId);
                     e.dataTransfer.setData('zone', zone);
+                    e.dataTransfer.setData('parentBlockId', parentBlockId || '');
                     e.dataTransfer.setData('source', 'canvas');
                 };
 
-                const handleDrop = (e, targetZone, targetIndex) => {
+                const handleDrop = (e, targetZone, targetIndex, parentBlockId) => {
+                    e.preventDefault();
                     const source = e.dataTransfer.getData('source');
-                    
-                    const getTargetList = () => {
-                        if (targetZone === 'main') {
-                            if (!pageMainBlocks[activePageId.value]) pageMainBlocks[activePageId.value] = [];
-                            return pageMainBlocks[activePageId.value];
-                        }
-                        return siteBlocks.value[targetZone];
-                    };
+                    const mutationList = findMutableBlockArray(targetZone, parentBlockId);
 
-                    const insertBlock = (block) => {
-                        const list = getTargetList();
-                        if (targetIndex > -1) {
-                            list.splice(targetIndex, 0, block);
+                    if(!mutationList) {
+                        console.error('[DROP] No mutation list found for zone:', targetZone);
+                        return;
+                    }
+
+                    // Helper to insert into the correct visual position within the mutationList
+                    const insertIntoCorrectPosition = (list, newBlock, targetZone, targetIndex) => {
+                        if(!targetZone.startsWith('col_')) {
+                            // Top-level insertion (Header, Footer, Main, Sidebar)
+                            newBlock.placement_key = targetZone;
+
+                            // Since list is now specific to the zone (main_blocks or sidebar_blocks),
+                            // we can simply splice at the target index!
+                            if(targetIndex < list.length) {
+                                list.splice(targetIndex, 0, newBlock);
+                            } else {
+                                list.push(newBlock);
+                            }
+
+                            // Update sort_order for ALL blocks in this zone based on their new array order
+                            list.forEach((b, index) => {
+                                b.sort_order = index;
+                            });
+
                         } else {
-                            list.push(block);
+                            // Nested insertion: Find the actual index in the parent's children array
+
+                            // 1. Get the list of blocks currently in the target column
+                            const currentColBlocks = list.filter(b => b.placement_key === targetZone).sort((a, b) => a.sort_order - b.sort_order);
+
+                            if(currentColBlocks.length === 0) {
+                                list.push(newBlock);
+                            } else if(targetIndex < currentColBlocks.length) {
+                                const blockToInsertBefore = currentColBlocks[targetIndex];
+                                const actualIndex = list.findIndex(b => b.id === blockToInsertBefore.id);
+                                list.splice(actualIndex, 0, newBlock);
+                            } else {
+                                list.push(newBlock);
+                            }
+
+                            // 2. Update sort_order for nested blocks
+                            let currentSortOrder = 0;
+                            list.forEach(b => {
+                                if(b.placement_key === targetZone) {
+                                    b.sort_order = currentSortOrder++;
+                                }
+                            });
                         }
                     };
 
-                    if (source === 'sidebar') {
+                    // 1. Handling New Drop from Sidebar
+                    if(source === 'sidebar') {
                         const type = e.dataTransfer.getData('type');
-                        const definition = BLOCK_DEFINITIONS[type];
-                        
+                        const definition = componentLibrary.value.find(c => c.id === type);
+
                         const newBlock = {
                             id: generateId(),
                             type: type,
-                            params: { ...definition.default_params } // Use default_params from API
+                            params: {...definition.default_params},
+                            // Initialize children for containers
+                            children: type === 'flex_columns' ? [] : null,
+                            // Only set placement_key for nested zones (columns), not for top-level zones
+                            placement_key: targetZone,
+                            parent_id: parentBlockId || null,
                         };
-                        insertBlock(newBlock);
-                    } 
-                    else if (source === 'canvas') {
-                        const blockId = e.dataTransfer.getData('blockId');
-                        const sourceZone = e.dataTransfer.getData('zone');
-                        
-                        let sourceList;
-                        if (sourceZone === 'main') {
-                            sourceList = pageMainBlocks[activePageId.value];
-                        } else {
-                            sourceList = siteBlocks.value[sourceZone];
+
+                        // --- FIX: Initialize column structure on drop ---
+                        if(type === 'flex_columns') {
+                            // Ensure col_widths is set
+                            newBlock.params.col_widths = newBlock.params.col_widths || '50.0, 50.0';
                         }
-                        
-                        const blockIndex = sourceList.findIndex(b => b.id === blockId);
-                        
-                        if (blockIndex > -1) {
-                            const [movedBlock] = sourceList.splice(blockIndex, 1);
-                            
-                            if (sourceZone === targetZone && blockIndex < targetIndex && targetIndex > -1) {
-                                targetIndex--; 
-                            }
-                            
-                            insertBlock(movedBlock);
-                        }
+
+                        insertIntoCorrectPosition(mutationList, newBlock, targetZone, targetIndex);
+                        selectedBlockId.value = newBlock.id;
                     }
-                };
+                    else if(source === 'canvas') {
+                        const blockId = e.dataTransfer.getData('blockId');
 
-                const updateBlockParams = (blockId, key, value) => {
-                    const zones = [
-                         { name: 'main', list: pageMainBlocks[activePageId.value] },
-                         { name: 'header', list: siteBlocks.value.header },
-                         { name: 'footer', list: siteBlocks.value.footer }
-                    ];
+                        const sourceResult = findBlockAndParent(blockId);
 
-                    for (const z of zones) {
-                        const block = z.list?.find(b => b.id === blockId);
-                        if (block) {
-                            block.params[key] = value;
-                            break;
+                        if(!sourceResult) {
+                            console.error('Source block not found:', blockId);
+                            return;
                         }
+
+                        const sourceList = sourceResult.list;
+                        const blockIndex = sourceResult.index;
+
+                        const [movedBlock] = sourceList.splice(blockIndex, 1);
+
+                        // Update relational keys for moved block - only set placement_key for nested zones
+                        movedBlock.placement_key = targetZone;
+                        movedBlock.parent_id = parentBlockId || null;
+
+                        insertIntoCorrectPosition(mutationList, movedBlock, targetZone, targetIndex);
                     }
                 };
 
                 const deleteBlock = (blockId) => {
-                    if (pageMainBlocks[activePageId.value]) {
-                        pageMainBlocks[activePageId.value] = pageMainBlocks[activePageId.value].filter(b => b.id !== blockId);
+                    const result = findBlockAndParent(blockId);
+                    if(result && result.list) {
+                        result.list.splice(result.index, 1);
                     }
-                    siteBlocks.value.header = siteBlocks.value.header.filter(b => b.id !== blockId);
-                    siteBlocks.value.footer = siteBlocks.value.footer.filter(b => b.id !== blockId);
-                    
                     selectedBlockId.value = null;
                 };
+
+                // --- UTILITIES ---
+                const formatKey = (key) => key.replace(/([A-Z])/g, ' $1').trim();
+
+                // Provide helper to global scope for debugging/reuse
+                if(typeof window !== 'undefined') {
+                    window.findBlock = findBlockAndParent;
+                }
 
                 return {
                     isLoaded,
@@ -966,15 +1546,22 @@ tags = [${tagsArray.join(', ')}]
                     componentLibrary,
                     generateConfig,
                     setActivePage,
+                    savePageContent,
                     handleDragStartNew,
                     handleDragStartExisting,
                     handleDrop,
-                    updateBlockParams,
+                    updateBlockParams: updateBlock,
                     deleteBlock,
                     formatKey,
                     setSelectedBlockId: (id) => selectedBlockId.value = id,
-                    
-                    sidebarTab
+                    getColWidths,
+                    updateColWidths: updateBlock,
+                    updateColCount,
+                    updateSingleWidth,
+                    sidebarTab,
+                    currentLayout,
+                    layoutTemplates,
+                    getZoneConfig
                 };
             }
         });
@@ -983,4 +1570,6 @@ tags = [${tagsArray.join(', ')}]
     </script>
 </body>
 {% endverbatim %}
+
 </html>
+```

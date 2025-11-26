@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
 import uuid 
-from .models import Page, BlockDefinition, BlockInstance
+from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate
 from .serializers import (
     PageListSerializer, 
     PageDetailSerializer, 
@@ -22,12 +22,14 @@ class CmsInitViewSet(viewsets.ViewSet):
     
     def list(self, request):
         definitions = BlockDefinition.objects.all()
+        layouts = LayoutTemplate.objects.all()
         # Global blocks are defined by having parent=null, page=null
         header_blocks = BlockInstance.objects.filter(placement_key='header', page=None, parent=None).order_by('sort_order')
         footer_blocks = BlockInstance.objects.filter(placement_key='footer', page=None, parent=None).order_by('sort_order')
         
         data = {
             'definitions': definitions,
+            'layouts': layouts,
             'header': header_blocks,
             'footer': footer_blocks
         }
@@ -117,14 +119,14 @@ class PageViewSet(viewsets.ModelViewSet):
             return PageListSerializer
         return PageDetailSerializer
 
-    @action(detail=False, methods=['get'])
+    @action(detail=True, methods=['get'])
     def content(self, request, pk=None):
         """
-        Returns the 'main' blocks for this specific page.
+        Returns all top-level blocks for this specific page (main, sidebar, etc).
         """
         page = self.get_object()
-        # Fetch only top-level blocks for the 'main' zone
-        blocks = BlockInstance.objects.filter(page=page, placement_key='main', parent=None).order_by('sort_order')
+        # Fetch all top-level blocks for the page, regardless of placement_key
+        blocks = BlockInstance.objects.filter(page=page, parent=None).order_by('sort_order')
         serializer = BlockInstanceSerializer(blocks, many=True)
         return Response(serializer.data)
 
@@ -153,13 +155,27 @@ class PageViewSet(viewsets.ModelViewSet):
                 # Delete existing blocks belonging to this page that are NOT in the payload
                 page.main_blocks.exclude(id__in=all_incoming_ids).delete()
                 
-                # 2. Save top-level blocks and their children recursively
+                # 2. Group blocks by placement_key (main, sidebar)
+                main_blocks = [b for b in top_level_blocks_data if b.get('placement_key') == 'main']
+                sidebar_blocks = [b for b in top_level_blocks_data if b.get('placement_key') == 'sidebar']
+                
+                # 3. Save top-level blocks recursively for each zone
                 self._save_blocks_recursive(
-                    top_level_blocks_data, 
+                    main_blocks, 
                     placement_key='main', 
                     page=page, 
                     parent=None
                 )
+                
+                self._save_blocks_recursive(
+                    sidebar_blocks, 
+                    placement_key='sidebar', 
+                    page=page, 
+                    parent=None
+                )
+                
+                # Update page timestamp to move it to top of list
+                page.save()
             
             return Response({'status': 'saved', 'page_id': page.id})
         except Exception as e:

@@ -1,10 +1,15 @@
 from rest_framework import serializers
-from .models import Page, BlockDefinition, BlockInstance
+from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate
 
 class BlockDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlockDefinition
         fields = ['id', 'label', 'icon', 'has_visual_preview', 'default_params']
+
+class LayoutTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LayoutTemplate
+        fields = ['id', 'label', 'zones', 'description']
 
 # --- Recursive Block Serializer ---
 
@@ -41,9 +46,10 @@ class PageDetailSerializer(serializers.ModelSerializer):
 
 class SiteConfigSerializer(serializers.Serializer):
     """
-    Custom serializer to aggregate Global Header, Footer, and Block Definitions
-    for the initial app load.
+    Custom serializer to aggregate Global Header, Footer, Block Definitions,
+    and Layout Templates for the initial app load.
     """
     definitions = BlockDefinitionSerializer(many=True)
+    layouts = LayoutTemplateSerializer(many=True)
     header = BlockInstanceSerializer(many=True)
     footer = BlockInstanceSerializer(many=True)
