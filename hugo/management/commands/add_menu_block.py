@@ -13,9 +13,9 @@ class Command(BaseCommand):
                 'has_visual_preview': True,
                 'default_params': {
                     'items': [
-                        {'label': 'Home', 'url': '/'},
-                        {'label': 'About', 'url': '/about'},
-                        {'label': 'Contact', 'url': '/contact'}
+                        {'label': 'Home', 'url': '/', 'type': 'page'},
+                        {'label': 'About', 'url': '/about', 'type': 'page'},
+                        {'label': 'Contact', 'url': '/contact', 'type': 'page'}
                     ],
                     'orientation': 'horizontal',  # or 'vertical'
                     'alignment': 'left',  # 'left', 'center', 'right'
