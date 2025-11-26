@@ -19,7 +19,10 @@ class Command(BaseCommand):
                     ],
                     'orientation': 'horizontal',  # or 'vertical'
                     'alignment': 'left',  # 'left', 'center', 'right'
-                    'style': 'default'  # 'default', 'pills', 'underline'
+                    'style': 'default',  # 'default', 'pills', 'underline'
+                    'responsive': 'false',  # 'false' = always visible, 'true' = hamburger menu
+                    'hamburgerDirection': 'dropdown',  # 'dropdown' = from top, 'sidebar' = from side
+                    'sidebarSide': 'left'  # 'left' or 'right' - which side sidebar slides from
                 }
             }
         )
