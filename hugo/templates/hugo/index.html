@@ -543,6 +543,14 @@
                                     <option value="underline">Underline</option>
                                 </select>
                             </div>
+
+                            <div class="flex items-center space-x-2 pt-2">
+                                <input type="checkbox"
+                                    :checked="selectedBlock.params.sticky === 'true' || selectedBlock.params.sticky === true"
+                                    @change="selectedBlock.params.sticky = $event.target.checked ? 'true' : 'false'"
+                                    class="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-2 focus:ring-indigo-500" />
+                                <label class="text-sm font-medium text-slate-700">Sticky</label>
+                            </div>
                         </div>
                     </div>
 
@@ -550,7 +558,7 @@
                     <div v-for="(value, key) in selectedBlock.params" :key="key">
                         <!-- Skip custom-handled parameters for menu blocks -->
                         <template
-                            v-if="!(selectedBlock.type === 'menu' && ['items', 'orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection', 'sidebarSide'].includes(key))">
+                            v-if="!(selectedBlock.type === 'menu' && ['items', 'orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection', 'sidebarSide', 'sticky'].includes(key))">
                             <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">
                                 {{ formatKey(key) }}
                             </label>
