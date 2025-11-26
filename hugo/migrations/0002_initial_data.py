@@ -5,7 +5,12 @@ import uuid
 def create_initial_data(apps, schema_editor):
     """
     Populates BlockDefinition, Page, and BlockInstance models 
-    to match the initial state of the Vue frontend.
+    to match the initial state of the Vue frontend's new relational structure.
+    
+    This function creates:
+    1. All Block Definitions (hero, text, flex_columns, etc.)
+    2. Three Pages (Home, About, Blog)
+    3. Three initial BlockInstances on the Home page: Hero, Flex Columns (Parent), and two nested children.
     """
     BlockDefinition = apps.get_model('hugo', 'BlockDefinition')
     Page = apps.get_model('hugo', 'Page')
@@ -13,7 +18,6 @@ def create_initial_data(apps, schema_editor):
 
     # --- 1. BLOCK DEFINITIONS ---
     
-    # We use a mapping similar to the Vue file to ensure consistency
     BLOCK_DEFINITIONS_DATA = {
         'hero': {
             'label': 'Hero Section',
@@ -37,11 +41,11 @@ def create_initial_data(apps, schema_editor):
             'has_visual_preview': True,
             'default_params': { 'src': 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80', 'caption': 'A beautiful view' }
         },
-        'columns': {
-            'label': '3 Columns',
+        'flex_columns': { # FLEXIBLE COLUMN BLOCK (Container)
+            'label': 'Flexible Columns',
             'icon': 'columns',
             'has_visual_preview': True,
-            'default_params': { 'col1': 'Feature A', 'col2': 'Feature B', 'col3': 'Feature C' }
+            'default_params': {} # Child content is relational, not in params
         },
         'markdown': {
             'label': 'Markdown',
@@ -49,7 +53,6 @@ def create_initial_data(apps, schema_editor):
             'has_visual_preview': True,
             'default_params': { 'md': '## Hello World\nThis is **markdown** content.' }
         },
-        # Arbitrary/Generic Blocks
         'youtube': {
             'label': 'YouTube Embed',
             'icon': 'video',
@@ -82,8 +85,7 @@ def create_initial_data(apps, schema_editor):
         definitions_map[block_id] = definition
 
     # --- 2. PAGES ---
-
-    # Hardcoding UUIDs for consistency with initial Vue app state
+    # Using hardcoded UUIDs for consistency with initial state/testing.
     PAGE_HOME_ID = uuid.UUID('f71d182e-9d2a-43f1-b4f0-32b7a950a120')
     PAGE_ABOUT_ID = uuid.UUID('322a012a-3e5f-4a3b-9a94-44b4c78a05f1')
     PAGE_BLOG_ID = uuid.UUID('7e7d692f-1a5c-4d8e-9c7f-02d2e1f4d9a3')
@@ -122,20 +124,15 @@ def create_initial_data(apps, schema_editor):
         date='2023-09-20'
     )
     
-    pages_map = {
-        'p1': page_home,
-        'p2': page_about,
-        'p3': page_blog,
-    }
+    # --- 3. INITIAL BLOCK INSTANCE (Top Level & Nested for Home Page) ---
 
-    # --- 3. INITIAL BLOCK INSTANCE (Main Content for Home Page) ---
-
-    # This mirrors the single hero block initially present on the 'Home' page (p1)
+    # 3a. Top-level Hero Block
     BlockInstance.objects.create(
-        id=uuid.UUID('088b901a-8537-4148-9c59-a29e469d724b'), # Arbitrary UUID
+        id=uuid.UUID('088b901a-8537-4148-9c59-a29e469d724b'),
         definition=definitions_map['hero'],
         page=page_home,
-        zone='main',
+        parent=None,
+        placement_key='main',
         sort_order=0,
         params={
             'title': 'Build Faster',
@@ -143,33 +140,69 @@ def create_initial_data(apps, schema_editor):
             'bgImage': 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&q=80'
         }
     )
+    
+    # 3b. Top-level Flex Columns Block (Parent Container)
+    flex_parent = BlockInstance.objects.create(
+        id=uuid.UUID('3b4d5e6f-1a2b-3c4d-5e6f-1a2b3c4d5e6f'), 
+        definition=definitions_map['flex_columns'],
+        page=page_home,
+        parent=None,
+        placement_key='main',
+        sort_order=1,
+        params={'col_widths': '50.0, 50.0'} # Widths stored in parent params
+    )
+    
+    # 3c. Nested Markdown Block (Child 1 - Column 0)
+    BlockInstance.objects.create(
+        id=uuid.UUID('c4a1b2c3-d4e5-f6a7-b8c9-0d1e2f3a4b5c'),
+        definition=definitions_map['markdown'],
+        page=None, # Nested blocks have no direct page link
+        parent=flex_parent,
+        placement_key='col_0', # Placement key specifies the column
+        sort_order=0,
+        params={'md': '## Nested Content\nThis is Column 1.'}
+    )
+
+    # 3d. Nested Image Block (Child 2 - Column 1)
+    BlockInstance.objects.create(
+        id=uuid.UUID('d4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f9a'),
+        definition=definitions_map['image'],
+        page=None,
+        parent=flex_parent,
+        placement_key='col_1',
+        sort_order=0,
+        params={'src': 'https://placehold.co/400x200/475569/ffffff?text=Nested+Image', 'caption': 'In Column 2'}
+    )
+
 
 def reverse_initial_data(apps, schema_editor):
     """
-    Reverses the data creation by deleting all entries based on the primary keys/IDs
+    Reverses the data creation.
     """
     BlockDefinition = apps.get_model('hugo', 'BlockDefinition')
     Page = apps.get_model('hugo', 'Page')
     BlockInstance = apps.get_model('hugo', 'BlockInstance')
 
-    # Delete instances first (due to FK constraints)
+    REVERSE_BLOCK_KEYS = [
+        'hero', 'text', 'image', 'flex_columns', 'markdown',
+        'youtube', 'alert', 'quote'
+    ]
+    
     BlockInstance.objects.all().delete()
     
-    # Delete pages
     Page.objects.filter(id__in=[
         'f71d182e-9d2a-43f1-b4f0-32b7a950a120',
         '322a012a-3e5f-4a3b-9a94-44b4c78a05f1',
         '7e7d692f-1a5c-4d8e-9c7f-02d2e1f4d9a3',
     ]).delete()
 
-    # Delete block definitions
-    BlockDefinition.objects.filter(id__in=BLOCK_DEFINITIONS_DATA.keys()).delete()
+    BlockDefinition.objects.filter(id__in=REVERSE_BLOCK_KEYS).delete()
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hugo', '0001_initial'), # Assuming your previous migration that created models
+        ('hugo', '0001_initial'), # This should be the name of your initial model creation migration
     ]
 
     operations = [

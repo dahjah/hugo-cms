@@ -6,13 +6,26 @@ class BlockDefinitionSerializer(serializers.ModelSerializer):
         model = BlockDefinition
         fields = ['id', 'label', 'icon', 'has_visual_preview', 'default_params']
 
+# --- Recursive Block Serializer ---
+
 class BlockInstanceSerializer(serializers.ModelSerializer):
-    # Flatten the type ID for the frontend (frontend expects 'type': 'hero', not nested object)
+    # Field to hold nested blocks (children)
+    children = serializers.SerializerMethodField()
+    # Flatten the type ID
     type = serializers.ReadOnlyField(source='definition.id')
     
     class Meta:
         model = BlockInstance
-        fields = ['id', 'type', 'params', 'zone', 'sort_order']
+        # Note: We expose the placement_key and parent_id for tracking
+        fields = ['id', 'type', 'params', 'placement_key', 'sort_order', 'parent_id', 'children']
+        read_only_fields = ['id', 'type', 'parent_id'] 
+
+    def get_children(self, obj):
+        # Recursively serialize children, ordering by sort_order
+        children = obj.children.all().order_by('sort_order')
+        # Use the same serializer recursively
+        serializer = BlockInstanceSerializer(children, many=True) 
+        return serializer.data
 
 class PageListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for the Sidebar list"""
