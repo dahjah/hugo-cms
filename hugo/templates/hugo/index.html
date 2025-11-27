@@ -513,6 +513,22 @@
                                 </select>
                             </div>
 
+                            <div
+                                v-if="selectedBlock.params.responsive === 'true' && selectedBlock.params.hamburgerDirection === 'sidebar'">
+                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Sidebar Footer
+                                    Content</label>
+                                <div class="border border-slate-300 rounded-md p-2 bg-slate-50 min-h-[100px]">
+                                    <drop-zone title="Footer Blocks" :zone="'menu_footer_' + selectedBlock.id"
+                                        :blocks="selectedBlock.params.sidebarFooterBlocks || []" :is-active="true"
+                                        :selected-id="null" :parent-block-id="selectedBlock.id" @drop-item="handleDrop"
+                                        @select-block="() => {}" @drag-start-block="handleDragStartExisting"
+                                        class="min-h-[80px]">
+                                    </drop-zone>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Drag blocks here to appear at bottom of sidebar
+                                    menu.</p>
+                            </div>
+
                             <div v-if="selectedBlock.params.responsive === 'false' || !selectedBlock.params.responsive">
                                 <label
                                     class="block text-xs font-semibold text-slate-500 uppercase mb-2">Orientation</label>
@@ -558,7 +574,7 @@
                     <div v-for="(value, key) in selectedBlock.params" :key="key">
                         <!-- Skip custom-handled parameters for menu blocks -->
                         <template
-                            v-if="!(selectedBlock.type === 'menu' && ['items', 'orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection', 'sidebarSide', 'sticky'].includes(key))">
+                            v-if="!(selectedBlock.type === 'menu' && ['items', 'orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection', 'sidebarSide', 'sticky', 'sidebarFooterBlocks'].includes(key))">
                             <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">
                                 {{ formatKey(key) }}
                             </label>
@@ -911,6 +927,18 @@
                                             {{ item.label }}
                                         </a>
                                     </nav>
+                                    
+                                    <!-- Sidebar Footer Content -->
+                                    <div v-if="block.params.sidebarFooterBlocks && block.params.sidebarFooterBlocks.length > 0" 
+                                        class="p-4 border-t border-slate-200 bg-slate-50">
+                                        <block-renderer
+                                            v-for="footerBlock in block.params.sidebarFooterBlocks"
+                                            :key="footerBlock.id"
+                                            :block="footerBlock"
+                                            :is-selected="false"
+                                            :is-editable="false">
+                                        </block-renderer>
+                                    </div>
                                 </div>
 
                                 <!-- Overlay for sidebar -->
@@ -1669,25 +1697,45 @@ layout = "${activePage.value.layout}"
                 };
 
                 // Helper to find the mutable array reference for blocks within a zone/column
-                const findMutableBlockArray = (zone, parentBlockId) => {
-                    if(parentBlockId) {
-                        // Handle nested blocks (columns)
-                        const parentResult = findBlockAndParent(parentBlockId);
-                        if(parentResult && parentResult.block.type === 'flex_columns') {
-                            if(!parentResult.block.children) parentResult.block.children = [];
-                            return parentResult.block.children;
+                function findMutableBlockArray(zone, parentBlockId) {
+                    // Handle menu footer zones (nested within menu block)
+                    if(zone.startsWith('menu_footer_')) {
+                        const menuBlockId = zone.replace('menu_footer_', '');
+                        const result = findBlockAndParent(menuBlockId);
+                        if(result && result.block) {
+                            if(!result.block.params.sidebarFooterBlocks) {
+                                result.block.params.sidebarFooterBlocks = [];
+                            }
+                            return result.block.params.sidebarFooterBlocks;
+                        }
+                        console.error('Menu block not found for footer zone:', zone);
+                        return null;
+                    }
+
+                    // Handle column zones (nested within columns block)
+                    if(zone.startsWith('col_') && parentBlockId) {
+                        const result = findBlockAndParent(parentBlockId);
+                        if(result && result.block && result.block.type === 'columns') {
+                            const colIndex = parseInt(zone.split('_')[1]);
+                            if(!result.block.params.columns[colIndex]) {
+                                result.block.params.columns[colIndex] = {blocks: []};
+                            }
+                            if(!result.block.params.columns[colIndex].blocks) {
+                                result.block.params.columns[colIndex].blocks = [];
+                            }
+                            return result.block.params.columns[colIndex].blocks;
                         }
                         return null;
                     }
 
-                    // All top-level zones work the same way now
+                    // Handle top-level zones
                     if(contentZones.value[zone]) {
                         return contentZones.value[zone];
                     }
 
-                    console.error("Could not find mutable array for zone:", zone);
+                    console.error('No mutation list found for zone:', zone);
                     return null;
-                };
+                }
 
                 const handleDragStartNew = (e, type) => {
                     e.dataTransfer.setData('type', type);

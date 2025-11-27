@@ -22,7 +22,8 @@ class Command(BaseCommand):
                     'style': 'default',  # 'default', 'pills', 'underline'
                     'responsive': 'false',  # 'false' = always visible, 'true' = hamburger menu
                     'hamburgerDirection': 'dropdown',  # 'dropdown' = from top, 'sidebar' = from side
-                    'sidebarSide': 'left'  # 'left' or 'right' - which side sidebar slides from
+                    'sidebarSide': 'left',  # 'left' or 'right' - which side sidebar slides from
+                    'sidebarFooterBlocks': []  # Array of blocks for sidebar footer area
                 }
             }
         )
