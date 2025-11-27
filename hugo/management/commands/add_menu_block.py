@@ -23,7 +23,8 @@ class Command(BaseCommand):
                     'responsive': 'false',  # 'false' = always visible, 'true' = hamburger menu
                     'hamburgerDirection': 'dropdown',  # 'dropdown' = from top, 'sidebar' = from side
                     'sidebarSide': 'left',  # 'left' or 'right' - which side sidebar slides from
-                    'sidebarFooterBlocks': []  # Array of blocks for sidebar footer area
+                    'sidebarFooterBlocks': [],  # Array of blocks for sidebar footer area
+                    'position': 'normal'  # 'normal', 'overlay', or 'fixed'
                 }
             }
         )
