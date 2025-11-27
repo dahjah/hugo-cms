@@ -1470,12 +1470,34 @@ layout = "${activePage.value.layout}"
                             output += `${indent}[[${zoneName}]]\n`;
                             output += `${indent}  type = "${b.type}"\n`;
 
-                            // 1. Render immediate params
+                            // 1. Render immediate params (skip complex objects/arrays)
                             Object.entries(b.params).forEach(([k, v]) => {
+                                // Skip complex types that need special handling
+                                if(typeof v === 'object' && v !== null) {
+                                    return; // Skip arrays and objects
+                                }
                                 output += `${indent}  ${k} = "${v}"\n`;
                             });
 
-                            // 2. Render nested children (e.g., columns)
+                            // 2. Handle menu-specific complex parameters
+                            if(b.type === 'menu') {
+                                // Render menu items as TOML array of tables
+                                if(b.params.items && Array.isArray(b.params.items)) {
+                                    b.params.items.forEach(item => {
+                                        output += `${indent}  [[menu.items]]\n`;
+                                        output += `${indent}    label = "${item.label}"\n`;
+                                        output += `${indent}    url = "${item.url}"\n`;
+                                        output += `${indent}    type = "${item.type}"\n`;
+                                    });
+                                }
+
+                                // Render sidebar footer blocks recursively
+                                if(b.params.sidebarFooterBlocks && Array.isArray(b.params.sidebarFooterBlocks) && b.params.sidebarFooterBlocks.length > 0) {
+                                    output += renderBlockToml(b.params.sidebarFooterBlocks, 'menu.sidebarFooterBlocks', depth + 1);
+                                }
+                            }
+
+                            // 3. Render nested children (e.g., columns)
                             if(b.type === 'flex_columns') {
 
                                 output += `${indent}  widths = [${b.params.col_widths}]\n`; // Use col_widths from parent params
