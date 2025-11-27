@@ -231,3 +231,175 @@ class PageViewSet(viewsets.ModelViewSet):
             return Response({'status': 'success', 'message': result}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['post'])
+    def publish(self, request):
+        """
+        Generate Hugo site files from CMS content and save to filesystem.
+        Creates markdown files for pages and hugo.toml for site configuration.
+        """
+        from pathlib import Path
+        from django.conf import settings
+        import os
+        
+        try:
+            output_dir = request.data.get('output_dir', None)
+            
+            # Default Hugo output directory
+            if not output_dir:
+                output_dir = os.path.join(settings.BASE_DIR, 'hugo_output')
+            
+            output_path = Path(output_dir)
+            content_dir = output_path / 'content'
+            
+            # Create directories
+            content_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Get all pages
+            pages = Page.objects.all()
+            generated_files = []
+            
+            for page in pages:
+                # Generate markdown content for this page
+                markdown_content = self._generate_page_markdown(page)
+                
+                # Determine file path based on slug
+                if page.slug == '/' or page.slug == '':
+                    file_path = content_dir / '_index.md'
+                else:
+                    # Remove leading slash and create directory structure
+                    slug_path = page.slug.lstrip('/')
+                    if '/' in slug_path:
+                        # Nested page
+                        parts = slug_path.split('/')
+                        page_dir = content_dir / '/'.join(parts[:-1]) / parts[-1]
+                        page_dir.mkdir(parents=True, exist_ok=True)
+                        file_path = page_dir / 'index.md'
+                    else:
+                        # Top-level page
+                        page_dir = content_dir / slug_path
+                        page_dir.mkdir(parents=True, exist_ok=True)
+                        file_path = page_dir / 'index.md'
+                
+                # Write markdown file
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(markdown_content)
+                
+                generated_files.append(str(file_path.relative_to(output_path)))
+            
+            # Generate hugo.toml
+            config_content = self._generate_site_config()
+            config_path = output_path / 'hugo.toml'
+            with open(config_path, 'w', encoding='utf-8') as f:
+                f.write(config_content)
+            
+            generated_files.append('hugo.toml')
+            
+            return Response({
+                'success': True,
+                'message': f'Successfully published {len(pages)} pages',
+                'output_dir': str(output_path),
+                'files': generated_files
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _generate_page_markdown(self, page):
+        """
+        Generate markdown file content for a page including frontmatter and blocks.
+        """
+        # Get blocks for this page
+        blocks = BlockInstance.objects.filter(page=page, parent=None).order_by('sort_order')
+        
+        # Build frontmatter
+        frontmatter = f"""+++
+title = "{page.title}"
+date = "{page.date or ''}"
+draft = false
+"""
+        
+        if page.description:
+            frontmatter += f'description = "{page.description}"\n'
+        
+        if page.tags:
+            tags_str = ', '.join([f'"{tag}"' for tag in page.tags])
+            frontmatter += f'tags = [{tags_str}]\n'
+        
+        frontmatter += "+++\n\n"
+        
+        # Generate block content
+        content = ""
+        
+        # Helper function to render blocks recursively
+        def render_blocks(blocks_list, zone_name, depth=0):
+            output = ""
+            indent = "  " * depth
+            
+            for block in blocks_list:
+                output += f"{indent}[[{zone_name}]]\n"
+                output += f'{indent}  type = "{block.definition_id}"\n'
+                
+                # Render simple parameters
+                params = block.params
+                for key, value in params.items():
+                    # Skip complex objects
+                    if isinstance(value, (dict, list)):
+                        continue
+                    output += f'{indent}  {key} = "{value}"\n'
+                
+                # Handle menu-specific parameters
+                if block.definition_id == 'menu':
+                    items = params.get('items', [])
+                    if items:
+                        for item in items:
+                            output += f'{indent}  [[menu.items]]\n'
+                            output += f'{indent}    label = "{item.get("label", "")}"\n'
+                            output += f'{indent}    url = "{item.get("url", "")}"\n'
+                            output += f'{indent}    type = "{item.get("type", "page")}"\n'
+                    
+                    # Render sidebar footer blocks
+                    footer_blocks = params.get('sidebarFooterBlocks', [])
+                    if footer_blocks:
+                        # These are stored as dicts in params, need to convert to BlockInstance-like objects
+                        footer_output = ""
+                        for fb in footer_blocks:
+                            footer_output += f"{indent}  [[menu.sidebarFooterBlocks]]\n"
+                            footer_output += f'{indent}    type = "{fb.get("type", "")}"\n'
+                            for k, v in fb.get('params', {}).items():
+                                if not isinstance(v, (dict, list)):
+                                    footer_output += f'{indent}    {k} = "{v}"\n'
+                        output += footer_output
+                
+                # Handle nested children (columns)
+                children = block.children.all().order_by('sort_order')
+                if children.exists():
+                    output += render_blocks(children, f'{zone_name}.children', depth + 1)
+                
+                output += "\n"
+            
+            return output
+        
+        # Render blocks from different zones
+        for zone in ['main', 'sidebar']:
+            zone_blocks = blocks.filter(placement_key=zone)
+            if zone_blocks.exists():
+                content += render_blocks(zone_blocks, zone)
+        
+        return frontmatter + content
+    
+    def _generate_site_config(self):
+        """
+        Generate hugo.toml configuration file.
+        """
+        config = """baseURL = "https://example.com/"
+languageCode = "en-us"
+title = "My Hugo Site"
+
+[params]
+  description = "A site built with Hugo CMS"
+"""
+        return config

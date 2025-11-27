@@ -46,7 +46,44 @@
 {% verbatim %}
 
 <body class="bg-slate-50 text-slate-800 font-sans overflow-hidden">
-    <div id="app" class="flex h-screen w-full">
+    <div id="app" class="h-screen flex bg-slate-50" v-cloak>
+        <!-- Toast Notifications -->
+        <div class="fixed top-20 right-4 z-[9999] space-y-2">
+            <div v-for="toast in toasts" :key="toast.id" :class="[
+                    'min-w-[300px] max-w-md p-4 rounded-lg shadow-lg transform transition-all duration-300',
+                    'flex items-start space-x-3',
+                    toast.type === 'success' ? 'bg-green-50 border border-green-200' :
+                    toast.type === 'error' ? 'bg-red-50 border border-red-200' :
+                    'bg-blue-50 border border-blue-200'
+                ]">
+                <icon :name="toast.type === 'success' ? 'check-circle' : toast.type === 'error' ? 'x-circle' : 'info'"
+                    :size="20"
+                    :class="toast.type === 'success' ? 'text-green-600' : toast.type === 'error' ? 'text-red-600' : 'text-blue-600'">
+                </icon>
+                <div class="flex-1">
+                    <p :class="[
+                        'font-medium text-sm',
+                        toast.type === 'success' ? 'text-green-900' :
+                        toast.type === 'error' ? 'text-red-900' :
+                        'text-blue-900'
+                    ]">{{ toast.message }}</p>
+                    <p v-if="toast.detail" :class="[
+                        'text-xs mt-1',
+                        toast.type === 'success' ? 'text-green-700' :
+                        toast.type === 'error' ? 'text-red-700' :
+                        'text-blue-700'
+                    ]">{{ toast.detail }}</p>
+                </div>
+                <button @click="removeToast(toast.id)" :class="[
+                        'p-1 rounded hover:bg-white/50 transition-colors',
+                        toast.type === 'success' ? 'text-green-600' :
+                        toast.type === 'error' ? 'text-red-600' :
+                        'text-blue-600'
+                    ]">
+                    <icon name="x" :size="16"></icon>
+                </button>
+            </div>
+        </div>
 
         <!-- Loading Spinner while fetching initial data -->
         <div v-if="!isLoaded" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center flex-col">
@@ -313,7 +350,7 @@
                             <icon name="save" :size="16"></icon>
                             <span>Save Draft</span>
                         </button>
-                        <button
+                        <button @click="publishSite"
                             class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors flex items-center space-x-2">
                             <icon name="send" :size="16"></icon>
                             <span>Publish</span>
@@ -1446,6 +1483,28 @@
                     return {...result.block, label: definition?.label, zone: result.zone};
                 });
 
+                // Toast notifications
+                const toasts = ref([]);
+                let toastIdCounter = 0;
+
+                const showToast = (message, type = 'info', detail = null, duration = 4000) => {
+                    const id = ++toastIdCounter;
+                    toasts.value.push({id, message, type, detail});
+
+                    if(duration > 0) {
+                        setTimeout(() => {
+                            removeToast(id);
+                        }, duration);
+                    }
+                };
+
+                const removeToast = (id) => {
+                    const index = toasts.value.findIndex(t => t.id === id);
+                    if(index > -1) {
+                        toasts.value.splice(index, 1);
+                    }
+                };
+
                 // Simplified (and potentially buggy for deep nesting) TOML generator for display only
                 const generateConfig = computed(() => {
                     if(!activePage.value) return '';
@@ -1676,11 +1735,10 @@ layout = "${activePage.value.layout}"
                         };
                         await fetchApi(`${API_BASE_URL}init/save_globals/`, 'POST', globalPayload);
 
-                        console.log('Content saved successfully to Django!');
-                        // Implement custom message box instead of alert
+                        showToast('Content saved successfully', 'success');
                     } catch(error) {
                         console.error("Save Error:", error);
-                        // Implement custom message box instead of alert
+                        showToast('Failed to save content', 'error', error.message);
                     }
                 };
 
@@ -1866,6 +1924,40 @@ layout = "${activePage.value.layout}"
                     setActivePage,
                     createNewPage,
                     savePageContent,
+                    publishSite: async () => {
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                                getCookie('csrftoken');
+
+                            const response = await fetch('/api/pages/publish/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify({})
+                            });
+
+                            const data = await response.json();
+
+                            if(data.success) {
+                                showToast(
+                                    `Successfully published ${data.files.length} files`,
+                                    'success',
+                                    `Output: ${data.output_dir}`,
+                                    6000
+                                );
+                            } else {
+                                showToast('Publish failed', 'error', data.error);
+                            }
+                        } catch(error) {
+                            console.error('Publish error:', error);
+                            showToast('Publish failed', 'error', error.message);
+                        }
+                    },
+                    toasts,
+                    showToast,
+                    removeToast,
                     handleDragStartNew,
                     handleDragStartExisting,
                     handleDrop,
