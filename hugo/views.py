@@ -294,6 +294,140 @@ class PageViewSet(viewsets.ModelViewSet):
                 f.write(config_content)
             
             generated_files.append('hugo.toml')
+
+            # --- Generate Default Layouts & Partials ---
+            layouts_dir = output_path / 'layouts'
+            partials_dir = layouts_dir / 'partials'
+            blocks_dir = partials_dir / 'blocks'
+            default_dir = layouts_dir / '_default'
+            
+            layouts_dir.mkdir(parents=True, exist_ok=True)
+            partials_dir.mkdir(parents=True, exist_ok=True)
+            blocks_dir.mkdir(parents=True, exist_ok=True)
+            default_dir.mkdir(parents=True, exist_ok=True)
+
+            # 1. _default/baseof.html
+            baseof_content = """<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }} | {{ .Site.Title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+    {{ block "main" . }}{{ end }}
+</body>
+</html>"""
+            with open(default_dir / 'baseof.html', 'w') as f: f.write(baseof_content)
+            generated_files.append('layouts/_default/baseof.html')
+
+            # 2. _default/single.html (Generic layout)
+            single_content = """{{ define "main" }}
+<div class="flex flex-col min-h-screen">
+    {{/* Header Zone */}}
+    <header class="w-full">
+        {{ range .Params.header }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </header>
+
+    <div class="container mx-auto px-4 py-8 flex-1 flex flex-col md:flex-row gap-8">
+        {{/* Sidebar Zone */}}
+        {{ if .Params.sidebar }}
+        <aside class="w-full md:w-64 flex-shrink-0">
+            {{ range .Params.sidebar }}
+                {{ partial "blocks/render-block.html" . }}
+            {{ end }}
+        </aside>
+        {{ end }}
+
+        {{/* Main Zone */}}
+        <main class="flex-1 min-w-0">
+            {{ range .Params.main }}
+                {{ partial "blocks/render-block.html" . }}
+            {{ end }}
+        </main>
+    </div>
+
+    {{/* Footer Zone */}}
+    <footer class="w-full mt-auto">
+        {{ range .Params.footer }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </footer>
+</div>
+{{ end }}"""
+            with open(default_dir / 'single.html', 'w') as f: f.write(single_content)
+            generated_files.append('layouts/_default/single.html')
+            
+            # 3. index.html (Home page - same as single for now)
+            with open(layouts_dir / 'index.html', 'w') as f: f.write(single_content)
+            generated_files.append('layouts/index.html')
+
+            # 4. partials/blocks/render-block.html
+            render_block_content = """{{ if .type }}
+    {{ $partialPath := printf "blocks/%s.html" .type }}
+    {{ if templates.Exists (printf "partials/%s" $partialPath) }}
+        {{ partial $partialPath . }}
+    {{ else }}
+        <div class="p-4 border border-red-200 bg-red-50 text-red-700 rounded my-4">
+            <strong>Missing Block Template:</strong> {{ .type }}
+        </div>
+    {{ end }}
+{{ end }}"""
+            with open(blocks_dir / 'render-block.html', 'w') as f: f.write(render_block_content)
+            generated_files.append('layouts/partials/blocks/render-block.html')
+
+            # 5. Generate basic templates for known block types
+            block_templates = {
+                'hero': """<section class="relative bg-slate-900 text-white py-20 px-6 rounded-lg mb-8 overflow-hidden">
+    {{ if .bgImage }}<img src="{{ .bgImage }}" class="absolute inset-0 w-full h-full object-cover opacity-30">{{ end }}
+    <div class="relative z-10 container mx-auto text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ .title }}</h1>
+        <p class="text-xl text-slate-300 max-w-2xl mx-auto">{{ .subtitle }}</p>
+    </div>
+</section>""",
+                'text': """<div class="prose max-w-none mb-8">
+    {{ .content | markdownify }}
+</div>""",
+                'markdown': """<div class="prose max-w-none mb-8">
+    {{ .md | markdownify }}
+</div>""",
+                'image': """<figure class="mb-8">
+    <img src="{{ .src }}" alt="{{ .caption }}" class="w-full h-auto rounded-lg shadow-md">
+    {{ if .caption }}<figcaption class="text-center text-sm text-slate-500 mt-2">{{ .caption }}</figcaption>{{ end }}
+</figure>""",
+                'menu': """<nav class="bg-white shadow-sm border-b border-slate-200 mb-8">
+    <div class="container mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center space-x-8">
+                {{ range .items }}
+                <a href="{{ .url }}" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors">{{ .label }}</a>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+</nav>""",
+                'flex_columns': """<div class="grid grid-cols-1 md:grid-cols-{{ len .widths }} gap-6 mb-8">
+    {{ range $index, $width := .widths }}
+        {{ $colKey := printf "col_%d" $index }}
+        <div class="flex flex-col gap-4">
+            {{/* Access the dynamic column key from the parent context */}}
+            {{ $colData := index $ $colKey }}
+            {{ if $colData }}
+                {{ range $colData }}
+                    {{ partial "blocks/render-block.html" . }}
+                {{ end }}
+            {{ end }}
+        </div>
+    {{ end }}
+</div>"""
+            }
+
+            for block_type, template_content in block_templates.items():
+                with open(blocks_dir / f'{block_type}.html', 'w') as f: f.write(template_content)
+                generated_files.append(f'layouts/partials/blocks/{block_type}.html')
             
             return Response({
                 'success': True,
