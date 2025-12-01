@@ -999,24 +999,47 @@
                             </div>
                         </div>
                         
-                        <!-- Standard Menu (Always Visible) -->
-                        <nav v-else :class="[
-                            'flex gap-2 p-4',
-                            block.params.orientation === 'vertical' ? 'flex-col' : 'flex-row flex-wrap',
-                            block.params.alignment === 'center' ? 'justify-center' : 
-                            block.params.alignment === 'right' ? 'justify-end' : 'justify-start'
-                        ]">
-                            <a v-for="(item, index) in block.params.items" :key="index"
-                                :href="item.url"
-                                :class="[
-                                    'px-4 py-2 transition-colors',
-                                    block.params.style === 'pills' ? 'rounded-full bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700' :
-                                    block.params.style === 'underline' ? 'border-b-2 border-transparent hover:border-indigo-600' :
-                                    'hover:text-indigo-600'
-                                ]">
-                                {{ item.label }}
-                            </a>
-                        </nav>
+                        <!-- Standard Menu (Responsive: Links on Desktop, Hamburger on Mobile) -->
+                        <div v-else class="w-full">
+                            <!-- Desktop Links -->
+                            <nav :class="[
+                                'hidden md:flex gap-2 p-4',
+                                block.params.orientation === 'vertical' ? 'flex-col' : 'flex-row flex-wrap',
+                                block.params.alignment === 'center' ? 'justify-center' : 
+                                block.params.alignment === 'right' ? 'justify-end' : 'justify-start'
+                            ]">
+                                <a v-for="(item, index) in block.params.items" :key="index"
+                                    :href="item.url"
+                                    :class="[
+                                        'px-4 py-2 transition-colors',
+                                        block.params.style === 'pills' ? 'rounded-full bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700' :
+                                        block.params.style === 'underline' ? 'border-b-2 border-transparent hover:border-indigo-600' :
+                                        'hover:text-indigo-600'
+                                    ]">
+                                    {{ item.label }}
+                                </a>
+                            </nav>
+
+                            <!-- Mobile Hamburger -->
+                            <div class="md:hidden p-4">
+                                <button @click="block._menuOpen = !block._menuOpen"
+                                    class="p-2 rounded-md hover:bg-slate-100 transition-colors flex items-center space-x-2">
+                                    <icon name="menu" :size="24"></icon>
+                                    <span class="font-medium text-slate-700">Menu</span>
+                                </button>
+
+                                <!-- Mobile Dropdown -->
+                                <div v-if="block._menuOpen" class="mt-2 bg-white border border-slate-200 rounded-lg shadow-lg">
+                                    <nav class="flex flex-col p-2">
+                                        <a v-for="(item, index) in block.params.items" :key="index"
+                                            :href="item.url"
+                                            class="px-4 py-3 hover:bg-slate-50 rounded-md text-slate-700 border-b last:border-0 border-slate-100">
+                                            {{ item.label }}
+                                        </a>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div v-else-if="block.type === 'flex_columns'">

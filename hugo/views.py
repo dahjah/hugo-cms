@@ -327,16 +327,16 @@ class PageViewSet(viewsets.ModelViewSet):
 <div class="flex flex-col min-h-screen">
     {{/* Header Zone */}}
     <header class="w-full">
-        {{ range .Params.header }}
+        {{ range .Params.header_blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
     </header>
 
     <div class="container mx-auto px-4 py-8 flex-1 flex flex-col md:flex-row gap-8">
         {{/* Sidebar Zone */}}
-        {{ if .Params.sidebar }}
+        {{ if .Params.sidebar_blocks }}
         <aside class="w-full md:w-64 flex-shrink-0">
-            {{ range .Params.sidebar }}
+            {{ range .Params.sidebar_blocks }}
                 {{ partial "blocks/render-block.html" . }}
             {{ end }}
         </aside>
@@ -344,7 +344,7 @@ class PageViewSet(viewsets.ModelViewSet):
 
         {{/* Main Zone */}}
         <main class="flex-1 min-w-0">
-            {{ range .Params.main }}
+            {{ range .Params.main_blocks }}
                 {{ partial "blocks/render-block.html" . }}
             {{ end }}
         </main>
@@ -352,7 +352,7 @@ class PageViewSet(viewsets.ModelViewSet):
 
     {{/* Footer Zone */}}
     <footer class="w-full mt-auto">
-        {{ range .Params.footer }}
+        {{ range .Params.footer_blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
     </footer>
@@ -398,19 +398,143 @@ class PageViewSet(viewsets.ModelViewSet):
     <img src="{{ .src }}" alt="{{ .caption }}" class="w-full h-auto rounded-lg shadow-md">
     {{ if .caption }}<figcaption class="text-center text-sm text-slate-500 mt-2">{{ .caption }}</figcaption>{{ end }}
 </figure>""",
-                'menu': """<nav class="bg-white shadow-sm border-b border-slate-200 mb-8">
+                'menu': """{{ $position := .position | default "normal" }}
+{{ $isAlwaysHamburger := eq .responsive "true" }}
+{{ $hamburgerDir := .hamburgerDirection | default "dropdown" }}
+{{ $classes := "bg-white shadow-sm border-b border-slate-200 mb-8" }}
+{{ if eq $position "overlay" }}
+    {{ $classes = "absolute top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-sm shadow-md" }}
+{{ else if eq $position "fixed" }}
+    {{ $classes = "fixed top-0 left-0 right-0 z-40 bg-white shadow-md" }}
+{{ end }}
+
+<nav class="{{ $classes }}">
     <div class="container mx-auto px-4">
         <div class="flex items-center justify-between h-16">
-            <div class="flex items-center space-x-8">
+            <!-- Hamburger Button -->
+            <button id="{{ if eq $hamburgerDir "sidebar" }}sidebar-menu-toggle{{ else }}dropdown-menu-toggle{{ end }}" 
+                    class="{{ if not $isAlwaysHamburger }}md:hidden{{ end }} text-slate-600 hover:text-indigo-600 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            
+            {{ if $isAlwaysHamburger }}
+            <div class="text-lg font-semibold text-slate-800 ml-4">Menu</div>
+            {{ end }}
+            
+            <!-- Desktop Links (Only visible in Standard mode on Desktop) -->
+            {{ if not $isAlwaysHamburger }}
+            <div class="hidden md:flex items-center space-x-2">
                 {{ range .items }}
-                <a href="{{ .url }}" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors">{{ .label }}</a>
+                {{ if eq $.style "pills" }}
+                <a href="{{ .url }}" class="px-4 py-2 rounded-full bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700 font-medium transition-colors">{{ .label }}</a>
+                {{ else if eq $.style "underline" }}
+                <a href="{{ .url }}" class="px-4 py-2 border-b-2 border-transparent hover:border-indigo-600 text-slate-600 font-medium transition-colors">{{ .label }}</a>
+                {{ else }}
+                <a href="{{ .url }}" class="px-4 py-2 text-slate-600 hover:text-indigo-600 font-medium transition-colors">{{ .label }}</a>
+                {{ end }}
                 {{ end }}
             </div>
+            {{ end }}
         </div>
+        
+        <!-- Dropdown Menu Panel (Only if direction is dropdown) -->
+        {{ if eq $hamburgerDir "dropdown" }}
+        <div id="dropdown-menu" class="hidden pb-4">
+            {{ range .items }}
+            {{ if eq $.style "pills" }}
+            <a href="{{ .url }}" class="block py-2 rounded-full bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700 font-medium transition-colors mb-1">{{ .label }}</a>
+            {{ else if eq $.style "underline" }}
+            <a href="{{ .url }}" class="block py-2 border-b border-transparent hover:border-indigo-600 text-slate-600 font-medium transition-colors">{{ .label }}</a>
+            {{ else }}
+            <a href="{{ .url }}" class="block py-2 text-slate-600 hover:text-indigo-600 font-medium transition-colors">{{ .label }}</a>
+            {{ end }}
+            {{ end }}
+        </div>
+        {{ end }}
     </div>
-</nav>""",
-                'flex_columns': """<div class="grid grid-cols-1 md:grid-cols-{{ len .widths }} gap-6 mb-8">
-    {{ range $index, $width := .widths }}
+</nav>
+
+<!-- Sidebar Panel (Only if direction is sidebar) -->
+{{ if eq $hamburgerDir "sidebar" }}
+<!-- Sidebar overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden transition-opacity"></div>
+
+<!-- Sidebar panel -->
+<div id="sidebar-panel" class="fixed top-0 {{ if eq .sidebarSide "right" }}right-0{{ else }}left-0{{ end }} h-full w-64 bg-white shadow-xl z-50 transform {{ if eq .sidebarSide "right" }}translate-x-full{{ else }}-translate-x-full{{ end }} transition-transform duration-300">
+    <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+        <h2 class="text-lg font-semibold text-slate-800">Menu</h2>
+        <button id="sidebar-close" class="text-slate-600 hover:text-indigo-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+    <div class="p-4">
+        {{ range .items }}
+        {{ if eq $.style "pills" }}
+        <a href="{{ .url }}" class="block py-3 px-4 rounded-full bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700 font-medium transition-colors mb-2">{{ .label }}</a>
+        {{ else if eq $.style "underline" }}
+        <a href="{{ .url }}" class="block py-3 px-4 border-b border-transparent hover:border-indigo-600 text-slate-600 font-medium transition-colors mb-1">{{ .label }}</a>
+        {{ else }}
+        <a href="{{ .url }}" class="block py-3 px-4 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded font-medium transition-colors mb-1">{{ .label }}</a>
+        {{ end }}
+        {{ end }}
+        
+        {{ if .menu.sidebarFooterBlocks }}
+        <div class="mt-6 pt-6 border-t border-slate-200">
+            {{ range .menu.sidebarFooterBlocks }}
+                {{ partial "blocks/render-block.html" . }}
+            {{ end }}
+        </div>
+        {{ end }}
+    </div>
+</div>
+
+<script>
+(function() {
+    const toggle = document.getElementById('sidebar-menu-toggle');
+    const overlay = document.getElementById('sidebar-overlay');
+    const panel = document.getElementById('sidebar-panel');
+    const close = document.getElementById('sidebar-close');
+    
+    if (toggle && overlay && panel) {
+        const open = function() {
+            overlay.classList.remove('hidden');
+            panel.classList.remove('{{ if eq .sidebarSide "right" }}translate-x-full{{ else }}-translate-x-full{{ end }}');
+            panel.classList.add('translate-x-0');
+        };
+        
+        const closeMenu = function() {
+            overlay.classList.add('hidden');
+            panel.classList.add('{{ if eq .sidebarSide "right" }}translate-x-full{{ else }}-translate-x-full{{ end }}');
+            panel.classList.remove('translate-x-0');
+        };
+        
+        toggle.addEventListener('click', open);
+        if (close) close.addEventListener('click', closeMenu);
+        overlay.addEventListener('click', closeMenu);
+    }
+})();
+</script>
+{{ else }}
+<!-- Dropdown Script -->
+<script>
+    (function() {
+        const toggle = document.getElementById('dropdown-menu-toggle');
+        const menu = document.getElementById('dropdown-menu');
+        if (toggle && menu) {
+            toggle.addEventListener('click', function() {
+                menu.classList.toggle('hidden');
+            });
+        }
+    })();
+</script>
+{{ end }}""",
+                'flex_columns': """{{ $widths := split (.col_widths | default "100") "," }}
+<div class="grid grid-cols-1 md:grid-cols-{{ len $widths }} gap-6 mb-8">
+    {{ range $index, $width := $widths }}
         {{ $colKey := printf "col_%d" $index }}
         <div class="flex flex-col gap-4">
             {{/* Access the dynamic column key from the parent context */}}
@@ -421,6 +545,21 @@ class PageViewSet(viewsets.ModelViewSet):
                 {{ end }}
             {{ end }}
         </div>
+    {{ end }}
+</div>""",
+                'youtube': """<div class="mb-8">
+    <div class="aspect-w-16 aspect-h-9 relative" style="padding-bottom: 56.25%;">
+        <iframe 
+            class="absolute inset-0 w-full h-full rounded-lg shadow-md"
+            src="https://www.youtube.com/embed/{{ .videoId }}"
+            title="{{ .title | default "YouTube video" }}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+        </iframe>
+    </div>
+    {{ if .title }}
+    <p class="text-center text-sm text-slate-600 mt-2">{{ .title }}</p>
     {{ end }}
 </div>"""
             }
@@ -446,8 +585,11 @@ class PageViewSet(viewsets.ModelViewSet):
         """
         Generate markdown file content for a page including frontmatter and blocks.
         """
-        # Get blocks for this page
-        blocks = BlockInstance.objects.filter(page=page, parent=None).order_by('sort_order')
+        # Get blocks for this page (page-specific blocks in main/sidebar zones)
+        page_blocks = BlockInstance.objects.filter(page=page, parent=None).order_by('sort_order')
+        
+        # Get global blocks (header/footer blocks with page=None)
+        global_blocks = BlockInstance.objects.filter(page=None, parent=None).order_by('sort_order')
         
         # Build frontmatter
         frontmatter = f"""+++
@@ -462,8 +604,6 @@ draft = false
         if page.tags:
             tags_str = ', '.join([f'"{tag}"' for tag in page.tags])
             frontmatter += f'tags = [{tags_str}]\n'
-        
-        frontmatter += "+++\n\n"
         
         # Generate block content
         content = ""
@@ -483,17 +623,25 @@ draft = false
                     # Skip complex objects
                     if isinstance(value, (dict, list)):
                         continue
-                    output += f'{indent}  {key} = "{value}"\n'
+                    # Escape special characters for TOML
+                    value_str = str(value).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                    output += f'{indent}  {key} = "{value_str}"\n'
                 
                 # Handle menu-specific parameters
                 if block.definition_id == 'menu':
                     items = params.get('items', [])
                     if items:
-                        for item in items:
-                            output += f'{indent}  [[menu.items]]\n'
-                            output += f'{indent}    label = "{item.get("label", "")}"\n'
-                            output += f'{indent}    url = "{item.get("url", "")}"\n'
-                            output += f'{indent}    type = "{item.get("type", "page")}"\n'
+                        # Use inline array of inline tables for TOML compatibility
+                        items_toml = "["
+                        for i, item in enumerate(items):
+                            if i > 0:
+                                items_toml += ", "
+                            label = str(item.get("label", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            url = str(item.get("url", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            item_type = str(item.get("type", "page")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            items_toml += f'{{label = "{label}", url = "{url}", type = "{item_type}"}}'
+                        items_toml += "]\n"
+                        output += f'{indent}  items = {items_toml}'
                     
                     # Render sidebar footer blocks
                     footer_blocks = params.get('sidebarFooterBlocks', [])
@@ -502,10 +650,12 @@ draft = false
                         footer_output = ""
                         for fb in footer_blocks:
                             footer_output += f"{indent}  [[menu.sidebarFooterBlocks]]\n"
-                            footer_output += f'{indent}    type = "{fb.get("type", "")}"\n'
+                            fb_type = str(fb.get("type", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            footer_output += f'{indent}    type = "{fb_type}"\n'
                             for k, v in fb.get('params', {}).items():
                                 if not isinstance(v, (dict, list)):
-                                    footer_output += f'{indent}    {k} = "{v}"\n'
+                                    v_str = str(v).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                                    footer_output += f'{indent}    {k} = "{v_str}"\n'
                         output += footer_output
                 
                 # Handle nested children (columns)
@@ -518,12 +668,20 @@ draft = false
             return output
         
         # Render blocks from different zones
-        for zone in ['main', 'sidebar']:
-            zone_blocks = blocks.filter(placement_key=zone)
+        # Use flat naming convention to avoid TOML nesting issues and reserved words
+        for zone in ['header', 'main', 'sidebar', 'footer']:
+            if zone in ['header', 'footer']:
+                # Global blocks (page=None)
+                zone_blocks = global_blocks.filter(placement_key=zone)
+            else:
+                # Page-specific blocks (main/sidebar)
+                zone_blocks = page_blocks.filter(placement_key=zone)
+                
             if zone_blocks.exists():
-                content += render_blocks(zone_blocks, zone)
+                content += render_blocks(zone_blocks, f'{zone}_blocks')
         
-        return frontmatter + content
+        # Close frontmatter
+        return frontmatter + content + "+++\n"
     
     def _generate_site_config(self):
         """
