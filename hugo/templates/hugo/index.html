@@ -199,7 +199,7 @@
                                 </div>
                                 <div class="flex items-center space-x-2">
                                     <span class="w-2 h-2 rounded-full"
-                                        :class="page.status === 'published' ? 'bg-emerald-400' : 'bg-amber-400'"></span>
+                                        :class="page.last_published_at && new Date(page.updated_at) <= new Date(page.last_published_at) ? 'bg-emerald-400' : 'bg-amber-400'"></span>
                                     <icon name="more-vertical" :size="14"
                                         class="opacity-0 group-hover:opacity-100 text-slate-400"></icon>
                                 </div>

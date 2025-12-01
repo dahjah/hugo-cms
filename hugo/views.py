@@ -342,6 +342,11 @@ class PageViewSet(viewsets.ModelViewSet):
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(markdown_content)
                 
+                # Update last_published_at timestamp
+                from django.utils import timezone
+                page.last_published_at = timezone.now()
+                page.save(update_fields=['last_published_at'])
+                
                 generated_files.append(str(file_path.relative_to(output_path)))
             
             # Generate hugo.toml

@@ -13,7 +13,7 @@ tags = ["default"]
   hamburgerDirection = "sidebar"
   sticky = "true"
   sidebarSide = "left"
-  position = "normal"
+  position = "overlay"
   items = [{label = "Home", url = "/", type = "page"}, {label = "About", url = "/kennysmom", type = "page"}, {label = "Contact", url = "/over9000", type = "page"}]
   sidebarFooterBlocks = [{type = "markdown", md = "## Hello World\nThis is **markdown** content."}]
 

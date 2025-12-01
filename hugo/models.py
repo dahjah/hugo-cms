@@ -51,6 +51,7 @@ class Page(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    last_published_at = models.DateTimeField(null=True, blank=True, help_text="Timestamp of last successful publish")
 
     def __str__(self):
         return f"{self.title} ({self.slug})"
