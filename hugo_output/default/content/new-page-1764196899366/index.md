@@ -11,7 +11,7 @@ draft = false
   hamburgerDirection = "sidebar"
   sticky = "true"
   sidebarSide = "left"
-  position = "overlay"
+  position = "normal"
   items = [{label = "Home", url = "/", type = "page"}, {label = "About", url = "/kennysmom", type = "page"}, {label = "Contact", url = "/over9000", type = "page"}]
   sidebarFooterBlocks = [{type = "markdown", md = "## Hello World\nThis is **markdown** content."}]
 

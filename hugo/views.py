@@ -456,6 +456,9 @@ class PageViewSet(viewsets.ModelViewSet):
                 'markdown': """<div class="prose max-w-none mb-8">
     {{ .md | markdownify }}
 </div>""",
+                'html': """<div class="html-block mb-8">
+    {{ .html | safeHTML }}
+</div>""",
                 'image': """<figure class="mb-8">
     <img src="{{ .src }}" alt="{{ .caption }}" class="w-full h-auto rounded-lg shadow-md">
     {{ if .caption }}<figcaption class="text-center text-sm text-slate-500 mt-2">{{ .caption }}</figcaption>{{ end }}
