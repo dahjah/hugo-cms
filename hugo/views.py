@@ -462,8 +462,9 @@ class PageViewSet(viewsets.ModelViewSet):
 <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden transition-opacity"></div>
 
 <!-- Sidebar panel -->
-<div id="sidebar-panel" class="fixed top-0 {{ if eq .sidebarSide "right" }}right-0{{ else }}left-0{{ end }} h-full w-64 bg-white shadow-xl z-50 transform {{ if eq .sidebarSide "right" }}translate-x-full{{ else }}-translate-x-full{{ end }} transition-transform duration-300">
-    <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+<!-- Sidebar panel -->
+<div id="sidebar-panel" class="fixed top-0 {{ if eq .sidebarSide "right" }}right-0{{ else }}left-0{{ end }} h-full w-64 bg-white shadow-xl z-50 transform {{ if eq .sidebarSide "right" }}translate-x-full{{ else }}-translate-x-full{{ end }} transition-transform duration-300 flex flex-col">
+    <div class="p-4 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
         <h2 class="text-lg font-semibold text-slate-800">Menu</h2>
         <button id="sidebar-close" class="text-slate-600 hover:text-indigo-600">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -471,7 +472,9 @@ class PageViewSet(viewsets.ModelViewSet):
             </svg>
         </button>
     </div>
-    <div class="p-4">
+    
+    <!-- Scrollable Menu Items -->
+    <div class="flex-1 overflow-y-auto p-4">
         {{ range .items }}
         {{ if eq $.style "pills" }}
         <a href="{{ .url }}" class="block py-3 px-4 rounded-full bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700 font-medium transition-colors mb-2">{{ .label }}</a>
@@ -481,15 +484,16 @@ class PageViewSet(viewsets.ModelViewSet):
         <a href="{{ .url }}" class="block py-3 px-4 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 rounded font-medium transition-colors mb-1">{{ .label }}</a>
         {{ end }}
         {{ end }}
-        
-        {{ if .menu.sidebarFooterBlocks }}
-        <div class="mt-6 pt-6 border-t border-slate-200">
-            {{ range .menu.sidebarFooterBlocks }}
-                {{ partial "blocks/render-block.html" . }}
-            {{ end }}
-        </div>
+    </div>
+
+    <!-- Sticky Footer -->
+    {{ if $.sidebarFooterBlocks }}
+    <div class="p-4 border-t border-slate-200 bg-slate-50 flex-shrink-0">
+        {{ range $.sidebarFooterBlocks }}
+            {{ partial "blocks/render-block.html" . }}
         {{ end }}
     </div>
+    {{ end }}
 </div>
 
 <script>
@@ -646,17 +650,40 @@ draft = false
                     # Render sidebar footer blocks
                     footer_blocks = params.get('sidebarFooterBlocks', [])
                     if footer_blocks:
-                        # These are stored as dicts in params, need to convert to BlockInstance-like objects
-                        footer_output = ""
-                        for fb in footer_blocks:
-                            footer_output += f"{indent}  [[menu.sidebarFooterBlocks]]\n"
+                        # Use inline array of inline tables for TOML compatibility
+                        footer_toml = "["
+                        for i, fb in enumerate(footer_blocks):
+                            if i > 0:
+                                footer_toml += ", "
+                            
+                            # Construct the inline table for this block
                             fb_type = str(fb.get("type", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                            footer_output += f'{indent}    type = "{fb_type}"\n'
+                            block_str = f'{{type = "{fb_type}"'
+                            
                             for k, v in fb.get('params', {}).items():
                                 if not isinstance(v, (dict, list)):
                                     v_str = str(v).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                                    footer_output += f'{indent}    {k} = "{v_str}"\n'
-                        output += footer_output
+                                    block_str += f', {k} = "{v_str}"'
+                            
+                            block_str += "}"
+                            footer_toml += block_str
+                        
+                        footer_toml += "]\n"
+                        output += f'{indent}  sidebarFooterBlocks = {footer_toml}'
+                
+                # Handle theme_features-specific parameters
+                if block.definition_id == 'theme_features':
+                    items = params.get('items', [])
+                    if items:
+                        items_toml = "["
+                        for i, item in enumerate(items):
+                            if i > 0:
+                                items_toml += ", "
+                            icon = str(item.get("icon", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            text = str(item.get("text", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            items_toml += f'{{icon = "{icon}", text = "{text}"}}'
+                        items_toml += "]\n"
+                        output += f'{indent}  items = {items_toml}'
                 
                 # Handle nested children (columns)
                 children = block.children.all().order_by('sort_order')

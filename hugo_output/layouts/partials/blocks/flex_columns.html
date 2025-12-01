@@ -1,5 +1,6 @@
-<div class="grid grid-cols-1 md:grid-cols-{{ len .widths }} gap-6 mb-8">
-    {{ range $index, $width := .widths }}
+{{ $widths := split (.col_widths | default "100") "," }}
+<div class="grid grid-cols-1 md:grid-cols-{{ len $widths }} gap-6 mb-8">
+    {{ range $index, $width := $widths }}
         {{ $colKey := printf "col_%d" $index }}
         <div class="flex flex-col gap-4">
             {{/* Access the dynamic column key from the parent context */}}

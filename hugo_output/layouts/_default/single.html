@@ -2,16 +2,16 @@
 <div class="flex flex-col min-h-screen">
     {{/* Header Zone */}}
     <header class="w-full">
-        {{ range .Params.header }}
+        {{ range .Params.header_blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
     </header>
 
     <div class="container mx-auto px-4 py-8 flex-1 flex flex-col md:flex-row gap-8">
         {{/* Sidebar Zone */}}
-        {{ if .Params.sidebar }}
+        {{ if .Params.sidebar_blocks }}
         <aside class="w-full md:w-64 flex-shrink-0">
-            {{ range .Params.sidebar }}
+            {{ range .Params.sidebar_blocks }}
                 {{ partial "blocks/render-block.html" . }}
             {{ end }}
         </aside>
@@ -19,7 +19,7 @@
 
         {{/* Main Zone */}}
         <main class="flex-1 min-w-0">
-            {{ range .Params.main }}
+            {{ range .Params.main_blocks }}
                 {{ partial "blocks/render-block.html" . }}
             {{ end }}
         </main>
@@ -27,7 +27,7 @@
 
     {{/* Footer Zone */}}
     <footer class="w-full mt-auto">
-        {{ range .Params.footer }}
+        {{ range .Params.footer_blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
     </footer>

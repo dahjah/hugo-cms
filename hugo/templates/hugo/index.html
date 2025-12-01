@@ -613,11 +613,46 @@
                         </div>
                     </div>
 
+                    <!-- Generic Items Editor (for blocks with 'items' parameter that aren't menu) -->
+                    <div v-if="selectedBlock.params.items && selectedBlock.type !== 'menu'" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Items</label>
+                            <div class="space-y-2">
+                                <div v-for="(item, index) in selectedBlock.params.items" :key="index"
+                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-medium text-slate-600">Item {{ index + 1 }}</span>
+                                        <button @click="selectedBlock.params.items.splice(index, 1)"
+                                            class="text-red-500 hover:text-red-700 transition-colors">
+                                            <icon name="x" :size="14"></icon>
+                                        </button>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <!-- Dynamically render fields for each property in the item -->
+                                        <div v-for="(val, prop) in item" :key="prop">
+                                            <label class="block text-xs text-slate-500 mb-1">{{ formatKey(prop)
+                                                }}</label>
+                                            <textarea v-if="typeof val === 'string' && val.length > 50"
+                                                v-model="item[prop]" rows="3"
+                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none"></textarea>
+                                            <input v-else type="text" v-model="item[prop]"
+                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <button @click="addGenericItem(selectedBlock)"
+                                    class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
+                                    <icon name="plus" :size="12"></icon>
+                                    <span>Add Item</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- General Block Parameters -->
                     <div v-for="(value, key) in selectedBlock.params" :key="key">
-                        <!-- Skip custom-handled parameters for menu blocks -->
-                        <template
-                            v-if="!(selectedBlock.type === 'menu' && ['items', 'orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection', 'sidebarSide', 'sidebarFooterBlocks', 'position', 'sticky'].includes(key))">
+                        <!-- Skip custom-handled parameters for menu blocks and items for all blocks -->
+                        <template v-if="shouldShowParam(selectedBlock.type, key)">
                             <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">
                                 {{ formatKey(key) }}
                             </label>
@@ -1182,6 +1217,11 @@
                                 <cite class="font-semibold not-italic">— {{ block.params.author }}</cite>
                             </footer>
                         </blockquote>
+                    </div>
+
+                    <!-- HTML Block -->
+                    <div v-else-if="block.type === 'html'" class="p-4">
+                        <div class="html-block" v-html="block.params.html"></div>
                     </div>
 
                     <!-- GENERIC RENDERER (For unknown blocks) -->
@@ -1928,6 +1968,37 @@ layout = "${activePage.value.layout}"
                 // --- UTILITIES ---
                 const formatKey = (key) => key.replace(/([A-Z])/g, ' $1').trim();
 
+                const shouldShowParam = (type, key) => {
+                    if(key === 'items') return false;
+                    if(type === 'menu' && ['orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection', 'sidebarSide', 'sidebarFooterBlocks', 'position', 'sticky'].includes(key)) return false;
+                    return true;
+                };
+
+
+                const addGenericItem = (block) => {
+                    if(!block.params.items) {
+                        block.params.items = [];
+                    }
+
+                    // Try to infer the structure from existing items
+                    if(block.params.items.length > 0) {
+                        const template = {...block.params.items[0]};
+                        // Clear values but keep structure
+                        Object.keys(template).forEach(key => {
+                            template[key] = '';
+                        });
+                        block.params.items.push(template);
+                    } else {
+                        // Default structure for common item types
+                        if(block.type === 'theme_features') {
+                            block.params.items.push({icon: 'box', text: 'New Feature'});
+                        } else {
+                            // Generic default
+                            block.params.items.push({text: 'New Item'});
+                        }
+                    }
+                };
+
                 // Provide helper to global scope for debugging/reuse
                 if(typeof window !== 'undefined') {
                     window.findBlock = findBlockAndParent;
@@ -1987,6 +2058,8 @@ layout = "${activePage.value.layout}"
                     updateBlockParams: updateBlock,
                     deleteBlock,
                     formatKey,
+                    shouldShowParam,
+                    addGenericItem,
                     setSelectedBlockId: (id) => selectedBlockId.value = id,
                     getColWidths,
                     updateColWidths: updateBlock,
