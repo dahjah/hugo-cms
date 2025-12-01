@@ -85,6 +85,34 @@
             </div>
         </div>
 
+        <!-- Create Website Modal -->
+        <div v-if="showCreateWebsiteModal" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                <h2 class="text-lg font-bold text-slate-800 mb-4">Create New Website</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Website Name</label>
+                        <input v-model="newWebsiteName" type="text"
+                            class="w-full border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="My Awesome Site">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">URL Slug</label>
+                        <input v-model="newWebsiteSlug" type="text"
+                            class="w-full border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="my-awesome-site">
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button @click="showCreateWebsiteModal = false"
+                        class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800">Cancel</button>
+                    <button @click="createWebsite"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700 font-medium">Create
+                        Website</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Loading Spinner while fetching initial data -->
         <div v-if="!isLoaded" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center flex-col">
             <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg"
@@ -106,9 +134,34 @@
                     <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
                         <icon name="layout" :size="18"></icon>
                     </div>
-                    <div>
-                        <h1 class="font-bold text-slate-800 leading-tight">HugoCMS</h1>
-                        <p class="text-xs text-slate-500">Django + Vue Mode</p>
+                    <div class="flex-1 min-w-0">
+                        <h1 class="font-bold text-slate-800 leading-tight truncate">HugoCMS</h1>
+                        <div class="relative">
+                            <button @click.stop="showWebsiteDropdown = !showWebsiteDropdown"
+                                class="flex items-center space-x-1 text-xs text-slate-500 hover:text-indigo-600 transition-colors">
+                                <span class="truncate max-w-[120px]">{{ currentWebsite ? currentWebsite.name :
+                                    'Loading...' }}</span>
+                                <icon name="chevron-down" :size="12"></icon>
+                            </button>
+                            <!-- Dropdown -->
+                            <div v-if="showWebsiteDropdown" @click.stop
+                                class="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-slate-100 py-1 z-50">
+                                <div v-for="site in websites" :key="site.id"
+                                    @click="changeWebsite(site.id); showWebsiteDropdown = false"
+                                    class="px-4 py-2 text-xs text-slate-600 hover:bg-slate-50 hover:text-indigo-600 cursor-pointer flex items-center justify-between">
+                                    <span class="truncate">{{ site.name }}</span>
+                                    <icon v-if="currentWebsite && currentWebsite.id === site.id" name="check" :size="12"
+                                        class="text-indigo-600"></icon>
+                                </div>
+                                <div class="border-t border-slate-100 mt-1 pt-1">
+                                    <button @click="showCreateWebsiteModal = true; showWebsiteDropdown = false"
+                                        class="w-full text-left px-4 py-2 text-xs text-indigo-600 hover:bg-indigo-50 font-medium flex items-center space-x-2">
+                                        <icon name="plus" :size="12"></icon>
+                                        <span>New Website</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -500,7 +553,8 @@
                                         <select v-if="item.type === 'page'" v-model="item.url"
                                             class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
                                             <option value="">Select a page...</option>
-                                            <option v-for="page in pages" :key="page.id" :value="page.slug">
+                                            <option v-for="page in pages" :key="page.id"
+                                                :value="page.slug.startsWith('/') ? page.slug : '/' + page.slug">
                                                 {{ page.title }} ({{ page.slug }})
                                             </option>
                                         </select>
@@ -1701,18 +1755,55 @@ layout = "${activePage.value.layout}"
                     contentZones.value.sidebar = blocks.filter(b => b.placement_key === 'sidebar').sort((a, b) => a.sort_order - b.sort_order);
                 };
 
+                const websites = ref([]);
+                const currentWebsite = ref(null);
+                const showCreateWebsiteModal = ref(false);
+                const showWebsiteDropdown = ref(false);
+                const newWebsiteName = ref('');
+                const newWebsiteSlug = ref('');
+
+                const fetchConfig = async (websiteId = null) => {
+                    try {
+                        let url = `${API_BASE_URL}init/`;
+                        if(websiteId) {
+                            url += `?website_id=${websiteId}`;
+                        }
+                        const response = await fetch(url);
+                        const data = await response.json();
+
+                        componentLibrary.value = data.definitions;
+                        layoutTemplates.value = data.layouts;
+                        websites.value = data.websites || [];
+                        currentWebsite.value = data.current_website;
+
+                        // Initialize global zones
+                        contentZones.value.header = data.header.map(b => ({...b, zone: 'header'}));
+                        contentZones.value.footer = data.footer.map(b => ({...b, zone: 'footer'}));
+
+                        isLoaded.value = true;
+                    } catch(error) {
+                        console.error('Error fetching config:', error);
+                        showToast('Failed to load configuration', 'error');
+                    }
+                };
+
+                const fetchPages = async () => {
+                    try {
+                        let url = `${API_BASE_URL}pages/`;
+                        if(currentWebsite.value) {
+                            url += `?website_id=${currentWebsite.value.id}`;
+                        }
+                        const response = await fetch(url);
+                        pages.value = await response.json();
+                    } catch(error) {
+                        console.error('Error fetching pages:', error);
+                    }
+                };
+
                 const initialLoad = async () => {
                     try {
-                        const response = await fetchApi(`${API_BASE_URL}init/`);
-                        componentLibrary.value = response.definitions;
-                        layoutTemplates.value = response.layouts;
-
-                        // Populate global zones in contentZones
-                        contentZones.value.header = response.header;
-                        contentZones.value.footer = response.footer;
-
-                        const pagesResponse = await fetchApi(`${API_BASE_URL}pages/`);
-                        pages.value = pagesResponse;
+                        await fetchConfig();
+                        await fetchPages();
 
                         if(pages.value.length > 0) {
                             activePageId.value = pages.value[0].id;
@@ -1792,11 +1883,36 @@ layout = "${activePage.value.layout}"
                         await fetchApi(`${API_BASE_URL}pages/${pageId}/save_content/`, 'POST', contentPayload);
 
                         // 3. Save Global Content (POST to init action)
-                        const globalPayload = {
-                            header: contentZones.value.header,
-                            footer: contentZones.value.footer
+                        const saveGlobals = async () => {
+                            try {
+                                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                                // Prepare payload with only IDs and structure for diffing
+                                const payload = {
+                                    header: contentZones.value.header,
+                                    footer: contentZones.value.footer,
+                                    website_id: currentWebsite.value?.id
+                                };
+
+                                const response = await fetch(`${API_BASE_URL}init/save_globals/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken,
+                                    },
+                                    body: JSON.stringify(payload),
+                                });
+
+                                if(!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                                showToast('Global content saved successfully', 'success');
+                            } catch(error) {
+                                console.error('Error saving global content:', error);
+                                showToast('Failed to save global content', 'error', error.message);
+                            }
                         };
-                        await fetchApi(`${API_BASE_URL}init/save_globals/`, 'POST', globalPayload);
+                        await saveGlobals();
 
                         showToast('Content saved successfully', 'success');
                     } catch(error) {
@@ -2018,6 +2134,56 @@ layout = "${activePage.value.layout}"
                     setActivePage,
                     createNewPage,
                     savePageContent,
+                    changeWebsite: async (websiteId) => {
+                        if(currentWebsite.value && currentWebsite.value.id === websiteId) return;
+                        isLoaded.value = false;
+                        activePageId.value = null;
+                        await fetchConfig(websiteId);
+                        await fetchPages();
+
+                        // Auto-select the first page after switching
+                        if(pages.value.length > 0) {
+                            activePageId.value = pages.value[0].id;
+                            await fetchPageContent(pages.value[0].id);
+                        }
+                    },
+                    createWebsite: async () => {
+                        if(!newWebsiteName.value || !newWebsiteSlug.value) {
+                            showToast('Please fill in all fields', 'error');
+                            return;
+                        }
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+                            const response = await fetch(`${API_BASE_URL}websites/`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    name: newWebsiteName.value,
+                                    slug: newWebsiteSlug.value
+                                })
+                            });
+
+                            if(response.ok) {
+                                const newSite = await response.json();
+                                showCreateWebsiteModal.value = false;
+                                newWebsiteName.value = '';
+                                newWebsiteSlug.value = '';
+                                showToast('Website created successfully', 'success');
+                                // Switch to new website
+                                await fetchConfig(newSite.id);
+                                await fetchPages();
+                            } else {
+                                const data = await response.json();
+                                showToast('Failed to create website', 'error', JSON.stringify(data));
+                            }
+                        } catch(error) {
+                            console.error('Create website error:', error);
+                            showToast('Failed to create website', 'error', error.message);
+                        }
+                    },
                     publishSite: async () => {
                         try {
                             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
@@ -2029,7 +2195,9 @@ layout = "${activePage.value.layout}"
                                     'Content-Type': 'application/json',
                                     'X-CSRFToken': csrfToken
                                 },
-                                body: JSON.stringify({})
+                                body: JSON.stringify({
+                                    website_id: currentWebsite.value?.id
+                                })
                             });
 
                             const data = await response.json();
@@ -2068,10 +2236,24 @@ layout = "${activePage.value.layout}"
                     sidebarTab,
                     currentLayout,
                     layoutTemplates,
-                    getZoneConfig
+                    getZoneConfig,
+                    websites,
+                    currentWebsite,
+                    showCreateWebsiteModal,
+                    showWebsiteDropdown,
+                    newWebsiteName,
+                    newWebsiteSlug
                 };
+
+                // Close dropdown when clicking outside
+                onMounted(() => {
+                    document.addEventListener('click', () => {
+                        showWebsiteDropdown.value = false;
+                    });
+                });
             }
         });
+
 
         app.mount('#app');
     </script>

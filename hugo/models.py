@@ -16,6 +16,18 @@ class BlockDefinition(models.Model):
     def __str__(self):
         return self.label
 
+class Website(models.Model):
+    """
+    Represents a distinct website managed by the CMS.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200)
+    slug = models.CharField(max_length=200, unique=True, help_text="URL slug for the website (e.g., 'my-site')")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
 class Page(models.Model):
     """
     Represents a single URL/Page in the Hugo site.
@@ -26,8 +38,9 @@ class Page(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    website = models.ForeignKey(Website, on_delete=models.CASCADE, related_name='pages', null=True, blank=True)
     title = models.CharField(max_length=200)
-    slug = models.CharField(max_length=200, unique=True, help_text="URL path (e.g., '/about')")
+    slug = models.CharField(max_length=200, help_text="URL path (e.g., '/about')")
     layout = models.CharField(max_length=100, default='single', help_text="Hugo layout template name")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     
@@ -70,6 +83,7 @@ class BlockInstance(models.Model):
     """
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    website = models.ForeignKey(Website, on_delete=models.CASCADE, related_name='blocks', null=True, blank=True)
     definition = models.ForeignKey(BlockDefinition, on_delete=models.CASCADE, related_name='instances')
     
     # --- HIERARCHY FIELDS ---

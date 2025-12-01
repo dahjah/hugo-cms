@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate
+from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website
+
+class WebsiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Website
+        fields = ['id', 'name', 'slug']
 
 class BlockDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,7 +27,7 @@ class BlockInstanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlockInstance
         # Note: We expose the placement_key and parent_id for tracking
-        fields = ['id', 'type', 'params', 'placement_key', 'sort_order', 'parent_id', 'children']
+        fields = ['id', 'type', 'params', 'placement_key', 'sort_order', 'parent_id', 'children', 'website']
         read_only_fields = ['id', 'type', 'parent_id'] 
 
     def get_children(self, obj):
@@ -36,13 +41,13 @@ class PageListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for the Sidebar list"""
     class Meta:
         model = Page
-        fields = ['id', 'title', 'slug', 'status', 'layout']
+        fields = ['id', 'title', 'slug', 'status', 'layout', 'website']
 
 class PageDetailSerializer(serializers.ModelSerializer):
     """Full serializer for the Editor Canvas metadata tab"""
     class Meta:
         model = Page
-        fields = ['id', 'title', 'slug', 'status', 'layout', 'date', 'description', 'tags']
+        fields = ['id', 'title', 'slug', 'status', 'layout', 'date', 'description', 'tags', 'website']
 
 class SiteConfigSerializer(serializers.Serializer):
     """
@@ -53,3 +58,5 @@ class SiteConfigSerializer(serializers.Serializer):
     layouts = LayoutTemplateSerializer(many=True)
     header = BlockInstanceSerializer(many=True)
     footer = BlockInstanceSerializer(many=True)
+    websites = WebsiteSerializer(many=True)
+    current_website = WebsiteSerializer()

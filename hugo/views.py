@@ -4,34 +4,68 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
 import uuid 
-from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate
+from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website
 from .serializers import (
     PageListSerializer, 
     PageDetailSerializer, 
     BlockDefinitionSerializer, 
     BlockInstanceSerializer,
-    SiteConfigSerializer
+    BlockInstanceSerializer,
+    SiteConfigSerializer,
+    WebsiteSerializer
 )
 from .importer import import_hugo_theme_structure
 
 def editor_view(request):
     """Serves the Vue.js frontend application."""
     return render(request, 'hugo/index.html')
+class WebsiteViewSet(viewsets.ModelViewSet):
+    queryset = Website.objects.all()
+    serializer_class = WebsiteSerializer
+    
+    def perform_create(self, serializer):
+        # Save the new website
+        website = serializer.save()
+        
+        # Automatically create a Home page for the new website
+        Page.objects.create(
+            website=website,
+            title='Home',
+            slug='/',
+            layout='single',
+            status='draft'
+        )
 
 class CmsInitViewSet(viewsets.ViewSet):
     
     def list(self, request):
         definitions = BlockDefinition.objects.all()
         layouts = LayoutTemplate.objects.all()
-        # Global blocks are defined by having parent=null, page=null
-        header_blocks = BlockInstance.objects.filter(placement_key='header', page=None, parent=None).order_by('sort_order')
-        footer_blocks = BlockInstance.objects.filter(placement_key='footer', page=None, parent=None).order_by('sort_order')
+        websites = Website.objects.all()
+        
+        # Determine current website
+        website_id = request.query_params.get('website_id')
+        if website_id:
+            current_website = Website.objects.filter(id=website_id).first()
+        else:
+            current_website = websites.first()
+            
+        if not current_website:
+            # Should not happen if migration ran, but handle gracefully
+            current_website = Website.objects.create(name="Default Site", slug="default")
+            websites = Website.objects.all()
+
+        # Global blocks are defined by having parent=null, page=null AND website=current_website
+        header_blocks = BlockInstance.objects.filter(placement_key='header', page=None, parent=None, website=current_website).order_by('sort_order')
+        footer_blocks = BlockInstance.objects.filter(placement_key='footer', page=None, parent=None, website=current_website).order_by('sort_order')
         
         data = {
             'definitions': definitions,
             'layouts': layouts,
             'header': header_blocks,
-            'footer': footer_blocks
+            'footer': footer_blocks,
+            'websites': websites,
+            'current_website': current_website
         }
         serializer = SiteConfigSerializer(data)
         return Response(serializer.data)
@@ -56,18 +90,24 @@ class CmsInitViewSet(viewsets.ViewSet):
         
         try:
             with transaction.atomic():
-                # Delete old global blocks not present in the new payload
-                BlockInstance.objects.filter(page=None, parent=None).exclude(id__in=incoming_ids).delete()
+                # Delete old global blocks not present in the new payload for this website
+                website_id = request.data.get('website_id')
+                if not website_id:
+                     return Response({'error': 'website_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                website = Website.objects.get(id=website_id)
+
+                BlockInstance.objects.filter(page=None, parent=None, website=website).exclude(id__in=incoming_ids).delete()
                 
                 # Save new/updated blocks recursively
-                self._save_blocks_recursive(request.data.get('header', []), placement_key='header', page=None)
-                self._save_blocks_recursive(request.data.get('footer', []), placement_key='footer', page=None)
+                self._save_blocks_recursive(request.data.get('header', []), placement_key='header', page=None, website=website)
+                self._save_blocks_recursive(request.data.get('footer', []), placement_key='footer', page=None, website=website)
 
             return Response({'status': 'saved'})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    def _save_blocks_recursive(self, blocks_data, placement_key, page, parent=None):
+    def _save_blocks_recursive(self, blocks_data, placement_key, page, parent=None, website=None):
         """Helper to save a list of blocks and their children."""
         for index, block_data in enumerate(blocks_data):
             # Ensure ID exists for update_or_create; generate new if necessary
@@ -79,6 +119,7 @@ class CmsInitViewSet(viewsets.ViewSet):
                     'definition_id': block_data['type'],
                     'page': page,
                     'parent': parent,
+                    'website': website,
                     'placement_key': placement_key,
                     'sort_order': index,
                     'params': block_data.get('params', {})
@@ -108,11 +149,19 @@ class CmsInitViewSet(viewsets.ViewSet):
                             col_data['blocks'], 
                             placement_key=col_placement_key, 
                             page=None, # Nested blocks do not link to the page directly
-                            parent=block_instance # Link to the 'flex_columns' parent instance
+                            parent=block_instance, # Link to the 'flex_columns' parent instance
+                            website=website
                         )
 
 class PageViewSet(viewsets.ModelViewSet):
     queryset = Page.objects.all().order_by('-updated_at')
+    
+    def get_queryset(self):
+        queryset = Page.objects.all().order_by('-updated_at')
+        website_id = self.request.query_params.get('website_id')
+        if website_id:
+            queryset = queryset.filter(website_id=website_id)
+        return queryset
     
     def get_serializer_class(self):
         if self.action == 'list':
@@ -247,7 +296,12 @@ class PageViewSet(viewsets.ModelViewSet):
             
             # Default Hugo output directory
             if not output_dir:
-                output_dir = os.path.join(settings.BASE_DIR, 'hugo_output')
+                website_id = request.data.get('website_id')
+                if website_id:
+                    website = Website.objects.get(id=website_id)
+                    output_dir = os.path.join(settings.BASE_DIR, 'hugo_output', website.slug)
+                else:
+                    output_dir = os.path.join(settings.BASE_DIR, 'hugo_output', 'default')
             
             output_path = Path(output_dir)
             content_dir = output_path / 'content'
@@ -255,8 +309,11 @@ class PageViewSet(viewsets.ModelViewSet):
             # Create directories
             content_dir.mkdir(parents=True, exist_ok=True)
             
-            # Get all pages
-            pages = Page.objects.all()
+            # Get all pages for this website
+            if request.data.get('website_id'):
+                pages = Page.objects.filter(website_id=request.data.get('website_id'))
+            else:
+                pages = Page.objects.all()
             generated_files = []
             
             for page in pages:
@@ -593,7 +650,7 @@ class PageViewSet(viewsets.ModelViewSet):
         page_blocks = BlockInstance.objects.filter(page=page, parent=None).order_by('sort_order')
         
         # Get global blocks (header/footer blocks with page=None)
-        global_blocks = BlockInstance.objects.filter(page=None, parent=None).order_by('sort_order')
+        global_blocks = BlockInstance.objects.filter(page=None, parent=None, website=page.website).order_by('sort_order')
         
         # Build frontmatter
         frontmatter = f"""+++
