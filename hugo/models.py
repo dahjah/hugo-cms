@@ -130,3 +130,46 @@ class BlockInstance(models.Model):
     def __str__(self):
         parent_info = f"Parent: {self.parent.id}" if self.parent else "No Parent"
         return f"{self.definition.id} ({self.placement_key}) - {parent_info}"
+
+class UploadedFile(models.Model):
+    """
+    Represents a file uploaded by the user.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    website = models.ForeignKey(Website, on_delete=models.CASCADE, related_name='files')
+    filename = models.CharField(max_length=255)
+    file_path = models.CharField(max_length=500, help_text="Relative path in storage")
+    file_url = models.CharField(max_length=500, help_text="Publicly accessible URL")
+    file_size = models.BigIntegerField()
+    content_type = models.CharField(max_length=100)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.filename
+
+class StorageSettings(models.Model):
+    """
+    Configuration for file storage (Local or S3).
+    """
+    STORAGE_TYPES = [
+        ('local', 'Local Filesystem'),
+        ('s3', 'S3 Compatible Storage'),
+    ]
+
+    website = models.OneToOneField(Website, on_delete=models.CASCADE, related_name='storage_settings')
+    storage_type = models.CharField(max_length=20, choices=STORAGE_TYPES, default='local')
+
+    # S3 Settings
+    s3_bucket = models.CharField(max_length=200, blank=True)
+    s3_endpoint = models.CharField(max_length=200, blank=True, help_text="e.g., https://nyc3.digitaloceanspaces.com")
+    s3_access_key = models.CharField(max_length=200, blank=True)
+    s3_secret_key = models.CharField(max_length=200, blank=True)
+    s3_region = models.CharField(max_length=100, blank=True)
+    s3_public_url = models.CharField(max_length=200, blank=True, help_text="Base URL for public access (CDN)")
+
+    # Local Settings
+    local_media_path = models.CharField(max_length=200, default='media/uploads', help_text="Directory to store files")
+    local_public_url = models.CharField(max_length=200, default='/media/', help_text="URL prefix for local files")
+
+    def __str__(self):
+        return f"Storage Settings for {self.website.name}"

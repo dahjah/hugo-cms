@@ -3,16 +3,18 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
+from django.conf import settings
 import uuid 
-from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website
+from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website, UploadedFile, StorageSettings
 from .serializers import (
     PageListSerializer, 
     PageDetailSerializer, 
     BlockDefinitionSerializer, 
     BlockInstanceSerializer,
-    BlockInstanceSerializer,
     SiteConfigSerializer,
-    WebsiteSerializer
+    WebsiteSerializer,
+    UploadedFileSerializer,
+    StorageSettingsSerializer
 )
 from .importer import import_hugo_theme_structure
 
@@ -36,251 +38,6 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             status='draft'
         )
 
-class CmsInitViewSet(viewsets.ViewSet):
-    
-    def list(self, request):
-        definitions = BlockDefinition.objects.all()
-        layouts = LayoutTemplate.objects.all()
-        websites = Website.objects.all()
-        
-        # Determine current website
-        website_id = request.query_params.get('website_id')
-        if website_id:
-            current_website = Website.objects.filter(id=website_id).first()
-        else:
-            current_website = websites.first()
-            
-        if not current_website:
-            # Should not happen if migration ran, but handle gracefully
-            current_website = Website.objects.create(name="Default Site", slug="default")
-            websites = Website.objects.all()
-
-        # Global blocks are defined by having parent=null, page=null AND website=current_website
-        header_blocks = BlockInstance.objects.filter(placement_key='header', page=None, parent=None, website=current_website).order_by('sort_order')
-        footer_blocks = BlockInstance.objects.filter(placement_key='footer', page=None, parent=None, website=current_website).order_by('sort_order')
-        
-        data = {
-            'definitions': definitions,
-            'layouts': layouts,
-            'header': header_blocks,
-            'footer': footer_blocks,
-            'websites': websites,
-            'current_website': current_website
-        }
-        serializer = SiteConfigSerializer(data)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['post'])
-    def save_globals(self, request):
-        """Saves header and footer blocks using the new relational structure."""
-        
-        # Helper to collect all UUIDs for deletion check
-        incoming_ids = []
-        def collect_ids(blocks):
-            for block in blocks:
-                incoming_ids.append(block['id'])
-                if block.get('children'):
-                    # The Vue frontend sends an array of column objects, each having a 'blocks' array
-                    for col in block['children']:
-                        if col.get('blocks'):
-                            collect_ids(col['blocks'])
-        
-        collect_ids(request.data.get('header', []))
-        collect_ids(request.data.get('footer', []))
-        
-        try:
-            with transaction.atomic():
-                # Delete old global blocks not present in the new payload for this website
-                website_id = request.data.get('website_id')
-                if not website_id:
-                     return Response({'error': 'website_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-                
-                website = Website.objects.get(id=website_id)
-
-                BlockInstance.objects.filter(page=None, parent=None, website=website).exclude(id__in=incoming_ids).delete()
-                
-                # Save new/updated blocks recursively
-                self._save_blocks_recursive(request.data.get('header', []), placement_key='header', page=None, website=website)
-                self._save_blocks_recursive(request.data.get('footer', []), placement_key='footer', page=None, website=website)
-
-            return Response({'status': 'saved'})
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    def _save_blocks_recursive(self, blocks_data, placement_key, page, parent=None, website=None):
-        """Helper to save a list of blocks and their children."""
-        for index, block_data in enumerate(blocks_data):
-            # Ensure ID exists for update_or_create; generate new if necessary
-            block_id = block_data.get('id') or uuid.uuid4()
-            
-            block_instance, _ = BlockInstance.objects.update_or_create(
-                id=block_id,
-                defaults={
-                    'definition_id': block_data['type'],
-                    'page': page,
-                    'parent': parent,
-                    'website': website,
-                    'placement_key': placement_key,
-                    'sort_order': index,
-                    'params': block_data.get('params', {})
-                }
-            )
-            
-            # --- Handle Children (Nesting) ---
-            if block_data.get('children'):
-                
-                # Delete old children of this parent not present in the incoming payload
-                incoming_child_ids = []
-                for col in block_data['children']:
-                     if col.get('blocks'):
-                         for child in col['blocks']:
-                             if 'id' in child: incoming_child_ids.append(child['id'])
-                
-                block_instance.children.exclude(id__in=incoming_child_ids).delete()
-
-                for col_index, col_data in enumerate(block_data['children']):
-                    # This handles the column structure sent by the Vue frontend
-                    
-                    if col_data.get('blocks'):
-                        col_placement_key = f"col_{col_index}"
-                        
-                        # Recursively save blocks inside the column
-                        self._save_blocks_recursive(
-                            col_data['blocks'], 
-                            placement_key=col_placement_key, 
-                            page=None, # Nested blocks do not link to the page directly
-                            parent=block_instance, # Link to the 'flex_columns' parent instance
-                            website=website
-                        )
-
-class PageViewSet(viewsets.ModelViewSet):
-    queryset = Page.objects.all().order_by('-updated_at')
-    
-    def get_queryset(self):
-        queryset = Page.objects.all().order_by('-updated_at')
-        website_id = self.request.query_params.get('website_id')
-        if website_id:
-            queryset = queryset.filter(website_id=website_id)
-        return queryset
-    
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return PageListSerializer
-        return PageDetailSerializer
-
-    @action(detail=True, methods=['get'])
-    def content(self, request, pk=None):
-        """
-        Returns all top-level blocks for this specific page (main, sidebar, etc).
-        """
-        page = self.get_object()
-        # Fetch all top-level blocks for the page, regardless of placement_key
-        blocks = BlockInstance.objects.filter(page=page, parent=None).order_by('sort_order')
-        serializer = BlockInstanceSerializer(blocks, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['post'])
-    def save_content(self, request, pk=None):
-        """
-        Saves the page metadata and block content using the new relational structure.
-        """
-        page = self.get_object()
-        top_level_blocks_data = request.data.get('blocks', [])
-        
-        # 1. Collect all UUIDs from the incoming payload (for deletion check)
-        all_incoming_ids = []
-        def collect_ids(blocks):
-            for block in blocks:
-                all_incoming_ids.append(block['id'])
-                if block.get('children'):
-                    # The Vue frontend sends an array of column objects, each having a 'blocks' array
-                    for col in block['children']:
-                        if col.get('blocks'):
-                            collect_ids(col['blocks'])
-        collect_ids(top_level_blocks_data)
-
-        try:
-            with transaction.atomic():
-                # Delete existing blocks belonging to this page that are NOT in the payload
-                page.main_blocks.exclude(id__in=all_incoming_ids).delete()
-                
-                # 2. Group blocks by placement_key (main, sidebar)
-                main_blocks = [b for b in top_level_blocks_data if b.get('placement_key') == 'main']
-                sidebar_blocks = [b for b in top_level_blocks_data if b.get('placement_key') == 'sidebar']
-                
-                # 3. Save top-level blocks recursively for each zone
-                self._save_blocks_recursive(
-                    main_blocks, 
-                    placement_key='main', 
-                    page=page, 
-                    parent=None
-                )
-                
-                self._save_blocks_recursive(
-                    sidebar_blocks, 
-                    placement_key='sidebar', 
-                    page=page, 
-                    parent=None
-                )
-                
-                # Update page timestamp to move it to top of list
-                page.save()
-            
-            return Response({'status': 'saved', 'page_id': page.id})
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            
-    def _save_blocks_recursive(self, blocks_data, placement_key, page, parent=None):
-        """Helper to save a list of blocks and their children. Same as CmsInitViewSet's helper."""
-        for index, block_data in enumerate(blocks_data):
-            block_id = block_data.get('id') or uuid.uuid4()
-            
-            block_instance, _ = BlockInstance.objects.update_or_create(
-                id=block_id,
-                defaults={
-                    'definition_id': block_data['type'],
-                    'page': page,
-                    'parent': parent,
-                    'placement_key': placement_key,
-                    'sort_order': index,
-                    'params': block_data.get('params', {})
-                }
-            )
-            
-            if block_data.get('children'):
-                
-                incoming_child_ids = []
-                for col in block_data['children']:
-                     if col.get('blocks'):
-                         for child in col['blocks']:
-                             if 'id' in child: incoming_child_ids.append(child['id'])
-                
-                block_instance.children.exclude(id__in=incoming_child_ids).delete()
-
-                for col_index, col_data in enumerate(block_data['children']):
-                    if col_data.get('blocks'):
-                        col_placement_key = f"col_{col_index}"
-                        
-                        self._save_blocks_recursive(
-                            col_data['blocks'], 
-                            placement_key=col_placement_key, 
-                            page=None, 
-                            parent=block_instance
-                        )
-
-    @action(detail=False, methods=['post'])
-    def import_theme(self, request):
-        """
-        Custom endpoint to trigger theme import logic.
-        """
-        theme_name = request.data.get('theme_name', 'default-mock')
-        
-        try:
-            result = import_hugo_theme_structure(theme_name)
-            return Response({'status': 'success', 'message': result}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
     @action(detail=False, methods=['post'])
     def publish(self, request):
         """
@@ -316,9 +73,12 @@ class PageViewSet(viewsets.ModelViewSet):
                 pages = Page.objects.all()
             generated_files = []
             
+            # Get base URL for absolute image paths
+            base_url = request.build_absolute_uri('/')
+            
             for page in pages:
                 # Generate markdown content for this page
-                markdown_content = self._generate_page_markdown(page)
+                markdown_content = self._generate_page_markdown(page, base_url)
                 
                 # Determine file path based on slug
                 if page.slug == '/' or page.slug == '':
@@ -650,7 +410,7 @@ class PageViewSet(viewsets.ModelViewSet):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def _generate_page_markdown(self, page):
+    def _generate_page_markdown(self, page, base_url=""):
         """
         Generate markdown file content for a page including frontmatter and blocks.
         """
@@ -692,8 +452,14 @@ draft = false
                     # Skip complex objects
                     if isinstance(value, (dict, list)):
                         continue
+                    
+                    # Prepend base_url to local media paths
+                    value_str = str(value)
+                    if value_str.startswith(settings.MEDIA_URL):
+                        value_str = f"{base_url.rstrip('/')}{value_str}"
+                        
                     # Escape special characters for TOML
-                    value_str = str(value).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                    value_str = value_str.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
                     output += f'{indent}  {key} = "{value_str}"\n'
                 
                 # Handle menu-specific parameters
@@ -727,7 +493,10 @@ draft = false
                             
                             for k, v in fb.get('params', {}).items():
                                 if not isinstance(v, (dict, list)):
-                                    v_str = str(v).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                                    v_str = str(v)
+                                    if v_str.startswith(settings.MEDIA_URL):
+                                        v_str = f"{base_url.rstrip('/')}{v_str}"
+                                    v_str = v_str.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
                                     block_str += f', {k} = "{v_str}"'
                             
                             block_str += "}"
@@ -787,3 +556,349 @@ title = "My Hugo Site"
   description = "A site built with Hugo CMS"
 """
         return config
+class StorageSettingsViewSet(viewsets.ModelViewSet):
+    serializer_class = StorageSettingsSerializer
+    
+    def get_queryset(self):
+        website_id = self.request.query_params.get('website_id')
+        if website_id:
+            return StorageSettings.objects.filter(website_id=website_id)
+        return StorageSettings.objects.none()
+    
+    def perform_create(self, serializer):
+        website_id = self.request.data.get('website_id')
+        website = Website.objects.get(id=website_id)
+        serializer.save(website=website)
+
+class FileUploadViewSet(viewsets.ViewSet):
+    
+    def list(self, request):
+        website_id = request.query_params.get('website_id')
+        if not website_id:
+            return Response({'error': 'website_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        files = UploadedFile.objects.filter(website_id=website_id).order_by('-uploaded_at')
+        serializer = UploadedFileSerializer(files, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def upload(self, request):
+        file_obj = request.FILES.get('file')
+        website_id = request.data.get('website_id')
+        
+        if not file_obj or not website_id:
+            return Response({'error': 'File and website_id are required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            website = Website.objects.get(id=website_id)
+            settings, _ = StorageSettings.objects.get_or_create(website=website)
+            
+            # Generate unique filename
+            ext = file_obj.name.split('.')[-1]
+            filename = f"{uuid.uuid4()}.{ext}"
+            
+            if settings.storage_type == 's3':
+                import boto3
+                from botocore.exceptions import ClientError
+                
+                s3 = boto3.client(
+                    's3',
+                    endpoint_url=settings.s3_endpoint,
+                    aws_access_key_id=settings.s3_access_key,
+                    aws_secret_access_key=settings.s3_secret_key,
+                    region_name=settings.s3_region
+                )
+                
+                path = f"{website.slug}/{filename}"
+                s3.upload_fileobj(
+                    file_obj, 
+                    settings.s3_bucket, 
+                    path,
+                    ExtraArgs={'ACL': 'public-read', 'ContentType': file_obj.content_type}
+                )
+                
+                # Construct public URL
+                if settings.s3_public_url:
+                    file_url = f"{settings.s3_public_url.rstrip('/')}/{path}"
+                else:
+                    # Fallback to endpoint/bucket style if no public URL configured
+                    file_url = f"{settings.s3_endpoint.rstrip('/')}/{settings.s3_bucket}/{path}"
+                    
+            else:
+                # Local Storage
+                import os
+                from django.conf import settings as django_settings
+                
+                # Create directory structure: media/uploads/{website_slug}/
+                upload_dir = os.path.join(django_settings.MEDIA_ROOT, 'uploads', website.slug)
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                path = os.path.join('uploads', website.slug, filename)
+                full_path = os.path.join(django_settings.MEDIA_ROOT, path)
+                
+                with open(full_path, 'wb+') as destination:
+                    for chunk in file_obj.chunks():
+                        destination.write(chunk)
+                        
+                file_url = f"{django_settings.MEDIA_URL}{path}"
+            
+            # Save record
+            uploaded_file = UploadedFile.objects.create(
+                website=website,
+                filename=file_obj.name,
+                file_path=path,
+                file_url=file_url,
+                file_size=file_obj.size,
+                content_type=file_obj.content_type
+            )
+            
+            return Response(UploadedFileSerializer(uploaded_file).data)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CmsInitViewSet(viewsets.ViewSet):
+    
+    def list(self, request):
+        definitions = BlockDefinition.objects.all()
+        layouts = LayoutTemplate.objects.all()
+        websites = Website.objects.all()
+        
+        # Determine current website
+        website_id = request.query_params.get('website_id')
+        if website_id:
+            current_website = Website.objects.filter(id=website_id).first()
+        else:
+            current_website = websites.first()
+            
+        if not current_website:
+            # Should not happen if migration ran, but handle gracefully
+            current_website = Website.objects.create(name="Default Site", slug="default")
+            websites = Website.objects.all()
+
+        # Global blocks are defined by having parent=null, page=null AND website=current_website
+        header_blocks = BlockInstance.objects.filter(placement_key='header', page=None, parent=None, website=current_website).order_by('sort_order')
+        footer_blocks = BlockInstance.objects.filter(placement_key='footer', page=None, parent=None, website=current_website).order_by('sort_order')
+        
+        data = {
+            'definitions': definitions,
+            'layouts': layouts,
+            'header': header_blocks,
+            'footer': footer_blocks,
+            'websites': websites,
+            'current_website': current_website
+        }
+        serializer = SiteConfigSerializer(data)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def save_globals(self, request):
+        """Saves header and footer blocks using the new relational structure."""
+        
+        # Helper to collect all UUIDs for deletion check
+        incoming_ids = []
+        def collect_ids(blocks):
+            for block in blocks:
+                incoming_ids.append(block['id'])
+                if block.get('children'):
+                    # The Vue frontend sends an array of column objects, each having a 'blocks' array
+                    for col in block['children']:
+                        if col.get('blocks'):
+                            collect_ids(col['blocks'])
+        
+        collect_ids(request.data.get('header', []))
+        collect_ids(request.data.get('footer', []))
+        
+        try:
+            with transaction.atomic():
+                # Delete old global blocks not present in the new payload for this website
+                website_id = request.data.get('website_id')
+                if not website_id:
+                     return Response({'error': 'website_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                website = Website.objects.get(id=website_id)
+
+                BlockInstance.objects.filter(page=None, parent=None, website=website).exclude(id__in=incoming_ids).delete()
+                
+                # Save new/updated blocks recursively
+                self._save_blocks_recursive(request.data.get('header', []), placement_key='header', page=None, website=website)
+                self._save_blocks_recursive(request.data.get('footer', []), placement_key='footer', page=None, website=website)
+
+            return Response({'status': 'saved'})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def _save_blocks_recursive(self, blocks_data, placement_key, page, parent=None, website=None):
+        """Helper to save a list of blocks and their children."""
+        for index, block_data in enumerate(blocks_data):
+            # Ensure ID exists for update_or_create; generate new if necessary
+            block_id = block_data.get('id') or uuid.uuid4()
+            
+            block_instance, _ = BlockInstance.objects.update_or_create(
+                id=block_id,
+                defaults={
+                    'definition_id': block_data['type'],
+                    'page': page,
+                    'parent': parent,
+                    'website': website,
+                    'placement_key': placement_key,
+                    'sort_order': index,
+                    'params': block_data.get('params', {})
+                }
+            )
+            
+            # --- Handle Children (Nesting) ---
+            if block_data.get('children'):
+                
+                # Delete old children of this parent not present in the incoming payload
+                incoming_child_ids = []
+                for col in block_data['children']:
+                     if col.get('blocks'):
+                         for child in col['blocks']:
+                             if 'id' in child: incoming_child_ids.append(child['id'])
+                
+                block_instance.children.exclude(id__in=incoming_child_ids).delete()
+
+                for col_index, col_data in enumerate(block_data['children']):
+                    # This handles the column structure sent by the Vue frontend
+                    
+                    if col_data.get('blocks'):
+                        col_placement_key = f"col_{col_index}"
+                        
+                        # Recursively save blocks inside the column
+                        self._save_blocks_recursive(
+                            col_data['blocks'], 
+                            placement_key=col_placement_key, 
+                            page=None, # Nested blocks do not link to the page directly
+                            parent=block_instance, # Link to the 'flex_columns' parent instance
+                            website=website
+                        )
+
+class PageViewSet(viewsets.ModelViewSet):
+    queryset = Page.objects.all().order_by('-updated_at')
+    
+    def get_queryset(self):
+        queryset = Page.objects.all().order_by('-updated_at')
+        website_id = self.request.query_params.get('website_id')
+        if website_id:
+            queryset = queryset.filter(website_id=website_id)
+        return queryset
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return PageListSerializer
+        return PageDetailSerializer
+
+    @action(detail=True, methods=['get'])
+    def content(self, request, pk=None):
+        """
+        Returns all top-level blocks for this specific page (main, sidebar, etc).
+        """
+        page = self.get_object()
+        # Fetch all top-level blocks for the page, regardless of placement_key
+        blocks = BlockInstance.objects.filter(page=page, parent=None).order_by('sort_order')
+        serializer = BlockInstanceSerializer(blocks, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def save_content(self, request, pk=None):
+        """
+        Saves the page metadata and block content using the new relational structure.
+        """
+        page = self.get_object()
+        top_level_blocks_data = request.data.get('blocks', [])
+        
+        # 1. Collect all UUIDs from the incoming payload (for deletion check)
+        all_incoming_ids = []
+        def collect_ids(blocks):
+            for block in blocks:
+                all_incoming_ids.append(block['id'])
+                if block.get('children'):
+                    # The Vue frontend sends an array of column objects, each having a 'blocks' array
+                    for col in block['children']:
+                        if col.get('blocks'):
+                            collect_ids(col['blocks'])
+        collect_ids(top_level_blocks_data)
+
+        try:
+            with transaction.atomic():
+                # Delete existing blocks belonging to this page that are NOT in the payload
+                page.main_blocks.exclude(id__in=all_incoming_ids).delete()
+                
+                # 2. Group blocks by placement_key (main, sidebar)
+                main_blocks = [b for b in top_level_blocks_data if b.get('placement_key') == 'main']
+                sidebar_blocks = [b for b in top_level_blocks_data if b.get('placement_key') == 'sidebar']
+                
+                # 3. Save top-level blocks recursively for each zone
+                self._save_blocks_recursive(
+                    main_blocks, 
+                    placement_key='main', 
+                    page=page, 
+                    parent=None
+                )
+                
+                self._save_blocks_recursive(
+                    sidebar_blocks, 
+                    placement_key='sidebar', 
+                    page=page, 
+                    parent=None
+                )
+                
+                # Update page timestamp to move it to top of list
+                page.save()
+            
+            return Response({'status': 'saved', 'page_id': page.id})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            
+    def _save_blocks_recursive(self, blocks_data, placement_key, page, parent=None):
+        """Helper to save a list of blocks and their children. Same as CmsInitViewSet's helper."""
+        for index, block_data in enumerate(blocks_data):
+            block_id = block_data.get('id') or uuid.uuid4()
+            
+            block_instance, _ = BlockInstance.objects.update_or_create(
+                id=block_id,
+                defaults={
+                    'definition_id': block_data['type'],
+                    'page': page,
+                    'parent': parent,
+                    'placement_key': placement_key,
+                    'sort_order': index,
+                    'params': block_data.get('params', {})
+                }
+            )
+            
+            if block_data.get('children'):
+                
+                incoming_child_ids = []
+                for col in block_data['children']:
+                     if col.get('blocks'):
+                         for child in col['blocks']:
+                             if 'id' in child: incoming_child_ids.append(child['id'])
+                
+                block_instance.children.exclude(id__in=incoming_child_ids).delete()
+
+                for col_index, col_data in enumerate(block_data['children']):
+                    if col_data.get('blocks'):
+                        col_placement_key = f"col_{col_index}"
+                        
+                        self._save_blocks_recursive(
+                            col_data['blocks'], 
+                            placement_key=col_placement_key, 
+                            page=None, 
+                            parent=block_instance
+                        )
+
+    @action(detail=False, methods=['post'])
+    def import_theme(self, request):
+        """
+        Custom endpoint to trigger theme import logic.
+        """
+        theme_name = request.data.get('theme_name', 'default-mock')
+        
+        try:
+            result = import_hugo_theme_structure(theme_name)
+            return Response({'status': 'success', 'message': result}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    

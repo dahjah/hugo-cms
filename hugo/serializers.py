@@ -1,5 +1,18 @@
 from rest_framework import serializers
-from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website
+from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website, UploadedFile, StorageSettings
+
+class UploadedFileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UploadedFile
+        fields = ['id', 'filename', 'file_url', 'file_size', 'content_type', 'uploaded_at']
+
+class StorageSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StorageSettings
+        fields = ['storage_type', 's3_bucket', 's3_endpoint', 's3_access_key', 's3_secret_key', 's3_region', 's3_public_url', 'local_media_path', 'local_public_url']
+        extra_kwargs = {
+            's3_secret_key': {'write_only': True}
+        }
 
 class WebsiteSerializer(serializers.ModelSerializer):
     class Meta:

@@ -113,6 +113,99 @@
             </div>
         </div>
 
+        <!-- Settings Modal -->
+        <div v-if="showSettingsModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            @click.self="showSettingsModal = false">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-slate-800">Website Settings</h2>
+                    <button @click="showSettingsModal = false" class="text-slate-400 hover:text-slate-600">
+                        <icon name="x" :size="24"></icon>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Storage Configuration -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-800 mb-3 flex items-center">
+                            <icon name="hard-drive" :size="20" class="mr-2 text-indigo-600"></icon>
+                            File Storage
+                        </h3>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            <div class="flex space-x-6 mb-4">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="radio" v-model="storageSettings.storage_type" value="local"
+                                        class="text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-slate-700 font-medium">Local Filesystem</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="radio" v-model="storageSettings.storage_type" value="s3"
+                                        class="text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-slate-700 font-medium">S3 Compatible Storage</span>
+                                </label>
+                            </div>
+
+                            <!-- Local Settings -->
+                            <div v-if="storageSettings.storage_type === 'local'" class="space-y-3 pl-1">
+                                <p class="text-sm text-slate-600">Files will be stored in the local
+                                    <code>media/uploads</code> directory.
+                                </p>
+                            </div>
+
+                            <!-- S3 Settings -->
+                            <div v-if="storageSettings.storage_type === 's3'"
+                                class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 mb-1">Endpoint URL</label>
+                                    <input v-model="storageSettings.s3_endpoint" type="text"
+                                        placeholder="https://nyc3.digitaloceanspaces.com"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 mb-1">Bucket Name</label>
+                                    <input v-model="storageSettings.s3_bucket" type="text" placeholder="my-bucket"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 mb-1">Region</label>
+                                    <input v-model="storageSettings.s3_region" type="text" placeholder="nyc3"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 mb-1">Public URL Base
+                                        (Optional)</label>
+                                    <input v-model="storageSettings.s3_public_url" type="text"
+                                        placeholder="https://cdn.example.com"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 mb-1">Access Key</label>
+                                    <input v-model="storageSettings.s3_access_key" type="text"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 mb-1">Secret Key</label>
+                                    <input v-model="storageSettings.s3_secret_key" type="password"
+                                        placeholder="••••••••"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                    <button @click="showSettingsModal = false"
+                        class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md font-medium transition-colors">Close</button>
+                    <button @click="saveSettings"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center">
+                        <icon name="save" :size="16" class="mr-2"></icon>
+                        Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Loading Spinner while fetching initial data -->
         <div v-if="!isLoaded" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center flex-col">
             <svg class="animate-spin -ml-1 mr-3 h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg"
@@ -348,7 +441,8 @@
                             <div class="text-sm font-medium text-slate-900">John Doe</div>
                             <div class="text-xs text-slate-500">Admin</div>
                         </div>
-                        <icon name="settings" :size="16" class="text-slate-400 cursor-pointer hover:text-slate-600">
+                        <icon name="settings" :size="16" class="text-slate-400 cursor-pointer hover:text-slate-600"
+                            @click="openSettingsModal">
                         </icon>
                     </div>
                 </div>
@@ -711,8 +805,43 @@
                                 {{ formatKey(key) }}
                             </label>
 
+                            <!-- Image Upload for 'src' or 'bgImage' -->
+                            <div v-if="['src', 'bgImage'].includes(key)" class="space-y-2">
+                                <div class="flex space-x-2">
+                                    <input type="text" :value="value"
+                                        @input="updateBlockParams(selectedBlock.id, key, $event.target.value)"
+                                        class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                        placeholder="https://..." />
+                                    <label
+                                        class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
+                                        title="Upload Image">
+                                        <input type="file" class="hidden" accept="image/*" @change="async (e) => {
+                                            if (e.target.files.length > 0) {
+                                                try {
+                                                    const result = await uploadFile(e.target.files[0]);
+                                                    updateBlockParams(selectedBlock.id, key, result.file_url);
+                                                    showToast('Image uploaded successfully', 'success');
+                                                } catch (err) {
+                                                    showToast('Upload failed: ' + err.message, 'error');
+                                                }
+                                                e.target.value = ''; // Reset input
+                                            }
+                                        }">
+                                        <icon name="hard-drive" :size="16" class="text-slate-600"></icon>
+                                    </label>
+                                </div>
+                                <div v-if="value"
+                                    class="relative h-32 bg-slate-100 rounded-md overflow-hidden border border-slate-200 group">
+                                    <img :src="value" class="w-full h-full object-cover">
+                                    <div
+                                        class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <span class="text-white text-xs font-medium">Preview</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <textarea
-                                v-if="['content', 'md'].includes(key) || (typeof value === 'string' && value.length > 50)"
+                                v-else-if="['content', 'md'].includes(key) || (typeof value === 'string' && value.length > 50)"
                                 :value="value" @input="updateBlockParams(selectedBlock.id, key, $event.target.value)"
                                 rows="6"
                                 class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:focus:border-indigo-500 outline-none resize-none font-mono"></textarea>
@@ -1762,6 +1891,18 @@ layout = "${activePage.value.layout}"
                 const newWebsiteName = ref('');
                 const newWebsiteSlug = ref('');
 
+                // Settings State
+                const showSettingsModal = ref(false);
+                const storageSettings = ref({
+                    storage_type: 'local',
+                    s3_bucket: '',
+                    s3_endpoint: '',
+                    s3_access_key: '',
+                    s3_secret_key: '',
+                    s3_region: '',
+                    s3_public_url: ''
+                });
+
                 const fetchConfig = async (websiteId = null) => {
                     try {
                         let url = `${API_BASE_URL}init/`;
@@ -2189,39 +2330,136 @@ layout = "${activePage.value.layout}"
                             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
                                 getCookie('csrftoken');
 
-                            const response = await fetch('/api/pages/publish/', {
+                            const response = await fetch('/api/websites/publish/', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
                                     'X-CSRFToken': csrfToken
                                 },
                                 body: JSON.stringify({
-                                    website_id: currentWebsite.value?.id
+                                    website_id: currentWebsite.value.id
                                 })
                             });
 
                             const data = await response.json();
 
                             if(data.success) {
-                                showToast(
-                                    `Successfully published ${data.files.length} files`,
-                                    'success',
-                                    `Output: ${data.output_dir}`,
-                                    6000
-                                );
+                                showToast('Site published successfully!', 'success');
+                                // Refresh pages to update status indicators
+                                await fetchPages();
                             } else {
-                                showToast('Publish failed', 'error', data.error);
+                                showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
                             }
                         } catch(error) {
                             console.error('Publish error:', error);
-                            showToast('Publish failed', 'error', error.message);
+                            showToast('Publish failed: ' + error.message, 'error');
                         }
+                    },
+
+                    openSettingsModal: async () => {
+                        if(!currentWebsite.value) return;
+                        showSettingsModal.value = true;
+
+                        try {
+                            const response = await fetch(`/api/storage-settings/?website_id=${currentWebsite.value.id}`);
+                            if(response.ok) {
+                                const data = await response.json();
+                                if(data.length > 0) {
+                                    storageSettings.value = {...storageSettings.value, ...data[0]};
+                                }
+                            }
+                        } catch(error) {
+                            console.error('Error fetching settings:', error);
+                            showToast('Failed to load settings', 'error');
+                        }
+                    },
+
+                    saveSettings: async () => {
+                        if(!currentWebsite.value) return;
+
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                            // Check if settings exist to decide between POST and PUT (or just use POST on list endpoint if ViewSet handles it, but ViewSet is ModelViewSet)
+                            // Actually, let's try to create or update. 
+                            // Since we don't have the ID easily available in the state (unless we fetched it), 
+                            // we can rely on the backend perform_create logic or fetch the ID first.
+                            // Simpler approach: The ViewSet filters by website_id. 
+                            // Let's just use POST to a custom action or standard create, but standard create might duplicate.
+                            // Let's fetch first to get ID, or assume we can just POST and backend handles it? 
+                            // The backend perform_create creates a new one.
+                            // Let's try to fetch first to see if we need to PUT.
+
+                            let method = 'POST';
+                            let url = '/api/storage-settings/';
+
+                            const existingResponse = await fetch(`/api/storage-settings/?website_id=${currentWebsite.value.id}`);
+                            if(existingResponse.ok) {
+                                const existingData = await existingResponse.json();
+                                if(existingData.length > 0) {
+                                    method = 'PATCH'; // or PUT
+                                    url = `/api/storage-settings/${existingData[0].id}/`;
+                                }
+                            }
+
+                            const payload = {
+                                ...storageSettings.value,
+                                website_id: currentWebsite.value.id
+                            };
+
+                            const response = await fetch(url, {
+                                method: method,
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify(payload)
+                            });
+
+                            if(response.ok) {
+                                showToast('Settings saved successfully', 'success');
+                                showSettingsModal.value = false;
+                            } else {
+                                const data = await response.json();
+                                showToast('Failed to save settings: ' + JSON.stringify(data), 'error');
+                            }
+                        } catch(error) {
+                            console.error('Error saving settings:', error);
+                            showToast('Error saving settings', 'error');
+                        }
+                    },
+
+                    uploadFile: async (file) => {
+                        if(!currentWebsite.value) throw new Error("No website selected");
+
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('website_id', currentWebsite.value.id);
+
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                        const response = await fetch('/api/files/upload/', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: formData
+                        });
+
+                        if(!response.ok) {
+                            const data = await response.json();
+                            throw new Error(data.error || 'Upload failed');
+                        }
+
+                        return await response.json();
                     },
                     toasts,
                     showToast,
                     removeToast,
                     handleDragStartNew,
                     handleDragStartExisting,
+                    showSettingsModal,
+                    storageSettings,
                     handleDrop,
                     updateBlockParams: updateBlock,
                     deleteBlock,
