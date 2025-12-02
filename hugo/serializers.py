@@ -9,7 +9,7 @@ class UploadedFileSerializer(serializers.ModelSerializer):
 class StorageSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = StorageSettings
-        fields = ['storage_type', 's3_bucket', 's3_endpoint', 's3_access_key', 's3_secret_key', 's3_region', 's3_public_url', 'local_media_path', 'local_public_url']
+        fields = ['id', 'storage_type', 's3_bucket', 's3_endpoint', 's3_access_key', 's3_secret_key', 's3_region', 's3_public_url', 'local_media_path', 'local_public_url']
         extra_kwargs = {
             's3_secret_key': {'write_only': True}
         }
@@ -17,7 +17,7 @@ class StorageSettingsSerializer(serializers.ModelSerializer):
 class WebsiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Website
-        fields = ['id', 'name', 'slug']
+        fields = ['id', 'name', 'slug', 'custom_css']
 
 class BlockDefinitionSerializer(serializers.ModelSerializer):
     class Meta:

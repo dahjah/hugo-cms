@@ -2,6 +2,7 @@
 title = "New Page"
 date = "2025-11-26"
 draft = false
+layout = "single"
 [[header_blocks]]
   type = "menu"
   orientation = "horizontal"
@@ -24,5 +25,16 @@ draft = false
 [[main_blocks]]
   type = "flex_columns"
   col_widths = "50.0, 50.0"
+  [[main_blocks.col_0]]
+    type = "image"
+    src = "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80"
+    caption = "A beautiful view"
+    width = "100%"
+    height = "auto"
+
+  [[main_blocks.col_1]]
+    type = "text"
+    content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+
 
 +++

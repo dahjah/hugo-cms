@@ -23,6 +23,7 @@ class Website(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=200, unique=True, help_text="URL slug for the website (e.g., 'my-site')")
+    custom_css = models.TextField(blank=True, null=True, help_text="Global CSS for the website")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

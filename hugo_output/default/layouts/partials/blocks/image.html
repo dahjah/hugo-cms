@@ -1,4 +1,4 @@
-<figure class="mb-8">
-    <img src="{{ .src }}" alt="{{ .caption }}" class="w-full h-auto rounded-lg shadow-md">
+<figure class="mb-8 {{ .css_classes }}" style="width: {{ .width | default "100%" }}; margin: 0 auto;">
+    <img src="{{ .src }}" alt="{{ .caption }}" class="w-full rounded-lg shadow-md" style="height: {{ .height | default "auto" }}; object-fit: cover;">
     {{ if .caption }}<figcaption class="text-center text-sm text-slate-500 mt-2">{{ .caption }}</figcaption>{{ end }}
 </figure>

@@ -2,6 +2,7 @@
 title = "Default Home"
 date = "2025-11-26"
 draft = false
+layout = "rightsidebar"
 description = "Default description."
 tags = ["default"]
 [[header_blocks]]
@@ -37,6 +38,25 @@ tags = ["default"]
   type = "youtube"
   videoId = "dQw4w9WgXcQ"
   title = "My Video"
+  width = "91.3%"
+
+[[main_blocks]]
+  type = "flex_columns"
+  col_widths = "50.0, 50.0"
+  [[main_blocks.col_0]]
+    type = "image"
+    src = "http://localhost:12345/media/uploads/default/151a432c-3673-45f3-a5e5-3c623c51f68d.png"
+    caption = "A beautiful view"
+    width = "100%"
+    height = "auto"
+
+  [[main_blocks.col_1]]
+    type = "image"
+    src = "http://localhost:12345/media/uploads/default/151a432c-3673-45f3-a5e5-3c623c51f68d.png"
+    caption = "A beautiful view"
+    width = "100%"
+    height = "auto"
+
 
 [[main_blocks]]
   type = "html"
@@ -46,5 +66,13 @@ tags = ["default"]
   type = "image"
   src = "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80"
   caption = "A beautiful view"
+  css_classes = "missing"
+
+[[sidebar_blocks]]
+  type = "image"
+  src = "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80"
+  caption = "A beautiful view"
+  width = "100%"
+  height = "auto"
 
 +++

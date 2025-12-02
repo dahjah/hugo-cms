@@ -137,6 +137,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ .Title }} | {{ .Site.Title }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/custom.css">
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
     {{ block "main" . }}{{ end }}
@@ -144,6 +145,16 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 </html>"""
             with open(default_dir / 'baseof.html', 'w') as f: f.write(baseof_content)
             generated_files.append('layouts/_default/baseof.html')
+
+            # Write custom.css
+            static_dir = output_path / 'static'
+            css_dir = static_dir / 'css'
+            css_dir.mkdir(parents=True, exist_ok=True)
+            
+            custom_css_path = css_dir / 'custom.css'
+            with open(custom_css_path, 'w') as f:
+                f.write(website.custom_css or "/* Custom CSS */")
+            generated_files.append('static/css/custom.css')
 
             # 2. _default/single.html (Generic layout)
             single_content = """{{ define "main" }}
@@ -204,23 +215,23 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 
             # 5. Generate basic templates for known block types
             block_templates = {
-                'hero': """<section class="relative bg-slate-900 text-white py-20 px-6 rounded-lg mb-8 overflow-hidden">
+                'hero': """<section class="relative bg-slate-900 text-white py-20 px-6 rounded-lg mb-8 overflow-hidden {{ .css_classes }}">
     {{ if .bgImage }}<img src="{{ .bgImage }}" class="absolute inset-0 w-full h-full object-cover opacity-30">{{ end }}
     <div class="relative z-10 container mx-auto text-center">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ .title }}</h1>
         <p class="text-xl text-slate-300 max-w-2xl mx-auto">{{ .subtitle }}</p>
     </div>
 </section>""",
-                'text': """<div class="prose max-w-none mb-8">
+                'text': """<div class="prose max-w-none mb-8 {{ .css_classes }}">
     {{ .content | markdownify }}
 </div>""",
-                'markdown': """<div class="prose max-w-none mb-8">
+                'markdown': """<div class="prose max-w-none mb-8 {{ .css_classes }}">
     {{ .md | markdownify }}
 </div>""",
-                'html': """<div class="html-block mb-8">
+                'html': """<div class="html-block mb-8 {{ .css_classes }}">
     {{ .html | safeHTML }}
 </div>""",
-                'image': """<figure class="mb-8" style="width: {{ .width | default "100%" }}; margin: 0 auto;">
+                'image': """<figure class="mb-8 {{ .css_classes }}" style="width: {{ .width | default "100%" }}; margin: 0 auto;">
     <img src="{{ .src }}" alt="{{ .caption }}" class="w-full rounded-lg shadow-md" style="height: {{ .height | default "auto" }}; object-fit: cover;">
     {{ if .caption }}<figcaption class="text-center text-sm text-slate-500 mt-2">{{ .caption }}</figcaption>{{ end }}
 </figure>""",
@@ -234,7 +245,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     {{ $classes = "fixed top-0 left-0 right-0 z-40 bg-white shadow-md" }}
 {{ end }}
 
-<nav class="{{ $classes }}">
+<nav class="{{ $classes }} {{ .css_classes }}">
     <div class="container mx-auto px-4">
         <div class="flex items-center justify-between h-16">
             <!-- Hamburger Button -->
@@ -363,7 +374,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 </script>
 {{ end }}""",
                 'flex_columns': """{{ $widths := split (.col_widths | default "100") "," }}
-<div class="grid grid-cols-1 md:grid-cols-{{ len $widths }} gap-6 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-{{ len $widths }} gap-6 mb-8 {{ .css_classes }}">
     {{ range $index, $width := $widths }}
         {{ $colKey := printf "col_%d" $index }}
         <div class="flex flex-col gap-4">
@@ -377,7 +388,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         </div>
     {{ end }}
 </div>""",
-                'youtube': """<div class="mb-8" style="width: {{ .width | default "100%" }}; margin: 0 auto;">
+                'youtube': """<div class="mb-8 {{ .css_classes }}" style="width: {{ .width | default "100%" }}; margin: 0 auto;">
     <div class="aspect-w-16 aspect-h-9 relative" style="padding-bottom: {{ if eq .aspect_ratio "4/3" }}75%{{ else }}56.25%{{ end }};">
         <iframe 
             class="absolute inset-0 w-full h-full rounded-lg shadow-md"
@@ -747,10 +758,11 @@ class StorageSettingsViewSet(viewsets.ModelViewSet):
     serializer_class = StorageSettingsSerializer
     
     def get_queryset(self):
+        queryset = StorageSettings.objects.all()
         website_id = self.request.query_params.get('website_id')
         if website_id:
-            return StorageSettings.objects.filter(website_id=website_id)
-        return StorageSettings.objects.none()
+            queryset = queryset.filter(website_id=website_id)
+        return queryset
     
     def perform_create(self, serializer):
         website_id = self.request.data.get('website_id')

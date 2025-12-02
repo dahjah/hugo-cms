@@ -192,6 +192,21 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Custom CSS -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-800 mb-3 flex items-center">
+                            <icon name="code" :size="20" class="mr-2 text-indigo-600"></icon>
+                            Global CSS
+                        </h3>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            <p class="text-sm text-slate-600 mb-2">Add custom CSS rules that will be applied to your
+                                entire site.</p>
+                            <textarea v-model="customCss" rows="8"
+                                class="w-full px-3 py-2 border border-slate-300 rounded text-sm font-mono focus:ring-1 focus:ring-indigo-500 outline-none"
+                                placeholder="body { background-color: #f0f0f0; }"></textarea>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-8 flex justify-end space-x-3 pt-4 border-t border-slate-100">
@@ -603,6 +618,15 @@
                 </div>
 
                 <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+                    <!-- Global Block Settings -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">CSS Classes</label>
+                        <input type="text" v-model="selectedBlock.params.css_classes"
+                            class="w-full border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                            placeholder="e.g. my-custom-class text-center">
+                        <p class="text-xs text-slate-400 mt-1">Space-separated list of CSS classes</p>
+                    </div>
+
                     <!-- Column Resizer Parameters for flex_columns -->
                     <div v-if="selectedBlock.type === 'flex_columns'">
                         <div class="space-y-4">
@@ -1995,6 +2019,7 @@ layout = "${activePage.value.layout}"
                 // Settings State
                 const showSettingsModal = ref(false);
                 const showPublishDropdown = ref(false);
+                const customCss = ref('');
                 const storageSettings = ref({
                     storage_type: 'local',
                     s3_bucket: '',
@@ -2529,12 +2554,20 @@ layout = "${activePage.value.layout}"
                         showSettingsModal.value = true;
 
                         try {
+                            // Fetch storage settings
                             const response = await fetch(`/api/storage-settings/?website_id=${currentWebsite.value.id}`);
                             if(response.ok) {
                                 const data = await response.json();
                                 if(data.length > 0) {
                                     storageSettings.value = {...storageSettings.value, ...data[0]};
                                 }
+                            }
+
+                            // Fetch website details (for custom_css)
+                            const websiteResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`);
+                            if(websiteResponse.ok) {
+                                const websiteData = await websiteResponse.json();
+                                customCss.value = websiteData.custom_css || '';
                             }
                         } catch(error) {
                             console.error('Error fetching settings:', error);
@@ -2548,32 +2581,19 @@ layout = "${activePage.value.layout}"
                         try {
                             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
 
-                            // Check if settings exist to decide between POST and PUT (or just use POST on list endpoint if ViewSet handles it, but ViewSet is ModelViewSet)
-                            // Actually, let's try to create or update. 
-                            // Since we don't have the ID easily available in the state (unless we fetched it), 
-                            // we can rely on the backend perform_create logic or fetch the ID first.
-                            // Simpler approach: The ViewSet filters by website_id. 
-                            // Let's just use POST to a custom action or standard create, but standard create might duplicate.
-                            // Let's fetch first to get ID, or assume we can just POST and backend handles it? 
-                            // The backend perform_create creates a new one.
-                            // Let's try to fetch first to see if we need to PUT.
-
-                            let method = 'POST';
-                            let url = '/api/storage-settings/';
-
-                            const existingResponse = await fetch(`/api/storage-settings/?website_id=${currentWebsite.value.id}`);
-                            if(existingResponse.ok) {
-                                const existingData = await existingResponse.json();
-                                if(existingData.length > 0) {
-                                    method = 'PATCH'; // or PUT
-                                    url = `/api/storage-settings/${existingData[0].id}/`;
-                                }
-                            }
-
-                            const payload = {
+                            // Save Storage Settings
+                            const storagePayload = {
                                 ...storageSettings.value,
                                 website_id: currentWebsite.value.id
                             };
+
+                            let url = '/api/storage-settings/';
+                            let method = 'POST';
+
+                            if(storageSettings.value.id) {
+                                url += `${storageSettings.value.id}/`;
+                                method = 'PUT';
+                            }
 
                             const response = await fetch(url, {
                                 method: method,
@@ -2581,15 +2601,38 @@ layout = "${activePage.value.layout}"
                                     'Content-Type': 'application/json',
                                     'X-CSRFToken': csrfToken
                                 },
-                                body: JSON.stringify(payload)
+                                body: JSON.stringify(storagePayload)
                             });
 
-                            if(response.ok) {
-                                showToast('Settings saved successfully', 'success');
-                                showSettingsModal.value = false;
-                            } else {
+                            if(!response.ok) {
+                                throw new Error('Failed to save storage settings');
+                            }
+
+                            // Save Website Settings (Custom CSS)
+                            const websitePayload = {
+                                custom_css: customCss.value
+                            };
+
+                            const websiteResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify(websitePayload)
+                            });
+
+                            if(!websiteResponse.ok) {
+                                throw new Error('Failed to save website settings');
+                            }
+
+                            showToast('Settings saved successfully', 'success');
+                            showSettingsModal.value = false;
+
+                            // Refresh storage settings ID if it was a new creation
+                            if(method === 'POST') {
                                 const data = await response.json();
-                                showToast('Failed to save settings: ' + JSON.stringify(data), 'error');
+                                storageSettings.value.id = data.id;
                             }
                         } catch(error) {
                             console.error('Error saving settings:', error);

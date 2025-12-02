@@ -2,6 +2,7 @@
 title = "New Page"
 date = "2025-11-26"
 draft = false
+layout = "list"
 [[header_blocks]]
   type = "menu"
   orientation = "horizontal"
@@ -38,5 +39,12 @@ draft = false
   title = "Welcome Home"
   subtitle = "Start your journey here"
   bgImage = "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80"
+
+[[sidebar_blocks]]
+  type = "image"
+  src = "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80"
+  caption = "A beautiful view"
+  width = "100%"
+  height = "auto"
 
 +++
