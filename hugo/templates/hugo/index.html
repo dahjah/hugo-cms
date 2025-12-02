@@ -2116,11 +2116,39 @@ layout = "${activePage.value.layout}"
                         // 1. Save Page Metadata (PUT)
                         await fetchApi(`${API_BASE_URL}pages/${pageId}/`, 'PUT', metadataPayload);
 
+
                         // 2. Save Block Content (POST to custom action)
                         // Collect page-specific blocks from contentZones
+                        const transformBlock = (block) => {
+                            const transformed = {...block};
+
+                            // Transform flex_columns children structure
+                            if(block.type === 'flex_columns' && block.children && Array.isArray(block.children)) {
+                                // Group children by col_0, col_1, etc.
+                                const columnMap = {};
+                                block.children.forEach(child => {
+                                    const colKey = child.placement_key || 'col_0';
+                                    if(!columnMap[colKey]) {
+                                        columnMap[colKey] = [];
+                                    }
+                                    columnMap[colKey].push(transformBlock(child));
+                                });
+
+                                // Convert to array format expected by backend: [{blocks: [...]}, {blocks: [...]}]
+                                transformed.children = Object.keys(columnMap)
+                                    .sort() // Ensure col_0, col_1, col_2 order
+                                    .map(key => ({blocks: columnMap[key]}));
+                            } else if(block.children && Array.isArray(block.children)) {
+                                // Recursively transform any other children
+                                transformed.children = block.children.map(transformBlock);
+                            }
+
+                            return transformed;
+                        };
+
                         const allPageBlocks = [
-                            ...contentZones.value.main.map(b => ({...b, placement_key: 'main'})),
-                            ...contentZones.value.sidebar.map(b => ({...b, placement_key: 'sidebar'}))
+                            ...contentZones.value.main.map(b => transformBlock({...b, placement_key: 'main'})),
+                            ...contentZones.value.sidebar.map(b => transformBlock({...b, placement_key: 'sidebar'}))
                         ];
                         const contentPayload = {blocks: allPageBlocks};
                         await fetchApi(`${API_BASE_URL}pages/${pageId}/save_content/`, 'POST', contentPayload);
@@ -2230,15 +2258,12 @@ layout = "${activePage.value.layout}"
                     // Handle column zones (nested within columns block)
                     if(zone.startsWith('col_') && parentBlockId) {
                         const result = findBlockAndParent(parentBlockId);
-                        if(result && result.block && result.block.type === 'columns') {
+                        if(result && result.block && result.block.type === 'flex_columns') {
                             const colIndex = parseInt(zone.split('_')[1]);
-                            if(!result.block.params.columns[colIndex]) {
-                                result.block.params.columns[colIndex] = {blocks: []};
+                            if(!result.block.children) {
+                                result.block.children = [];
                             }
-                            if(!result.block.params.columns[colIndex].blocks) {
-                                result.block.params.columns[colIndex].blocks = [];
-                            }
-                            return result.block.params.columns[colIndex].blocks;
+                            return result.block.children;
                         }
                         return null;
                     }

@@ -692,10 +692,24 @@ layout = "{page.layout}"
                         items_toml += "]\n"
                         output += f'{indent}  items = {items_toml}'
                 
-                # Handle nested children (columns)
+                
+                # Handle nested children (flex_columns)
                 children = block.children.all().order_by('sort_order')
                 if children.exists():
-                    output += render_blocks(children, f'{zone_name}.children', depth + 1)
+                    if block.definition_id == 'flex_columns':
+                        # Group children by their placement_key (col_0, col_1, etc.)
+                        from collections import defaultdict
+                        cols = defaultdict(list)
+                        for child in children:
+                            col_key = child.placement_key or 'col_0'
+                            cols[col_key].append(child)
+                        
+                        # Render each column's blocks
+                        for col_key, col_blocks in cols.items():
+                            output += render_blocks(col_blocks, f'{zone_name}.{col_key}', depth + 1)
+                    else:
+                        # For other block types, render children normally
+                        output += render_blocks(children, f'{zone_name}.children', depth + 1)
                 
                 output += "\n"
             
