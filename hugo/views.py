@@ -223,7 +223,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     </div>
 </section>""",
                 'text': """<div class="prose max-w-none mb-8 {{ .css_classes }}">
-    {{ .content | markdownify }}
+    {{ .content | safeHTML }}
 </div>""",
                 'markdown': """<div class="prose max-w-none mb-8 {{ .css_classes }}">
     {{ .md | markdownify }}

@@ -2,7 +2,7 @@
 title = "Default Home"
 date = "2025-11-26"
 draft = false
-layout = "rightsidebar"
+layout = "home"
 description = "Default description."
 tags = ["default"]
 [[header_blocks]]
@@ -32,7 +32,7 @@ tags = ["default"]
 
 [[main_blocks]]
   type = "text"
-  content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+  content = "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p><p><br></p><ul><li>helo</li></ul><ol><li><u>underline</u></li></ol><p><a href=\"https://hugo.cloud.djg.dev/\" target=\"_blank\">hyperlink</a></p>"
 
 [[main_blocks]]
   type = "youtube"

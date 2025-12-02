@@ -2,7 +2,7 @@
 title = "Test Page 3"
 date = ""
 draft = false
-layout = "list"
+layout = "rightsidebar"
 [[header_blocks]]
   type = "menu"
   orientation = "horizontal"
