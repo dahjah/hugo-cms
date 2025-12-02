@@ -45,14 +45,14 @@ tags = ["default"]
   col_widths = "50.0, 50.0"
   [[main_blocks.col_0]]
     type = "image"
-    src = "http://localhost:12345/media/uploads/default/151a432c-3673-45f3-a5e5-3c623c51f68d.png"
+    src = "http://hugo.cloud.djg.dev/media/uploads/default/151a432c-3673-45f3-a5e5-3c623c51f68d.png"
     caption = "A beautiful view"
     width = "100%"
     height = "auto"
 
   [[main_blocks.col_1]]
     type = "image"
-    src = "http://localhost:12345/media/uploads/default/151a432c-3673-45f3-a5e5-3c623c51f68d.png"
+    src = "http://hugo.cloud.djg.dev/media/uploads/default/151a432c-3673-45f3-a5e5-3c623c51f68d.png"
     caption = "A beautiful view"
     width = "100%"
     height = "auto"

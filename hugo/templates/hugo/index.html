@@ -329,8 +329,15 @@
                             <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Drag to
                                 Canvas</span>
                         </div>
+
+                        <!-- Search Input -->
+                        <div class="mb-3">
+                            <input v-model="searchQuery" type="text" placeholder="Search blocks..."
+                                class="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                        </div>
+
                         <div class="space-y-2">
-                            <div v-for="comp in componentLibrary" :key="comp.id" draggable="true"
+                            <div v-for="comp in filteredComponentLibrary" :key="comp.id" draggable="true"
                                 @dragstart="handleDragStartNew($event, comp.id)"
                                 class="bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-sm p-3 rounded-md cursor-grab active:cursor-grabbing flex items-center space-x-3 transition-all group">
                                 <div class="text-slate-400 group-hover:text-indigo-500 transition-colors">
@@ -343,11 +350,12 @@
                                     </span>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="mt-6 p-3 bg-indigo-50 rounded-md border border-indigo-100 text-xs text-indigo-700">
-                            <div class="font-bold mb-1">Tip:</div>
-                            New components are loaded from Django's BlockDefinition model.
+                            <!-- Empty State -->
+                            <div v-if="filteredComponentLibrary.length === 0" class="text-center py-8 text-slate-400">
+                                <icon name="search" :size="32" class="mx-auto mb-2 opacity-50"></icon>
+                                <p class="text-sm">No blocks found</p>
+                            </div>
                         </div>
                     </div>
 
@@ -1731,6 +1739,8 @@
                 const viewMode = ref('editor');
                 const selectedBlockId = ref(null);
                 const sidebarTab = ref('pages');
+                const searchQuery = ref('');
+
 
                 // UNIFIED STATE: All content zones (global and page-specific) in one place
                 const contentZones = ref({
@@ -1845,6 +1855,19 @@
 
                 // Combine global + page specific for viewing
                 const activeContent = computed(() => contentZones.value);
+
+                // Filter component library based on search query
+                const filteredComponentLibrary = computed(() => {
+                    if(!searchQuery.value.trim()) {
+                        return componentLibrary.value;
+                    }
+                    const query = searchQuery.value.toLowerCase();
+                    return componentLibrary.value.filter(comp =>
+                        comp.label.toLowerCase().includes(query) ||
+                        comp.id.toLowerCase().includes(query)
+                    );
+                });
+
 
                 const selectedBlock = computed(() => {
                     if(!selectedBlockId.value) return null;
@@ -2493,6 +2516,8 @@ layout = "${activePage.value.layout}"
                     selectedBlockId,
                     selectedBlock,
                     componentLibrary,
+                    searchQuery,
+                    filteredComponentLibrary,
                     generateConfig,
                     setActivePage,
                     createNewPage,
