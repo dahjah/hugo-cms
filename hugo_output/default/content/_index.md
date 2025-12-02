@@ -33,6 +33,7 @@ tags = ["default"]
 [[main_blocks]]
   type = "text"
   content = "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p><p><br></p><ul><li>helo</li></ul><ol><li><u>underline</u></li></ol><p><a href=\"https://hugo.cloud.djg.dev/\" target=\"_blank\">hyperlink</a></p>"
+  css_classes = ""
 
 [[main_blocks]]
   type = "youtube"
