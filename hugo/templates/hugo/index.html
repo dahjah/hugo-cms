@@ -1024,6 +1024,7 @@
                                 :is-editable="isActive"
                                 :col-index="isNested ? getColIndex(zone) : null"
                                 @select="$emit('select-block', $event)"
+                                @select-block="$emit('select-block', $event)"
                                 @drag-start="emitDragStart($event, block.id)"
                                 @drag-start-block="handleNestedDragStartReemit"
                                 @nested-drop="handleNestedDropReemit"
@@ -1153,9 +1154,6 @@
                     <div v-if="isEditable" class="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur shadow-sm p-1 rounded cursor-grab active:cursor-grabbing text-slate-500">
                         <icon name="move" :size="14"></icon>
                     </div>
-                    
-                    <!-- Overlay to capture click/drag -->
-                    <div v-if="isEditable" class="absolute inset-0 z-0"></div>
                     
                     <!-- Content Rendering -->
                     <div v-if="block.type === 'hero'" class="relative h-64 w-full flex items-center justify-center text-center text-white overflow-hidden rounded-sm">
@@ -1323,7 +1321,7 @@
                                                 :is-nested="true"
                                                 :parent-block-id="block.id"
                                                 @drop-item="handleNestedDrop"
-                                                @select-block="$emit('select-block', $event)"
+                                                @select-block="handleSelectBlock"
                                                 @drag-start-block="handleNestedDragStart"
                                                 class="p-0 border-0"
                                             ></drop-zone>
@@ -1656,6 +1654,7 @@
                 // --- General Handlers ---
                 const handleClick = (e) => {
                     if(props.isEditable) {
+                        // Stop propagation and select this block
                         e.stopPropagation();
                         emit('select', props.block.id);
                     }
@@ -1668,6 +1667,11 @@
 
                 const handleNestedDragStart = (e, blockId, zone, parentBlockId) => {
                     emit('drag-start-block', e, blockId, zone, parentBlockId);
+                };
+
+                // Handler to re-emit select-block events from nested drop-zones (e.g., in flex_columns)
+                const handleSelectBlock = (blockId) => {
+                    emit('select-block', blockId);
                 };
 
                 const getDefinition = (type) => {
@@ -1689,6 +1693,7 @@
                     handleClick,
                     handleDragStart,
                     handleNestedDragStart,
+                    handleSelectBlock,
                     getDefinition,
                 };
             }
