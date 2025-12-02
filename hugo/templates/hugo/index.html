@@ -1321,9 +1321,25 @@
                     </div>
                     
                     <div v-else-if="block.type === 'image'" class="p-4">
-                        <figure>
-                            <img :src="block.params.src" :alt="block.params.caption" class="w-full rounded-lg shadow-sm" />
+                        <figure :style="{ width: block.params.width || '100%', margin: '0 auto' }" class="relative group/resize">
+                            <img :src="block.params.src" :alt="block.params.caption" 
+                                 class="w-full rounded-lg shadow-sm" 
+                                 :style="{ height: block.params.height || 'auto', objectFit: 'cover' }" />
                             <figcaption class="text-center text-sm text-slate-500 mt-2 italic">{{ block.params.caption }}</figcaption>
+                            
+                            <!-- Resize Handles -->
+                            <div v-if="isEditable"
+                                 class="absolute top-0 left-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/resize:opacity-100 transition-opacity z-20"
+                                 @mousedown="startBlockResize($event, block, 'left')"
+                                 @touchstart="startBlockResize($event, block, 'left')">
+                                <div class="w-1.5 h-8 bg-white border border-slate-300 rounded-full shadow-sm"></div>
+                            </div>
+                            <div v-if="isEditable"
+                                 class="absolute top-0 right-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/resize:opacity-100 transition-opacity z-20"
+                                 @mousedown="startBlockResize($event, block, 'right')"
+                                 @touchstart="startBlockResize($event, block, 'right')">
+                                <div class="w-1.5 h-8 bg-white border border-slate-300 rounded-full shadow-sm"></div>
+                            </div>
                         </figure>
                     </div>
 
@@ -1333,15 +1349,31 @@
 
                     <!-- YouTube Embed -->
                     <div v-else-if="block.type === 'youtube'" class="p-4">
-                        <div class="relative w-full" style="padding-bottom: 56.25%;">
-                            <iframe 
-                                :src="'https://www.youtube.com/embed/' + block.params.videoId" 
-                                :title="block.params.title || 'YouTube video'"
-                                class="absolute inset-0 w-full h-full rounded-lg shadow-lg"
-                                frameborder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                allowfullscreen>
-                            </iframe>
+                        <div :style="{ width: block.params.width || '100%', margin: '0 auto' }" class="relative group/resize">
+                            <div class="relative w-full" :style="{ paddingBottom: block.params.aspect_ratio === '4/3' ? '75%' : '56.25%' }">
+                                <iframe 
+                                    :src="'https://www.youtube.com/embed/' + block.params.videoId" 
+                                    :title="block.params.title || 'YouTube video'"
+                                    class="absolute inset-0 w-full h-full rounded-lg shadow-lg"
+                                    frameborder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowfullscreen>
+                                </iframe>
+                            </div>
+                            
+                            <!-- Resize Handles -->
+                            <div v-if="isEditable"
+                                 class="absolute top-0 left-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/resize:opacity-100 transition-opacity z-20"
+                                 @mousedown="startBlockResize($event, block, 'left')"
+                                 @touchstart="startBlockResize($event, block, 'left')">
+                                <div class="w-1.5 h-8 bg-white border border-slate-300 rounded-full shadow-sm"></div>
+                            </div>
+                            <div v-if="isEditable"
+                                 class="absolute top-0 right-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/resize:opacity-100 transition-opacity z-20"
+                                 @mousedown="startBlockResize($event, block, 'right')"
+                                 @touchstart="startBlockResize($event, block, 'right')">
+                                <div class="w-1.5 h-8 bg-white border border-slate-300 rounded-full shadow-sm"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -1533,6 +1565,52 @@
                     document.addEventListener('touchend', mouseUp);
                 };
 
+                // --- Block Resizer Logic (Image/Video) ---
+                const startBlockResize = (e, block, direction = 'right') => {
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    const container = e.currentTarget.parentElement;
+                    const startX = e.clientX || e.touches[0].clientX;
+                    const startWidth = container.offsetWidth;
+                    const parentWidth = container.parentElement.offsetWidth;
+
+                    const mouseMove = (e) => {
+                        const currentX = e.clientX || e.touches[0].clientX;
+                        let deltaX = currentX - startX;
+
+                        // Invert delta for left handle
+                        if(direction === 'left') {
+                            deltaX = -deltaX;
+                        }
+
+                        let newWidth = startWidth + deltaX;
+
+                        // Convert to percentage
+                        let newWidthPercent = (newWidth / parentWidth) * 100;
+
+                        // Clamp between 10% and 100%
+                        newWidthPercent = Math.max(10, Math.min(100, newWidthPercent));
+
+                        // Round to 1 decimal place
+                        newWidthPercent = Math.round(newWidthPercent * 10) / 10;
+
+                        block.params.width = newWidthPercent + '%';
+                    };
+
+                    const mouseUp = () => {
+                        document.removeEventListener('mousemove', mouseMove);
+                        document.removeEventListener('mouseup', mouseUp);
+                        document.removeEventListener('touchmove', mouseMove);
+                        document.removeEventListener('touchend', mouseUp);
+                    };
+
+                    document.addEventListener('mousemove', mouseMove);
+                    document.addEventListener('mouseup', mouseUp);
+                    document.addEventListener('touchmove', mouseMove);
+                    document.addEventListener('touchend', mouseUp);
+                };
+
                 // --- General Handlers ---
                 const handleClick = (e) => {
                     if(props.isEditable) {
@@ -1565,6 +1643,7 @@
                     getColumnStructure,
                     handleNestedDrop,
                     startResize,
+                    startBlockResize,
                     handleClick,
                     handleDragStart,
                     handleNestedDragStart,

@@ -219,8 +219,8 @@ class WebsiteViewSet(viewsets.ModelViewSet):
                 'html': """<div class="html-block mb-8">
     {{ .html | safeHTML }}
 </div>""",
-                'image': """<figure class="mb-8">
-    <img src="{{ .src }}" alt="{{ .caption }}" class="w-full h-auto rounded-lg shadow-md">
+                'image': """<figure class="mb-8" style="width: {{ .width | default "100%" }}; margin: 0 auto;">
+    <img src="{{ .src }}" alt="{{ .caption }}" class="w-full rounded-lg shadow-md" style="height: {{ .height | default "auto" }}; object-fit: cover;">
     {{ if .caption }}<figcaption class="text-center text-sm text-slate-500 mt-2">{{ .caption }}</figcaption>{{ end }}
 </figure>""",
                 'menu': """{{ $position := .position | default "normal" }}
@@ -376,8 +376,8 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         </div>
     {{ end }}
 </div>""",
-                'youtube': """<div class="mb-8">
-    <div class="aspect-w-16 aspect-h-9 relative" style="padding-bottom: 56.25%;">
+                'youtube': """<div class="mb-8" style="width: {{ .width | default "100%" }}; margin: 0 auto;">
+    <div class="aspect-w-16 aspect-h-9 relative" style="padding-bottom: {{ if eq .aspect_ratio "4/3" }}75%{{ else }}56.25%{{ end }};">
         <iframe 
             class="absolute inset-0 w-full h-full rounded-lg shadow-md"
             src="https://www.youtube.com/embed/{{ .videoId }}"
