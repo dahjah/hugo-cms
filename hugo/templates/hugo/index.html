@@ -497,11 +497,33 @@
                             <icon name="save" :size="16"></icon>
                             <span>Save Draft</span>
                         </button>
-                        <button @click="publishSite"
-                            class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors flex items-center space-x-2">
-                            <icon name="send" :size="16"></icon>
-                            <span>Publish</span>
-                        </button>
+                        <!-- Publish Button Group -->
+                        <div class="relative inline-flex" @click.away="showPublishDropdown = false">
+                            <button @click="publishSite"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-l-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors flex items-center space-x-2">
+                                <icon name="send" :size="16"></icon>
+                                <span>Publish</span>
+                            </button>
+                            <button @click.stop="showPublishDropdown = !showPublishDropdown"
+                                class="px-2 py-2 bg-indigo-600 text-white border-l border-indigo-500 rounded-r-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors">
+                                <icon name="chevron-down" :size="16"></icon>
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div v-if="showPublishDropdown"
+                                class="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-md shadow-lg z-50">
+                                <button @click="publishSite(); showPublishDropdown = false"
+                                    class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center space-x-2">
+                                    <icon name="send" :size="14"></icon>
+                                    <span>Publish All Pages</span>
+                                </button>
+                                <button @click="publishCurrentPage(); showPublishDropdown = false"
+                                    class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center space-x-2 border-t border-slate-100">
+                                    <icon name="file" :size="14"></icon>
+                                    <span>Publish Current Page Only</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </header>
 
@@ -1972,6 +1994,7 @@ layout = "${activePage.value.layout}"
 
                 // Settings State
                 const showSettingsModal = ref(false);
+                const showPublishDropdown = ref(false);
                 const storageSettings = ref({
                     storage_type: 'local',
                     s3_bucket: '',
@@ -2340,6 +2363,75 @@ layout = "${activePage.value.layout}"
                     window.findBlock = findBlockAndParent;
                 }
 
+                // Publish functions
+                const publishSite = async () => {
+                    try {
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                            getCookie('csrftoken');
+
+                        const response = await fetch('/api/websites/publish/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: JSON.stringify({
+                                website_id: currentWebsite.value.id
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if(data.success) {
+                            showToast('Site published successfully!', 'success');
+                            // Refresh pages to update status indicators
+                            await fetchPages();
+                        } else {
+                            showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
+                        }
+                    } catch(error) {
+                        console.error('Publish error:', error);
+                        showToast('Publish failed: ' + error.message, 'error');
+                    }
+                };
+
+                const publishCurrentPage = async () => {
+                    if(!activePage.value) {
+                        showToast('No page selected', 'error');
+                        return;
+                    }
+
+                    try {
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                            getCookie('csrftoken');
+
+                        const response = await fetch('/api/websites/publish_page/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: JSON.stringify({
+                                website_id: currentWebsite.value.id,
+                                page_id: activePage.value.id
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if(data.success) {
+                            showToast('Page published successfully!', 'success');
+                            // Refresh pages to update status indicators
+                            await fetchPages();
+                        } else {
+                            showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
+                        }
+                    } catch(error) {
+                        console.error('Publish error:', error);
+                        showToast('Publish failed: ' + error.message, 'error');
+                    }
+                };
+
                 return {
                     isLoaded,
                     pages,
@@ -2354,6 +2446,8 @@ layout = "${activePage.value.layout}"
                     setActivePage,
                     createNewPage,
                     savePageContent,
+                    publishSite,
+                    publishCurrentPage,
                     changeWebsite: async (websiteId) => {
                         if(currentWebsite.value && currentWebsite.value.id === websiteId) return;
                         isLoaded.value = false;
@@ -2402,36 +2496,6 @@ layout = "${activePage.value.layout}"
                         } catch(error) {
                             console.error('Create website error:', error);
                             showToast('Failed to create website', 'error', error.message);
-                        }
-                    },
-                    publishSite: async () => {
-                        try {
-                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
-                                getCookie('csrftoken');
-
-                            const response = await fetch('/api/websites/publish/', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': csrfToken
-                                },
-                                body: JSON.stringify({
-                                    website_id: currentWebsite.value.id
-                                })
-                            });
-
-                            const data = await response.json();
-
-                            if(data.success) {
-                                showToast('Site published successfully!', 'success');
-                                // Refresh pages to update status indicators
-                                await fetchPages();
-                            } else {
-                                showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
-                            }
-                        } catch(error) {
-                            console.error('Publish error:', error);
-                            showToast('Publish failed: ' + error.message, 'error');
                         }
                     },
 
@@ -2557,6 +2621,8 @@ layout = "${activePage.value.layout}"
                     websites,
                     currentWebsite,
                     showCreateWebsiteModal,
+                    showPublishDropdown,
+                    publishCurrentPage,
                     showWebsiteDropdown,
                     newWebsiteName,
                     newWebsiteSlug

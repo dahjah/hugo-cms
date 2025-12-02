@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
 from django.conf import settings
+from pathlib import Path
 import uuid 
 from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website, UploadedFile, StorageSettings
 from .serializers import (
@@ -406,6 +407,73 @@ class WebsiteViewSet(viewsets.ModelViewSet):
                 'message': f'Successfully published {len(pages)} pages',
                 'output_dir': str(output_path),
                 'files': generated_files
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['post'])
+    def publish_page(self, request):
+        """
+        Publish a single page to Hugo output directory.
+        Accepts website_id and page_id in request body.
+        """
+        try:
+            website_id = request.data.get('website_id')
+            page_id = request.data.get('page_id')
+            
+            if not website_id or not page_id:
+                return Response({
+                    'success': False,
+                    'error': 'website_id and page_id are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                website = Website.objects.get(id=website_id)
+                page = Page.objects.get(id=page_id, website=website)
+            except (Website.DoesNotExist, Page.DoesNotExist) as e:
+                return Response({
+                    'success': False,
+                    'error': str(e)
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Build output path
+            base_output_dir = Path(settings.BASE_DIR) / 'hugo_output'
+            output_path = base_output_dir / website.slug
+            content_dir = output_path / 'content'
+            
+            # Ensure content directory exists
+            content_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Generate base URL for absolute paths
+            base_url = request.build_absolute_uri('/')
+            
+            # Generate markdown for this page
+            page_content = self._generate_page_markdown(page, base_url)
+            
+            # Write to appropriate location
+            if page.slug == '/':
+                page_file = content_dir / '_index.md'
+            else:
+                page_dir = content_dir / page.slug.strip('/')
+                page_dir.mkdir(parents=True, exist_ok=True)
+                page_file = page_dir / 'index.md'
+            
+            with open(page_file, 'w') as f:
+                f.write(page_content)
+            
+            # Update last_published_at timestamp
+            from django.utils import timezone
+            page.last_published_at = timezone.now()
+            page.save(update_fields=['last_published_at'])
+            
+            return Response({
+                'success': True,
+                'message': f'Successfully published page: {page.title}',
+                'file': str(page_file)
             })
             
         except Exception as e:
