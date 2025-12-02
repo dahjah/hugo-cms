@@ -397,6 +397,10 @@ class WebsiteViewSet(viewsets.ModelViewSet):
                 with open(blocks_dir / f'{block_type}.html', 'w') as f: f.write(template_content)
                 generated_files.append(f'layouts/partials/blocks/{block_type}.html')
             
+            # 6. Generate layout-specific templates for each LayoutTemplate
+            layout_files = self._generate_layout_templates(layouts_dir, default_dir)
+            generated_files.extend(layout_files)
+            
             return Response({
                 'success': True,
                 'message': f'Successfully published {len(pages)} pages',
@@ -409,6 +413,106 @@ class WebsiteViewSet(viewsets.ModelViewSet):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _generate_layout_templates(self, layouts_dir, default_dir):
+        """
+        Generate Hugo layout templates for each LayoutTemplate in the database.
+        Each template respects the zones configuration (order, width, cssClasses).
+        """
+        from .models import LayoutTemplate
+        generated_files = []
+        
+        layouts = LayoutTemplate.objects.all()
+        
+        for layout in layouts:
+            # Sort zones by order
+            zones = sorted(layout.zones, key=lambda z: z.get('order', 0))
+            
+            # Build the template content
+            template_parts = []
+            template_parts.append('{{ define "main" }}')
+            template_parts.append('<div class="flex flex-col min-h-screen">')
+            
+            # Group zones by their width type to handle flex containers
+            full_width_zones = [z for z in zones if z.get('width') == 'w-full']
+            flex_zones = [z for z in zones if z.get('width') != 'w-full']
+            
+            # Render full-width zones in order, with flex zones in a container
+            current_order = 0
+            
+            for zone in zones:
+                zone_name = zone.get('name', 'main')
+                zone_width = zone.get('width', 'flex-1')
+                zone_css = zone.get('cssClasses', '')
+                zone_order = zone.get('order', 0)
+                
+                if zone_width == 'w-full':
+                    # Full-width zone (header/footer)
+                    if zone_name == 'header':
+                        template_parts.append(f'    {{{{/* Header Zone */}}}}')
+                        template_parts.append(f'    <header class="w-full {zone_css}">')
+                        template_parts.append(f'        {{{{ range .Params.{zone_name}_blocks }}}}')
+                        template_parts.append(f'            {{{{ partial "blocks/render-block.html" . }}}}')
+                        template_parts.append(f'        {{{{ end }}}}')
+                        template_parts.append(f'    </header>')
+                    elif zone_name == 'footer':
+                        template_parts.append(f'    {{{{/* Footer Zone */}}}}')
+                        template_parts.append(f'    <footer class="w-full mt-auto {zone_css}">')
+                        template_parts.append(f'        {{{{ range .Params.{zone_name}_blocks }}}}')
+                        template_parts.append(f'            {{{{ partial "blocks/render-block.html" . }}}}')
+                        template_parts.append(f'        {{{{ end }}}}')
+                        template_parts.append(f'    </footer>')
+                    else:
+                        template_parts.append(f'    <div class="w-full {zone_css}">')
+                        template_parts.append(f'        {{{{ range .Params.{zone_name}_blocks }}}}')
+                        template_parts.append(f'            {{{{ partial "blocks/render-block.html" . }}}}')
+                        template_parts.append(f'        {{{{ end }}}}')
+                        template_parts.append(f'    </div>')
+                
+                # Check if we need to start a flex container for non-full-width zones
+                elif zone_order > current_order and any(z.get('order', 0) > current_order and z.get('width') != 'w-full' for z in zones):
+                    # This is the first flex zone, start container
+                    if current_order == 0 or (current_order > 0 and zones[current_order-1].get('width') == 'w-full'):
+                        template_parts.append('    <div class="container mx-auto px-4 py-8 flex-1 flex flex-col md:flex-row gap-8">')
+                    
+                    # Render flex zones
+                    for flex_zone in [z for z in zones if z.get('order', 0) >= zone_order and z.get('width') != 'w-full']:
+                        fz_name = flex_zone.get('name', 'main')
+                        fz_width = flex_zone.get('width', 'flex-1')
+                        fz_css = flex_zone.get('cssClasses', '')
+                        
+                        if fz_name == 'sidebar':
+                            template_parts.append(f'        {{{{/* Sidebar Zone */}}}}')
+                            template_parts.append(f'        {{{{ if .Params.{fz_name}_blocks }}}}')
+                            template_parts.append(f'        <aside class="{fz_width} flex-shrink-0 {fz_css}">')
+                            template_parts.append(f'            {{{{ range .Params.{fz_name}_blocks }}}}')
+                            template_parts.append(f'                {{{{ partial "blocks/render-block.html" . }}}}')
+                            template_parts.append(f'            {{{{ end }}}}')
+                            template_parts.append(f'        </aside>')
+                            template_parts.append(f'        {{{{ end }}}}')
+                        elif fz_name == 'main':
+                            template_parts.append(f'        {{{{/* Main Zone */}}}}')
+                            template_parts.append(f'        <main class="{fz_width} min-w-0 {fz_css}">')
+                            template_parts.append(f'            {{{{ range .Params.{fz_name}_blocks }}}}')
+                            template_parts.append(f'                {{{{ partial "blocks/render-block.html" . }}}}')
+                            template_parts.append(f'            {{{{ end }}}}')
+                            template_parts.append(f'        </main>')
+                    
+                    template_parts.append('    </div>')
+                    break  # Only process flex container once
+            
+            template_parts.append('</div>')
+            template_parts.append('{{ end }}')
+            
+            # Write the template file
+            template_content = '\n'.join(template_parts)
+            layout_file = default_dir / f'{layout.id}.html'
+            with open(layout_file, 'w') as f:
+                f.write(template_content)
+            
+            generated_files.append(f'layouts/_default/{layout.id}.html')
+        
+        return generated_files
     
     def _generate_page_markdown(self, page, base_url=""):
         """
@@ -425,6 +529,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 title = "{page.title}"
 date = "{page.date or ''}"
 draft = false
+layout = "{page.layout}"
 """
         
         if page.description:
