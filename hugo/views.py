@@ -619,6 +619,27 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         </a>
         {{ end }}
     </div>
+</div>""",
+                'faq': """
+<div class="py-16 px-4 {{ .css_classes }}">
+    {{ if .title }}
+    <h2 class="text-3xl font-bold text-center mb-12 text-slate-900">{{ .title }}</h2>
+    {{ end }}
+    <div class="max-w-3xl mx-auto space-y-4">
+        {{ range $index, $item := .questions }}
+        <details class="group bg-white rounded-lg shadow-md overflow-hidden">
+            <summary class="cursor-pointer p-6 font-semibold text-slate-900 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                <span>{{ .question }}</span>
+                <svg class="w-5 h-5 text-slate-500 transform transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </summary>
+            <div class="px-6 pb-6 text-slate-600 border-t border-slate-100 pt-4">
+                {{ .answer }}
+            </div>
+        </details>
+        {{ end }}
+    </div>
 </div>"""
             }
 
@@ -1037,6 +1058,20 @@ draft = false
                             links_toml += f'{{platform = "{platform}", url = "{url}"}}'
                         links_toml += "]\n"
                         output += f'{indent}  links = {links_toml}'
+                
+                # Handle faq-specific parameters
+                if block.definition_id == 'faq':
+                    questions = params.get('questions', [])
+                    if questions:
+                        questions_toml = "["
+                        for i, q in enumerate(questions):
+                            if i > 0:
+                                questions_toml += ", "
+                            question = str(q.get("question", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            answer = str(q.get("answer", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            questions_toml += f'{{question = "{question}", answer = "{answer}"}}'
+                        questions_toml += "]\n"
+                        output += f'{indent}  questions = {questions_toml}'
                 
                 
                 # Handle nested children (flex_columns)

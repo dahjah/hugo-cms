@@ -141,6 +141,29 @@ class Command(BaseCommand):
                         {'platform': 'twitter', 'url': 'https://twitter.com/mambotruck'}
                     ]
                 }
+            },
+            {
+                'id': 'faq',
+                'label': 'FAQ',
+                'icon': 'help-circle',
+                'has_visual_preview': False,
+                'default_params': {
+                    'title': 'Frequently Asked Questions',
+                    'questions': [
+                        {
+                            'question': 'How far in advance should I book?',
+                            'answer': 'We recommend booking at least 2-3 weeks in advance, especially for weekends and peak seasons.'
+                        },
+                        {
+                            'question': 'What is included in the catering package?',
+                            'answer': 'Our packages include the food truck, staff, serving equipment, and cleanup. Food and beverages are customized based on your selections.'
+                        },
+                        {
+                            'question': 'Do you accommodate dietary restrictions?',
+                            'answer': 'Absolutely! We can accommodate vegetarian, vegan, gluten-free, and other dietary needs. Just let us know when booking.'
+                        }
+                    ]
+                }
             }
         ]
         
