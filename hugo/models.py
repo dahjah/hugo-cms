@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 import uuid
+from .deployment_models import DeploymentProvider
 
 class BlockDefinition(models.Model):
     """
@@ -24,6 +25,7 @@ class Website(models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=200, unique=True, help_text="URL slug for the website (e.g., 'my-site')")
     custom_css = models.TextField(blank=True, null=True, help_text="Global CSS for the website")
+    deployment_provider = models.ForeignKey('DeploymentProvider', on_delete=models.SET_NULL, null=True, blank=True, related_name='websites', help_text="Deployment configuration for this website")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

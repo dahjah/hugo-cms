@@ -7,6 +7,9 @@ from django.conf import settings
 from pathlib import Path
 import uuid 
 from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website, UploadedFile, StorageSettings
+from .deployment_models import DeploymentProvider, DeploymentHistory
+from .deployment_service import CloudflareR2Deployer, HugoBuilder
+from django.utils import timezone
 from .serializers import (
     PageListSerializer, 
     PageDetailSerializer, 
@@ -15,7 +18,8 @@ from .serializers import (
     SiteConfigSerializer,
     WebsiteSerializer,
     UploadedFileSerializer,
-    StorageSettingsSerializer
+    StorageSettingsSerializer,
+    DeploymentProviderSerializer
 )
 from .importer import import_hugo_theme_structure
 
@@ -408,6 +412,64 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             # 6. Generate layout-specific templates for each LayoutTemplate
             layout_files = self._generate_layout_templates(layouts_dir, default_dir)
             generated_files.extend(layout_files)
+            
+            # 7. Deploy if provider is configured
+            if request.data.get('website_id'):
+                try:
+                    website = Website.objects.get(id=request.data.get('website_id'))
+                    if website.deployment_provider and website.deployment_provider.enabled:
+                        # Create history record
+                        history = DeploymentHistory.objects.create(
+                            website=website,
+                            deployment_provider=website.deployment_provider,
+                            status='pending',
+                            hugo_version='unknown'
+                        )
+                        
+                        deployer = CloudflareR2Deployer(website.deployment_provider)
+                        builder = HugoBuilder()
+
+                        # Update status
+                        history.status = 'building'
+                        history.save()
+
+                        # Build
+                        build_result = builder.build(output_path)
+                        
+                        if not build_result['success']:
+                            history.status = 'failed'
+                            history.error_message = build_result.get('error', 'Build failed')
+                            history.save()
+                            generated_files.append(f"DEPLOYMENT: Build Failed - {history.error_message}")
+                        else:
+                            # Update status
+                            history.status = 'uploading'
+                            history.save()
+                            
+                            # Upload (public dir)
+                            public_dir = output_path / 'public'
+                            result = deployer.upload_directory(public_dir, prefix=website.slug)
+                        
+                        if result['success']:
+                            history.status = 'success'
+                            history.files_uploaded = result['files_uploaded']
+                            history.total_size_bytes = result['total_size_bytes']
+                            history.completed_at = timezone.now()
+                            
+                            # Construct URL
+                            if website.deployment_provider.custom_domain:
+                                history.deployment_url = f"https://{website.slug}.{website.deployment_provider.custom_domain}"
+                            
+                            generated_files.append(f"DEPLOYMENT: Success ({history.deployment_url})")
+                        else:
+                            history.status = 'failed'
+                            history.error_message = result.get('error', 'Unknown error')
+                            generated_files.append(f"DEPLOYMENT: Failed - {history.error_message}")
+                            
+                        history.save()
+                except Exception as e:
+                    print(f"Deployment error: {e}")
+                    generated_files.append(f"DEPLOYMENT: Error - {str(e)}")
             
             return Response({
                 'success': True,
@@ -1097,3 +1159,7 @@ class PageViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+
+class DeploymentProviderViewSet(viewsets.ModelViewSet):
+    queryset = DeploymentProvider.objects.all()
+    serializer_class = DeploymentProviderSerializer

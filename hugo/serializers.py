@@ -1,5 +1,15 @@
 from rest_framework import serializers
 from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website, UploadedFile, StorageSettings
+from .deployment_models import DeploymentProvider
+
+class DeploymentProviderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeploymentProvider
+        fields = ['id', 'name', 'enabled', 'provider_type', 'cf_account_id', 'cf_zone_id', 'cf_r2_access_key', 'cf_r2_secret_key', 'cf_api_token', 'cf_bucket_name', 'custom_domain']
+        extra_kwargs = {
+            'cf_r2_secret_key': {'write_only': True},
+            'cf_api_token': {'write_only': True}
+        }
 
 class UploadedFileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,7 +27,7 @@ class StorageSettingsSerializer(serializers.ModelSerializer):
 class WebsiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Website
-        fields = ['id', 'name', 'slug', 'custom_css']
+        fields = ['id', 'name', 'slug', 'custom_css', 'deployment_provider']
 
 class BlockDefinitionSerializer(serializers.ModelSerializer):
     class Meta:

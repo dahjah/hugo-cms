@@ -133,6 +133,21 @@
                 </div>
 
                 <div class="space-y-6">
+                    <!-- General Settings -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-800 mb-3 flex items-center">
+                            <icon name="settings" :size="20" class="mr-2 text-indigo-600"></icon>
+                            General Settings
+                        </h3>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">URL Slug</label>
+                            <input v-model="websiteSlug" type="text"
+                                class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none"
+                                placeholder="my-site-slug">
+                            <p class="text-xs text-slate-500 mt-1">Used in the site URL (e.g., slug.monu.dev)</p>
+                        </div>
+                    </div>
+
                     <!-- Storage Configuration -->
                     <div>
                         <h3 class="text-lg font-semibold text-slate-800 mb-3 flex items-center">
@@ -211,6 +226,116 @@
                             <p class="text-sm text-slate-600 mb-2">Add custom CSS rules that will be applied to your
                                 entire site.</p>
                             <div ref="cssEditorRef" class="border border-slate-300 rounded"></div>
+                        </div>
+                    </div>
+
+                    <!-- Deployment Settings -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-800 mb-3 flex items-center">
+                            <icon name="cloud-upload" :size="20" class="mr-2 text-indigo-600"></icon>
+                            Cloud Deployment
+                        </h3>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4">
+                            <p class="text-sm text-slate-600">Configure automatic deployment to Cloudflare R2.</p>
+
+                            <!-- Provider Selection -->
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Select Deployment
+                                        Provider</label>
+                                    <div class="flex space-x-2">
+                                        <select v-model="selectedProviderId"
+                                            class="flex-1 px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                            <option value="">-- No Deployment --</option>
+                                            <option v-for="provider in availableProviders" :key="provider.id"
+                                                :value="provider.id">
+                                                {{ provider.name }} ({{ provider.custom_domain || provider.provider_type
+                                                }})
+                                            </option>
+                                        </select>
+                                        <button
+                                            @click="isEditingProvider = true; editingProvider = { id: null, name: 'New Provider', enabled: true, provider_type: 'cloudflare_r2', cf_account_id: '', cf_zone_id: '', cf_r2_access_key: '', cf_r2_secret_key: '', cf_api_token: '', cf_bucket_name: '', custom_domain: '' }"
+                                            class="px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
+                                            New
+                                        </button>
+                                        <button v-if="selectedProviderId"
+                                            @click="() => { const p = availableProviders.find(p => p.id === selectedProviderId); if(p) { editingProvider = {...p}; isEditingProvider = true; } }"
+                                            class="px-3 py-2 bg-slate-200 text-slate-700 rounded text-sm hover:bg-slate-300">
+                                            Edit
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Provider Edit Form -->
+                                <div v-if="isEditingProvider"
+                                    class="p-4 bg-slate-100 rounded border border-slate-200 space-y-3">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h4 class="font-medium text-slate-700">{{ editingProvider.id ? 'Edit Provider' :
+                                            'New Provider' }}</h4>
+                                        <button @click="isEditingProvider = false"
+                                            class="text-slate-400 hover:text-slate-600">
+                                            <icon name="x" :size="16"></icon>
+                                        </button>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-500 mb-1">Provider
+                                            Name</label>
+                                        <input v-model="editingProvider.name" type="text"
+                                            placeholder="e.g. My Personal R2"
+                                            class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                    </div>
+
+                                    <div>
+                                        <label class="flex items-center space-x-2 text-sm font-medium text-slate-700">
+                                            <input v-model="editingProvider.enabled" type="checkbox"
+                                                class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                            <span>Enable deployment</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-3 pt-2">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-500 mb-1">Cloudflare
+                                                Account ID</label>
+                                            <input v-model="editingProvider.cf_account_id" type="text"
+                                                class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-500 mb-1">Zone ID (for
+                                                monu.dev)</label>
+                                            <input v-model="editingProvider.cf_zone_id" type="text"
+                                                class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-500 mb-1">R2 Bucket
+                                                Name</label>
+                                            <input v-model="editingProvider.cf_bucket_name" type="text"
+                                                class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-500 mb-1">R2 Access Key
+                                                ID</label>
+                                            <input v-model="editingProvider.cf_r2_access_key" type="text"
+                                                class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-500 mb-1">R2 Secret
+                                                Access Key</label>
+                                            <input v-model="editingProvider.cf_r2_secret_key" type="password"
+                                                placeholder="••••••••"
+                                                class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                        </div>
+                                        <div class="col-span-2">
+                                            <label class="block text-xs font-medium text-slate-500 mb-1">Custom
+                                                Domain</label>
+                                            <input v-model="editingProvider.custom_domain" type="text"
+                                                placeholder="mysite.monu.dev"
+                                                class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-1 focus:ring-indigo-500 outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -526,15 +651,32 @@
                             <icon name="save" :size="16"></icon>
                             <span>Save Draft</span>
                         </button>
+
+                        <!-- View Site Button -->
+                        <a v-if="selectedProviderId && availableProviders.find(p => p.id === selectedProviderId)?.custom_domain && currentWebsite"
+                            :href="'https://' + currentWebsite.slug + '.' + availableProviders.find(p => p.id === selectedProviderId).custom_domain"
+                            target="_blank"
+                            class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-md text-sm font-medium hover:bg-slate-50 transition-colors flex items-center space-x-2 text-decoration-none">
+                            <icon name="external-link" :size="16"></icon>
+                            <span>View Site</span>
+                        </a>
                         <!-- Publish Button Group -->
                         <div class="relative inline-flex" @click.away="showPublishDropdown = false">
-                            <button @click="publishSite"
-                                class="px-4 py-2 bg-indigo-600 text-white rounded-l-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors flex items-center space-x-2">
-                                <icon name="send" :size="16"></icon>
-                                <span>Publish</span>
+                            <button @click="publishSite" :disabled="isPublishing"
+                                class="px-4 py-2 bg-indigo-600 text-white rounded-l-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors flex items-center space-x-2 disabled:opacity-75 disabled:cursor-not-allowed">
+                                <icon v-if="!isPublishing" name="send" :size="16"></icon>
+                                <svg v-else class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
+                                    fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                                <span>{{ isPublishing ? 'Publishing...' : 'Publish' }}</span>
                             </button>
-                            <button @click.stop="showPublishDropdown = !showPublishDropdown"
-                                class="px-2 py-2 bg-indigo-600 text-white border-l border-indigo-500 rounded-r-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors">
+                            <button @click.stop="showPublishDropdown = !showPublishDropdown" :disabled="isPublishing"
+                                class="px-2 py-2 bg-indigo-600 text-white border-l border-indigo-500 rounded-r-md text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors disabled:opacity-75 disabled:cursor-not-allowed">
                                 <icon name="chevron-down" :size="16"></icon>
                             </button>
 
@@ -2102,7 +2244,9 @@ layout = "${activePage.value.layout}"
                 // Settings State
                 const showSettingsModal = ref(false);
                 const showPublishDropdown = ref(false);
+                const isPublishing = ref(false);
                 const customCss = ref('');
+                const websiteSlug = ref('');
                 const cssEditorRef = ref(null);
                 let cssEditorInstance = null;
 
@@ -2114,6 +2258,23 @@ layout = "${activePage.value.layout}"
                     s3_secret_key: '',
                     s3_region: '',
                     s3_public_url: ''
+                });
+
+                const availableProviders = ref([]);
+                const selectedProviderId = ref('');
+                const isEditingProvider = ref(false);
+                const editingProvider = ref({
+                    id: null,
+                    name: '',
+                    enabled: false,
+                    provider_type: 'cloudflare_r2',
+                    cf_account_id: '',
+                    cf_zone_id: '',
+                    cf_r2_access_key: '',
+                    cf_r2_secret_key: '',
+                    cf_api_token: '',
+                    cf_bucket_name: '',
+                    custom_domain: ''
                 });
 
                 // Initialize CodeMirror when settings modal opens
@@ -2153,6 +2314,16 @@ layout = "${activePage.value.layout}"
                         layoutTemplates.value = data.layouts;
                         websites.value = data.websites || [];
                         currentWebsite.value = data.current_website;
+
+                        // Fetch providers for UI
+                        const providersResponse = await fetch(`${API_BASE_URL}deployment-providers/`);
+                        if(providersResponse.ok) {
+                            availableProviders.value = await providersResponse.json();
+                        }
+
+                        if(currentWebsite.value) {
+                            selectedProviderId.value = currentWebsite.value.deployment_provider || '';
+                        }
 
                         // Initialize global zones
                         contentZones.value.header = data.header.map(b => ({...b, zone: 'header'}));
@@ -2560,6 +2731,7 @@ layout = "${activePage.value.layout}"
                         showToast('No page selected', 'error');
                         return;
                     }
+                    isPublishing.value = true;
 
                     try {
                         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
@@ -2680,6 +2852,7 @@ layout = "${activePage.value.layout}"
                             if(websiteResponse.ok) {
                                 const websiteData = await websiteResponse.json();
                                 customCss.value = websiteData.custom_css || '';
+                                websiteSlug.value = websiteData.slug || '';
                             }
                         } catch(error) {
                             console.error('Error fetching settings:', error);
@@ -2689,6 +2862,7 @@ layout = "${activePage.value.layout}"
 
                     saveSettings: async () => {
                         if(!currentWebsite.value) return;
+                        isPublishing.value = true;
 
                         try {
                             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
@@ -2720,9 +2894,10 @@ layout = "${activePage.value.layout}"
                                 throw new Error('Failed to save storage settings');
                             }
 
-                            // Save Website Settings (Custom CSS)
+                            // Save Website Settings (Custom CSS & Slug)
                             const websitePayload = {
-                                custom_css: customCss.value
+                                custom_css: customCss.value,
+                                slug: websiteSlug.value
                             };
 
                             const websiteResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
@@ -2736,6 +2911,66 @@ layout = "${activePage.value.layout}"
 
                             if(!websiteResponse.ok) {
                                 throw new Error('Failed to save website settings');
+                            }
+
+                            // Save Deployment Settings
+
+                            // 1. If editing a provider, save it first
+                            if(isEditingProvider.value) {
+                                const providerPayload = {...editingProvider.value};
+                                let providerUrl = '/api/deployment-providers/';
+                                let providerMethod = 'POST';
+
+                                if(providerPayload.id) {
+                                    providerUrl += `${providerPayload.id}/`;
+                                    providerMethod = 'PUT';
+                                }
+
+                                const providerResponse = await fetch(providerUrl, {
+                                    method: providerMethod,
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken
+                                    },
+                                    body: JSON.stringify(providerPayload)
+                                });
+
+                                if(!providerResponse.ok) {
+                                    throw new Error('Failed to save provider settings');
+                                }
+
+                                const savedProvider = await providerResponse.json();
+
+                                // Update available providers list
+                                if(providerMethod === 'POST') {
+                                    availableProviders.value.push(savedProvider);
+                                    selectedProviderId.value = savedProvider.id; // Auto-select new provider
+                                } else {
+                                    const index = availableProviders.value.findIndex(p => p.id === savedProvider.id);
+                                    if(index !== -1) {
+                                        availableProviders.value[index] = savedProvider;
+                                    }
+                                }
+                                isEditingProvider.value = false;
+                            }
+
+                            // 2. Link Selected Provider to Website
+                            // We need to update the website record with the selected deployment_provider
+                            const websiteLinkPayload = {
+                                deployment_provider: selectedProviderId.value || null
+                            };
+
+                            const linkResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify(websiteLinkPayload)
+                            });
+
+                            if(!linkResponse.ok) {
+                                throw new Error('Failed to link deployment provider');
                             }
 
                             showToast('Settings saved successfully', 'success');
@@ -2784,8 +3019,13 @@ layout = "${activePage.value.layout}"
                     handleDragStartExisting,
                     showSettingsModal,
                     customCss,
+                    websiteSlug,
                     cssEditorRef,
                     storageSettings,
+                    availableProviders,
+                    selectedProviderId,
+                    isEditingProvider,
+                    editingProvider,
                     handleDrop,
                     updateBlockParams: updateBlock,
                     deleteBlock,
@@ -2805,6 +3045,7 @@ layout = "${activePage.value.layout}"
                     currentWebsite,
                     showCreateWebsiteModal,
                     showPublishDropdown,
+                    isPublishing,
                     publishCurrentPage,
                     showWebsiteDropdown,
                     newWebsiteName,
