@@ -199,11 +199,69 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             with open(default_dir / 'single.html', 'w') as f: f.write(single_content)
             generated_files.append('layouts/_default/single.html')
             
-            # 3. index.html (Home page - same as single for now)
-            with open(layouts_dir / 'index.html', 'w') as f: f.write(single_content)
-            generated_files.append('layouts/index.html')
+            # 3. list.html (for homepage and list pages - respects layout parameter)
+            # This template checks the layout parameter and renders blocks accordingly
+            # Since we can't dynamically include templates, we check the layout value
+            list_content = """{{ define "main" }}
+{{ $layout := .Params.layout | default "list" }}
+<div class="flex flex-col min-h-screen">
+    {{/* Header Zone */}}
+    <header class="w-full">
+        {{ range .Params.header_blocks }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </header>
+    
+    {{ if eq $layout "rightsidebar" }}
+        {{/* Right Sidebar Layout */}}
+        <div class="container mx-auto px-4 py-8 flex-1 flex flex-col md:flex-row gap-8">
+            {{/* Main Zone (left) */}}
+            <main class="flex-1 min-w-0 min-h-[400px]">
+                {{ range .Params.main_blocks }}
+                    {{ partial "blocks/render-block.html" . }}
+                {{ end }}
+            </main>
+            {{/* Sidebar Zone (right) */}}
+            {{ if .Params.sidebar_blocks }}
+            <aside class="w-64 flex-shrink-0 border-r border-slate-100 bg-slate-50/30">
+                {{ range .Params.sidebar_blocks }}
+                    {{ partial "blocks/render-block.html" . }}
+                {{ end }}
+            </aside>
+            {{ end }}
+        </div>
+    {{ else }}
+        {{/* Default/List Layout (sidebar on left) */}}
+        <div class="container mx-auto px-4 py-8 flex-1 flex flex-col md:flex-row gap-8">
+            {{/* Sidebar Zone (left) */}}
+            {{ if .Params.sidebar_blocks }}
+            <aside class="w-full md:w-64 flex-shrink-0">
+                {{ range .Params.sidebar_blocks }}
+                    {{ partial "blocks/render-block.html" . }}
+                {{ end }}
+            </aside>
+            {{ end }}
+            {{/* Main Zone (right) */}}
+            <main class="flex-1 min-w-0">
+                {{ range .Params.main_blocks }}
+                    {{ partial "blocks/render-block.html" . }}
+                {{ end }}
+            </main>
+        </div>
+    {{ end }}
+    
+    {{/* Footer Zone */}}
+    <footer class="w-full mt-auto">
+        {{ range .Params.footer_blocks }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </footer>
+</div>
+{{ end }}"""
+            with open(default_dir / 'list.html', 'w') as f: f.write(list_content)
+            generated_files.append('layouts/_default/list.html')
 
-            # 4. partials/blocks/render-block.html
+            # 4. partials/blocks/render-block.html (removed hardcoded index.html to allow layout parameter)
             render_block_content = """{{ if .type }}
     {{ $partialPath := printf "blocks/%s.html" .type }}
     {{ if templates.Exists (printf "partials/%s" $partialPath) }}
@@ -515,6 +573,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         """
         Generate Hugo layout templates for each LayoutTemplate in the database.
         Each template respects the zones configuration (order, width, cssClasses).
+        Generates templates in both _default/ and type-specific directories for homepage support.
         """
         from .models import LayoutTemplate
         generated_files = []
@@ -601,13 +660,23 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             template_parts.append('</div>')
             template_parts.append('{{ end }}')
             
-            # Write the template file
+            # Write the template content
             template_content = '\n'.join(template_parts)
+            
+            # 1. Write to _default/{layout}.html (for regular pages with layout parameter)
             layout_file = default_dir / f'{layout.id}.html'
             with open(layout_file, 'w') as f:
                 f.write(template_content)
-            
             generated_files.append(f'layouts/_default/{layout.id}.html')
+            
+            # 2. Write to {layout}/list.html (for homepage with type parameter)
+            # This allows homepage to use type="rightsidebar" and find layouts/rightsidebar/list.html
+            type_dir = layouts_dir / layout.id
+            type_dir.mkdir(parents=True, exist_ok=True)
+            type_list_file = type_dir / 'list.html'
+            with open(type_list_file, 'w') as f:
+                f.write(template_content)
+            generated_files.append(f'layouts/{layout.id}/list.html')
         
         return generated_files
     
@@ -622,12 +691,23 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         global_blocks = BlockInstance.objects.filter(page=None, parent=None, website=page.website).order_by('sort_order')
         
         # Build frontmatter
+        # For homepage (kind: home), Hugo prioritizes home.html over layout parameter
+        # Use 'type' to override template lookup directory for homepage
+        is_homepage = (page.slug == '/' or page.slug == '')
+        
         frontmatter = f"""+++
 title = "{page.title}"
 date = "{page.date or ''}"
 draft = false
-layout = "{page.layout}"
 """
+        
+        if is_homepage:
+            # For homepage, use 'type' to change template lookup directory
+            # This makes Hugo look in layouts/{type}/ instead of layouts/home.html
+            frontmatter += f'type = "{page.layout}"\n'
+        else:
+            # For other pages, use 'layout' parameter
+            frontmatter += f'layout = "{page.layout}"\n'
         
         if page.description:
             frontmatter += f'description = "{page.description}"\n'
@@ -635,6 +715,7 @@ layout = "{page.layout}"
         if page.tags:
             tags_str = ', '.join([f'"{tag}"' for tag in page.tags])
             frontmatter += f'tags = [{tags_str}]\n'
+
         
         # Generate block content
         content = ""
@@ -651,6 +732,10 @@ layout = "{page.layout}"
                 # Render simple parameters
                 params = block.params
                 for key, value in params.items():
+                    # Skip 'type' to avoid duplicate key (already output as block type)
+                    if key == 'type':
+                        continue
+                    
                     # Skip complex objects
                     if isinstance(value, (dict, list)):
                         continue
