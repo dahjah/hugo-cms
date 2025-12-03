@@ -498,6 +498,102 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             </div>
         </div>
     </div>
+</div>""",
+                'features_grid': """
+<div class="py-16 px-4 {{ .css_classes }}">
+    {{ if .title }}
+    <h2 class="text-3xl font-bold text-center mb-12 text-slate-900">{{ .title }}</h2>
+    {{ end }}
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+        {{ range .features }}
+        <div class="text-center p-6 rounded-lg hover:shadow-lg transition-shadow">
+            {{ if .icon }}
+            <div class="w-16 h-16 mx-auto mb-4 bg-indigo-100 rounded-full flex items-center justify-center">
+                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            {{ end }}
+            <h4 class="text-xl font-semibold mb-3 text-slate-800">{{ .title }}</h4>
+            <p class="text-slate-600">{{ .description }}</p>
+        </div>
+        {{ end }}
+    </div>
+</div>""",
+                'process_steps': """
+<div class="py-16 px-4 bg-slate-50 {{ .css_classes }}">
+    {{ if .title }}
+    <h2 class="text-3xl font-bold text-center mb-12 text-slate-900">{{ .title }}</h2>
+    {{ end }}
+    <div class="max-w-4xl mx-auto space-y-8">
+        {{ range $index, $step := .steps }}
+        <div class="flex gap-6 items-start">
+            <div class="flex-shrink-0">
+                <div class="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xl font-bold">
+                    {{ add $index 1 }}
+                </div>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-2xl font-semibold mb-2 text-slate-900">{{ .title }}</h3>
+                <p class="text-slate-600 leading-relaxed">{{ .description }}</p>
+            </div>
+        </div>
+        {{ end }}
+    </div>
+</div>""",
+                'stats_counter': """
+<div class="py-16 px-4 bg-indigo-600 text-white {{ .css_classes }}">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+        {{ range .stats }}
+        <div>
+            <div class="text-5xl font-bold mb-2">{{ .value }}{{ if .suffix }}{{ .suffix }}{{ end }}</div>
+            <div class="text-indigo-100 text-lg">{{ .label }}</div>
+        </div>
+        {{ end }}
+    </div>
+</div>""",
+                'menu_grid': """
+<div class="py-16 px-4 {{ .css_classes }}">
+    {{ if .title }}
+    <h2 class="text-3xl font-bold text-center mb-12 text-slate-900">{{ .title }}</h2>
+    {{ end }}
+    <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {{ range .items }}
+        <div class="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
+            {{ if .image }}
+            <img src="{{ .image }}" alt="{{ .name }}" class="w-full h-48 object-cover"/>
+            {{ end }}
+            <div class="p-4">
+                <h4 class="text-lg font-semibold mb-2 text-slate-900">{{ .name }}</h4>
+                {{ if .description }}
+                <p class="text-sm text-slate-600">{{  .description }}</p>
+                {{ end }}
+            </div>
+        </div>
+        {{ end }}
+    </div>
+</div>""",
+                'cta_hero': """
+<div class="relative overflow-hidden {{ .css_classes }}">
+    {{ if .background_image }}
+    <div class="absolute inset-0 z-0">
+        <img src="{{ .background_image }}" alt="Background" class="w-full h-full object-cover"/>
+        <div class="absolute inset-0 bg-black/50"></div>
+    </div>
+    {{ end }}
+    <div class="relative z-10 max-w-4xl mx-auto text-center py-24 px-4">
+        {{ if .headline }}
+        <h1 class="text-4xl md:text-6xl font-bold mb-6 {{ if .background_image }}text-white{{ else }}text-slate-900{{ end }}">{{ .headline }}</h1>
+        {{ end }}
+        {{ if .subheadline }}
+        <p class="text-xl md:text-2xl mb-8 {{ if .background_image }}text-white/90{{ else }}text-slate-700{{ end }}">{{ .subheadline }}</p>
+        {{ end }}
+        {{ if .cta_text }}
+        <a href="{{ .cta_url | default "#" }}" class="inline-block px-8 py-4 bg-indigo-600 text-white text-lg font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-lg">
+            {{ .cta_text }}
+        </a>
+        {{ end }}
+    </div>
 </div>"""
             }
 
