@@ -128,6 +128,19 @@ class Command(BaseCommand):
                         }
                     ]
                 }
+            },
+            {
+                'id': 'social_links',
+                'label': 'Social Media Links',
+                'icon': 'layout',
+                'has_visual_preview': False,
+                'default_params': {
+                    'links': [
+                        {'platform': 'facebook', 'url': 'https://facebook.com/mambotruck'},
+                        {'platform': 'instagram', 'url': 'https://instagram.com/mambotruck'},
+                        {'platform': 'twitter', 'url': 'https://twitter.com/mambotruck'}
+                    ]
+                }
             }
         ]
         
