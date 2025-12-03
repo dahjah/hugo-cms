@@ -164,6 +164,39 @@ class Command(BaseCommand):
                         }
                     ]
                 }
+            },
+            {
+                'id': 'google_reviews',
+                'label': 'Google Reviews',
+                'icon': 'star',
+                'has_visual_preview': False,
+                'default_params': {
+                    'title': 'What Our Customers Say',
+                    'subtitle': 'We take pride in serving delicious food and creating memorable experiences.',
+                    'reviews': [
+                        {
+                            'name': 'Sarah Johnson',
+                            'rating': 5,
+                            'text': 'The food was absolutely amazing! Everyone at our wedding raved about the Cuban sandwiches. Highly recommend!',
+                            'date': '2 weeks ago',
+                            'image': ''
+                        },
+                        {
+                            'name': 'Mike Chen',
+                            'rating': 5,
+                            'text': 'Best food truck in town. The service was professional and the setup looked great. Will definitely book again.',
+                            'date': '1 month ago',
+                            'image': ''
+                        },
+                        {
+                            'name': 'Emily Davis',
+                            'rating': 4,
+                            'text': 'Great food and friendly staff. The portions were generous and everything tasted fresh.',
+                            'date': '2 months ago',
+                            'image': ''
+                        }
+                    ]
+                }
             }
         ]
         

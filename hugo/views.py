@@ -640,6 +640,49 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         </details>
         {{ end }}
     </div>
+</div>""",
+                'google_reviews': """
+<div class="py-16 px-4 bg-slate-50 {{ .css_classes }}">
+    {{ if .title }}
+    <h2 class="text-3xl font-bold text-center mb-4 text-slate-900">{{ .title }}</h2>
+    {{ end }}
+    {{ if .subtitle }}
+    <p class="text-center text-slate-600 mb-12 max-w-2xl mx-auto">{{ .subtitle }}</p>
+    {{ end }}
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {{ range .reviews }}
+        <div class="bg-white rounded-lg shadow-md p-6 flex flex-col">
+            <div class="flex items-start mb-4">
+                {{ if .image }}
+                <img src="{{ .image }}" alt="{{ .name }}" class="w-12 h-12 rounded-full mr-3 object-cover">
+                {{ else }}
+                <div class="w-12 h-12 rounded-full mr-3 bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold">
+                    {{ substr .name 0 1 }}
+                </div>
+                {{ end }}
+                <div class="flex-1">
+                    <h4 class="font-semibold text-slate-900">{{ .name }}</h4>
+                    <div class="flex items-center gap-1 mt-1">
+                        {{ range seq (int .rating) }}
+                        <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                        </svg>
+                        {{ end }}
+                        {{ range seq (sub 5 (int .rating)) }}
+                        <svg class="w-4 h-4 text-slate-300 fill-current" viewBox="0 0 20 20">
+                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                        </svg>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+            <p class="text-slate-600 text-sm flex-1 mb-3">{{ .text }}</p>
+            {{ if .date }}
+            <p class="text-xs text-slate-400">{{ .date }}</p>
+            {{ end }}
+        </div>
+        {{ end }}
+    </div>
 </div>"""
             }
 
@@ -1072,6 +1115,23 @@ draft = false
                             questions_toml += f'{{question = "{question}", answer = "{answer}"}}'
                         questions_toml += "]\n"
                         output += f'{indent}  questions = {questions_toml}'
+                
+                # Handle google_reviews-specific parameters
+                if block.definition_id == 'google_reviews':
+                    reviews = params.get('reviews', [])
+                    if reviews:
+                        reviews_toml = "["
+                        for i, r in enumerate(reviews):
+                            if i > 0:
+                                reviews_toml += ", "
+                            name = str(r.get("name", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            rating = str(r.get("rating", "5")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            text = str(r.get("text", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            date = str(r.get("date", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            image = str(r.get("image", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            reviews_toml += f'{{name = "{name}", rating = "{rating}", text = "{text}", date = "{date}", image = "{image}"}}'
+                        reviews_toml += "]\n"
+                        output += f'{indent}  reviews = {reviews_toml}'
                 
                 
                 # Handle nested children (flex_columns)
