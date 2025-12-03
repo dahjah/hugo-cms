@@ -1005,8 +1005,139 @@
                         </div>
                     </div>
 
-                    <!-- Generic Items Editor (for blocks with 'items' parameter that aren't menu) -->
-                    <div v-if="selectedBlock.params.items && selectedBlock.type !== 'menu'" class="space-y-4">
+                    <!-- CTA Hero Block Editor -->
+                    <div v-if="selectedBlock.type === 'cta_hero'" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Background Image
+                                URL</label>
+                            <input type="text" v-model="selectedBlock.params.background_image"
+                                class="w-full px-3 py-2 border border-slate-200 rounded-md text-sm" />
+                        </div>
+                    </div>
+
+                    <!-- Features Grid Block Editor -->
+                    <div v-if="selectedBlock.type === 'features_grid'" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Features</label>
+                            <div class="space-y-2">
+                                <div v-for="(feature, index) in (selectedBlock.params.features || [])" :key="index"
+                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-medium text-slate-600">Feature {{ index + 1 }}</span>
+                                        <button @click="selectedBlock.params.features.splice(index, 1)"
+                                            class="text-red-500 hover:text-red-700">
+                                            <icon name="trash-2" :size="14"></icon>
+                                        </button>
+                                    </div>
+                                    <input type="text" v-model="feature.title" placeholder="Title"
+                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mb-2" />
+                                    <textarea v-model="feature.description" placeholder="Description"
+                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm"
+                                        rows="2"></textarea>
+                                </div>
+                            </div>
+                            <button
+                                @click="selectedBlock.params.features = [...(selectedBlock.params.features || []), {title: 'New Feature', description: 'Feature description', icon: 'check'}]"
+                                class="mt-2 px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
+                                + Add Feature
+                            </button>
+                        </div>
+                    </div>
+
+                    <!--  Process Steps Block Editor -->
+                    <div v-if="selectedBlock.type === 'process_steps'" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Steps</label>
+                            <div class="space-y-2">
+                                <div v-for="(step, index) in (selectedBlock.params.steps || [])" :key="index"
+                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-medium text-slate-600">Step {{ index + 1 }}</span>
+                                        <button @click="selectedBlock.params.steps.splice(index, 1)"
+                                            class="text-red-500 hover:text-red-700">
+                                            <icon name="trash-2" :size="14"></icon>
+                                        </button>
+                                    </div>
+                                    <input type="text" v-model="step.title" placeholder="Step Title"
+                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mb-2" />
+                                    <textarea v-model="step.description" placeholder="Description"
+                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm"
+                                        rows="2"></textarea>
+                                </div>
+                            </div>
+                            <button
+                                @click="selectedBlock.params.steps = [...(selectedBlock.params.steps || []), {title: 'New Step', description: 'Step description'}]"
+                                class="mt-2 px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
+                                + Add Step
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Counter Block Editor -->
+                    <div v-if="selectedBlock.type === 'stats_counter'" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Statistics</label>
+                            <div class="space-y-2">
+                                <div v-for="(stat, index) in (selectedBlock.params.stats || [])" :key="index"
+                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-medium text-slate-600">Stat {{ index + 1 }}</span>
+                                        <button @click="selectedBlock.params.stats.splice(index, 1)"
+                                            class="text-red-500 hover:text-red-700">
+                                            <icon name="trash-2" :size="14"></icon>
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" v-model="stat.value" placeholder="Value"
+                                            class="px-2 py-1 border border-slate-200 rounded text-sm" />
+                                        <input type="text" v-model="stat.suffix" placeholder="Suffix (k+, etc.)"
+                                            class="px-2 py-1 border border-slate-200 rounded text-sm" />
+                                    </div>
+                                    <input type="text" v-model="stat.label" placeholder="Label"
+                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mt-2" />
+                                </div>
+                            </div>
+                            <button
+                                @click="selectedBlock.params.stats = [...(selectedBlock.params.stats || []), {value: '100', suffix: '+', label: 'New Stat'}]"
+                                class="mt-2 px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
+                                + Add Stat
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Menu Grid Block Editor -->
+                    <div v-if="selectedBlock.type === 'menu_grid'" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Menu Items</label>
+                            <div class="space-y-2">
+                                <div v-for="(item, index) in (selectedBlock.params.items || [])" :key="index"
+                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-medium text-slate-600">Item {{ index + 1 }}</span>
+                                        <button @click="selectedBlock.params.items.splice(index, 1)"
+                                            class="text-red-500 hover:text-red-700">
+                                            <icon name="trash-2" :size="14"></icon>
+                                        </button>
+                                    </div>
+                                    <input type="text" v-model="item.name" placeholder="Item Name"
+                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mb-2" />
+                                    <input type="text" v-model="item.image" placeholder="Image URL"
+                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mb-2" />
+                                    <input type="text" v-model="item.description" placeholder="Description"
+                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm" />
+                                </div>
+                            </div>
+                            <button
+                                @click="selectedBlock.params.items = [...(selectedBlock.params.items || []), {name: 'New Item', image: '', description: ''}]"
+                                class="mt-2 px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
+                                + Add Item
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Generic Items Editor (for blocks with 'items' parameter that aren't menu or menu_grid) -->
+                    <div v-if="selectedBlock.params.items && selectedBlock.type !== 'menu' && selectedBlock.type !== 'menu_grid'"
+                        class="space-y-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Items</label>
                             <div class="space-y-2">
@@ -1680,6 +1811,87 @@
                     <!-- HTML Block -->
                     <div v-else-if="block.type === 'html'" class="p-4">
                         <div class="html-block" v-html="block.params.html"></div>
+                    </div>
+
+                    <!-- CTA Hero Block -->
+                    <div v-else-if="block.type === 'cta_hero'" class="relative overflow-hidden rounded-lg shadow-lg" style="min-height: 300px;">
+                        <div v-if="block.params.background_image" class="absolute inset-0 z-0">
+                            <img :src="block.params.background_image" alt="Background" class="w-full h-full object-cover"/>
+                            <div class="absolute inset-0 bg-black/50"></div>
+                        </div>
+                        <div :class="['relative z-10 text-center py-16 px-6', block.params.background_image ? 'text-white' : 'text-slate-900']">
+                            <h1 class="text-4xl font-bold mb-4">{{ block.params.headline || 'Headline' }}</h1>
+                            <p class="text-xl mb-6 opacity-90">{{ block.params.subheadline || 'Subheadline' }}</p>
+                            <div class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold shadow-lg">
+                                {{ block.params.cta_text || 'Call to Action' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Features Grid Block -->
+                    <div v-else-if="block.type === 'features_grid'" class="p-6 bg-white rounded-lg">
+                        <h2 v-if="block.params.title" class="text-2xl font-bold text-center mb-8 text-slate-900">{{ block.params.title }}</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div v-for="(feature, idx) in (block.params.features || [])" :key="idx" class="text-center p-4 rounded-lg hover:shadow-md transition-shadow">
+                                <div class="w-12 h-12 mx-auto mb-3 bg-indigo-100 rounded-full flex items-center justify-center">
+                                    <icon name="check-circle" :size="24" class="text-indigo-600"></icon>
+                                </div>
+                                <h4 class="text-lg font-semibold mb-2 text-slate-800">{{ feature.title }}</h4>
+                                <p class="text-sm text-slate-600">{{ feature.description }}</p>
+                            </div>
+                        </div>
+                        <div v-if="!block.params.features || block.params.features.length === 0" class="text-center text-slate-400 py-8">
+                            No features added yet
+                        </div>
+                    </div>
+
+                    <!-- Process Steps Block -->
+                    <div v-else-if="block.type === 'process_steps'" class="p-6 bg-slate-50 rounded-lg">
+                        <h2 v-if="block.params.title" class="text-2xl font-bold text-center mb-8 text-slate-900">{{ block.params.title }}</h2>
+                        <div class="space-y-6 max-w-2xl mx-auto">
+                            <div v-for="(step, idx) in (block.params.steps || [])" :key="idx" class="flex gap-4 items-start">
+                                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">
+                                    {{ idx + 1 }}
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-semibold mb-1 text-slate-900">{{ step.title }}</h3>
+                                    <p class="text-slate-600">{{ step.description }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="!block.params.steps || block.params.steps.length === 0" class="text-center text-slate-400 py-8">
+                            No steps added yet
+                        </div>
+                    </div>
+
+                    <!-- Stats Counter Block -->
+                    <div v-else-if="block.type === 'stats_counter'" class="p-8 bg-indigo-600 text-white rounded-lg">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                            <div v-for="(stat, idx) in (block.params.stats || [])" :key="idx">
+                                <div class="text-4xl font-bold mb-1">{{ stat.value }}{{ stat.suffix || '' }}</div>
+                                <div class="text-indigo-100">{{ stat.label }}</div>
+                            </div>
+                        </div>
+                        <div v-if="!block.params.stats || block.params.stats.length === 0" class="text-center text-indigo-200 py-8">
+                            No stats added yet
+                        </div>
+                    </div>
+
+                    <!-- Menu Grid Block -->
+                    <div v-else-if="block.type === 'menu_grid'" class="p-6 bg-white rounded-lg">
+                        <h2 v-if="block.params.title" class="text-2xl font-bold text-center mb-8 text-slate-900">{{ block.params.title }}</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div v-for="(item, idx) in (block.params.items || [])" :key="idx" class="bg-white rounded-lg overflow-hidden shadow-md">
+                                <img v-if="item.image" :src="item.image" :alt="item.name" class="w-full h-32 object-cover"/>
+                                <div class="p-3">
+                                    <h4 class="font-semibold text-slate-900 mb-1">{{ item.name }}</h4>
+                                    <p v-if="item.description" class="text-xs text-slate-600">{{ item.description }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="!block.params.items || block.params.items.length === 0" class="text-center text-slate-400 py-8">
+                            No menu items added yet
+                        </div>
                     </div>
 
                     <!-- GENERIC RENDERER (For unknown blocks) -->
@@ -2723,6 +2935,11 @@ layout = "${activePage.value.layout}"
                 const shouldShowParam = (type, key) => {
                     if(key === 'items') return false;
                     if(type === 'menu' && ['orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection', 'sidebarSide', 'sidebarFooterBlocks', 'position', 'sticky'].includes(key)) return false;
+                    // Hide array parameters for MamboTruck blocks (they have custom editors)
+                    if(type === 'features_grid' && key === 'features') return false;
+                    if(type === 'process_steps' && key === 'steps') return false;
+                    if(type === 'stats_counter' && key === 'stats') return false;
+                    if(type === 'menu_grid' && key === 'items') return false;
                     return true;
                 };
 
