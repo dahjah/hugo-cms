@@ -22,8 +22,25 @@ layout = "list"
   height = "auto"
 
 [[main_blocks]]
+  type = "text"
+  content = "<p><strong>Lorem ipsum </strong>dolor <em>sit amet, consecte</em>tur <u>adipiscing elit.</u></p><ul><li><u>helo</u></li></ul><ol><li><u>s</u><a href=\"https://testing.com\" target=\"_blank\"><u>dfsdfsdf</u></a></li><li><u><span class=\"ql-cursor\">﻿</span></u></li></ol>"
+
+[[main_blocks]]
+  type = "flex_columns"
+  col_widths = "50.0, 50.0"
+  [[main_blocks.col_0]]
+    type = "markdown"
+    md = "## Hello World\nThis is **markdown** content."
+
+  [[main_blocks.col_1]]
+    type = "markdown"
+    md = "## Hello World\nThis is **markdown** content."
+
+
+[[main_blocks]]
   type = "alert"
   message = "This is an important alert message."
+  alert_type = "warning"
 
 [[sidebar_blocks]]
   type = "quote"

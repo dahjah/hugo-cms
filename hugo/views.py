@@ -467,33 +467,33 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     <footer class="text-sm text-slate-500 mt-2 not-italic">— {{ .author }}</footer>
     {{ end }}
 </blockquote>""",
-                'alert': """{{ $type := .type | default "info" }}
-<div style="border-left: 4px solid {{ cond (eq $type "success") "#22c55e" (cond (eq $type "warning") "#eab308" (cond (eq $type "error") "#ef4444" "#3b82f6")) }}; background-color: {{ cond (eq $type "success") "#f0fdf4" (cond (eq $type "warning") "#fefce8" (cond (eq $type "error") "#fef2f2" "#eff6ff")) }}; padding: 1rem; margin-bottom: 2rem; border-radius: 0.375rem;" class="{{ .css_classes }}">
-    <div style="display: flex; align-items: flex-start;">
-        <div style="flex-shrink: 0;">
-            {{ if eq $type "success" }}
-            <svg style="height: 1.25rem; width: 1.25rem; color: #22c55e;" fill="currentColor" viewBox="0 0 20 20">
+                'alert': """{{ $alertType := .alert_type | default "info" }}
+<div class="border-l-4 p-4 mb-8 rounded {{ .css_classes }} {{ if eq $alertType "success" }}border-green-500 bg-green-50{{ else if eq $alertType "warning" }}border-yellow-500 bg-yellow-50{{ else if eq $alertType "error" }}border-red-500 bg-red-50{{ else }}border-blue-500 bg-blue-50{{ end }}">
+    <div class="flex items-start">
+        <div class="flex-shrink-0">
+            {{ if eq $alertType "success" }}
+            <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
-            {{ else if eq $type "warning" }}
-            <svg style="height: 1.25rem; width: 1.25rem; color: #eab308;" fill="currentColor" viewBox="0 0 20 20">
+            {{ else if eq $alertType "warning" }}
+            <svg class="h-5 w-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
             </svg>
-            {{ else if eq $type "error" }}
-            <svg style="height: 1.25rem; width: 1.25rem; color: #ef4444;" fill="currentColor" viewBox="0 0 20 20">
+            {{ else if eq $alertType "error" }}
+            <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
             </svg>
             {{ else }}
-            <svg style="height: 1.25rem; width: 1.25rem; color: #3b82f6;" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
             </svg>
             {{ end }}
         </div>
-        <div style="margin-left: 0.75rem; flex: 1;">
+        <div class="ml-3 flex-1">
             {{ if .title }}
-            <h3 style="font-size: 0.875rem; font-weight: 500; color: {{ cond (eq $type "success") "#14532d" (cond (eq $type "warning") "#713f12" (cond (eq $type "error") "#7f1d1d" "#1e3a8a")) }};">{{ .title }}</h3>
+            <h3 class="text-sm font-medium {{ if eq $alertType "success" }}text-green-900{{ else if eq $alertType "warning" }}text-yellow-900{{ else if eq $alertType "error" }}text-red-900{{ else }}text-blue-900{{ end }}">{{ .title }}</h3>
             {{ end }}
-            <div style="font-size: 0.875rem; color: {{ cond (eq $type "success") "#14532d" (cond (eq $type "warning") "#713f12" (cond (eq $type "error") "#7f1d1d" "#1e3a8a")) }}; {{ if .title }}margin-top: 0.5rem;{{ end }}">
+            <div class="text-sm {{ if eq $alertType "success" }}text-green-900{{ else if eq $alertType "warning" }}text-yellow-900{{ else if eq $alertType "error" }}text-red-900{{ else }}text-blue-900{{ end }} {{ if .title }}mt-2{{ end }}">
                 {{ .message | safeHTML }}
             </div>
         </div>

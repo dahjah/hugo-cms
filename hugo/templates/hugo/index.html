@@ -1642,15 +1642,15 @@
                     <div v-else-if="block.type === 'alert'" class="p-4">
                         <div :class="[
                             'p-4 rounded-lg border-l-4',
-                            block.params.type === 'warning' ? 'bg-amber-50 border-amber-500 text-amber-900' :
-                            block.params.type === 'error' ? 'bg-red-50 border-red-500 text-red-900' :
-                            block.params.type === 'success' ? 'bg-emerald-50 border-emerald-500 text-emerald-900' :
+                            (block.params.alert_type || block.params.type) === 'warning' ? 'bg-amber-50 border-amber-500 text-amber-900' :
+                            (block.params.alert_type || block.params.type) === 'error' ? 'bg-red-50 border-red-500 text-red-900' :
+                            (block.params.alert_type || block.params.type) === 'success' ? 'bg-emerald-50 border-emerald-500 text-emerald-900' :
                             'bg-blue-50 border-blue-500 text-blue-900'
                         ]">
                             <div class="flex items-start space-x-3">
-                                <icon :name="block.params.type === 'warning' ? 'alert-triangle' : 
-                                            block.params.type === 'error' ? 'x-circle' :
-                                            block.params.type === 'success' ? 'check-circle' : 'info'"
+                                <icon :name="(block.params.alert_type || block.params.type) === 'warning' ? 'alert-triangle' : 
+                                            (block.params.alert_type || block.params.type) === 'error' ? 'x-circle' :
+                                            (block.params.alert_type || block.params.type) === 'success' ? 'check-circle' : 'info'"
                                       :size="20" class="mt-0.5 flex-shrink-0"></icon>
                                 <p class="flex-1 font-medium">{{ block.params.message }}</p>
                             </div>
