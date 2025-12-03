@@ -2766,6 +2766,7 @@ layout = "${activePage.value.layout}"
                         await saveGlobals();
 
                         showToast('Content saved successfully', 'success');
+                        hasUnsavedChanges.value = false; // Reset unsaved changes flag
                     } catch(error) {
                         console.error("Save Error:", error);
                         showToast('Failed to save content', 'error', error.message);
@@ -3337,6 +3338,8 @@ layout = "${activePage.value.layout}"
                     showCreateWebsiteModal,
                     showPublishDropdown,
                     isPublishing,
+                    isSavingSettings,
+                    hasUnsavedChanges,
                     publishCurrentPage,
                     showWebsiteDropdown,
                     newWebsiteName,
