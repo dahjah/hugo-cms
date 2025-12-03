@@ -697,8 +697,10 @@
                         </a>
 
                         <button @click="savePageContent" title="Save Draft"
-                            class="p-2 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors flex items-center justify-center">
+                            class="p-2 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors flex items-center justify-center relative">
                             <icon name="save" :size="20"></icon>
+                            <span v-if="hasUnsavedChanges"
+                                class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
                         </button>
                         <!-- Publish Button Group -->
                         <div class="relative inline-flex" @click.away="showPublishDropdown = false">
@@ -2267,12 +2269,21 @@ layout = "${activePage.value.layout}"
                 };
 
                 const fetchContent = async (pageId) => {
-                    const url = `${API_BASE_URL}pages/${pageId}/content/`;
-                    const blocks = await fetchApi(url) || [];
+                    isFetchingContent.value = true;
+                    try {
+                        const url = `${API_BASE_URL}pages/${pageId}/content/`;
+                        const blocks = await fetchApi(url) || [];
 
-                    // Populate page-specific zones in contentZones
-                    contentZones.value.main = blocks.filter(b => b.placement_key === 'main' || !b.placement_key).sort((a, b) => a.sort_order - b.sort_order);
-                    contentZones.value.sidebar = blocks.filter(b => b.placement_key === 'sidebar').sort((a, b) => a.sort_order - b.sort_order);
+                        // Populate page-specific zones in contentZones
+                        contentZones.value.main = blocks.filter(b => b.placement_key === 'main' || !b.placement_key).sort((a, b) => a.sort_order - b.sort_order);
+                        contentZones.value.sidebar = blocks.filter(b => b.placement_key === 'sidebar').sort((a, b) => a.sort_order - b.sort_order);
+
+                        // Reset unsaved changes flag after content load
+                        await nextTick();
+                        hasUnsavedChanges.value = false;
+                    } finally {
+                        isFetchingContent.value = false;
+                    }
                 };
 
                 const websites = ref([]);
@@ -2287,6 +2298,8 @@ layout = "${activePage.value.layout}"
                 const showPublishDropdown = ref(false);
                 const isPublishing = ref(false);
                 const isSavingSettings = ref(false);
+                const hasUnsavedChanges = ref(false);
+                const isFetchingContent = ref(false);
                 const customCss = ref('');
                 const websiteSlug = ref('');
                 const cssEditorRef = ref(null);
@@ -2415,10 +2428,16 @@ layout = "${activePage.value.layout}"
                 // Watch activePageId to load new main content
                 watch(activePageId, async (newId) => {
                     if(newId) {
-                        // Fetch content to populate page-specific zones in contentZones
                         await fetchContent(newId);
                     }
                 });
+
+                // Watch for content changes
+                watch(contentZones, () => {
+                    if(!isFetchingContent.value) {
+                        hasUnsavedChanges.value = true;
+                    }
+                }, {deep: true});
 
                 // --- ACTIONS ---
                 const setActivePage = (id) => {
