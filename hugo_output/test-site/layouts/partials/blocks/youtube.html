@@ -1,5 +1,5 @@
-<div class="mb-8">
-    <div class="aspect-w-16 aspect-h-9 relative" style="padding-bottom: 56.25%;">
+<div class="mb-8 {{ .css_classes }}" style="width: {{ .width | default "100%" }}; margin: 0 auto;">
+    <div class="aspect-w-16 aspect-h-9 relative" style="padding-bottom: {{ if eq .aspect_ratio "4/3" }}75%{{ else }}56.25%{{ end }};">
         <iframe 
             class="absolute inset-0 w-full h-full rounded-lg shadow-md"
             src="https://www.youtube.com/embed/{{ .videoId }}"

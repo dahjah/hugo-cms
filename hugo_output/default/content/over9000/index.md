@@ -2,7 +2,7 @@
 title = "New Page"
 date = "2025-11-26"
 draft = false
-layout = "list"
+layout = "rightsidebar"
 [[header_blocks]]
   type = "menu"
   orientation = "horizontal"
