@@ -69,6 +69,9 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             content_dir = output_path / 'content'
             
             # Create directories
+            import shutil
+            if content_dir.exists():
+                shutil.rmtree(content_dir)
             content_dir.mkdir(parents=True, exist_ok=True)
             
             # Get all pages for this website
@@ -566,7 +569,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             <div class="p-4">
                 <h4 class="text-lg font-semibold mb-2 text-slate-900">{{ .name }}</h4>
                 {{ if .description }}
-                <p class="text-sm text-slate-600">{{  .description }}</p>
+                <p class="text-sm text-slate-600">{{ .description }}</p>
                 {{ end }}
             </div>
         </div>
