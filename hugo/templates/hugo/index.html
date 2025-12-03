@@ -377,10 +377,18 @@
                 <div class="mt-8 flex justify-end space-x-3 pt-4 border-t border-slate-100">
                     <button @click="showSettingsModal = false"
                         class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md font-medium transition-colors">Close</button>
-                    <button @click="saveSettings"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center">
-                        <icon name="save" :size="16" class="mr-2"></icon>
-                        Save Settings
+                    <button @click="saveSettings" :disabled="isSavingSettings"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <icon v-if="!isSavingSettings" name="save" :size="16" class="mr-2"></icon>
+                        <svg v-else class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        {{ isSavingSettings ? 'Saving...' : 'Save Settings' }}
                     </button>
                 </div>
             </div>
@@ -2279,6 +2287,7 @@ layout = "${activePage.value.layout}"
                 const showSettingsModal = ref(false);
                 const showPublishDropdown = ref(false);
                 const isPublishing = ref(false);
+                const isSavingSettings = ref(false);
                 const customCss = ref('');
                 const websiteSlug = ref('');
                 const cssEditorRef = ref(null);
@@ -2731,6 +2740,7 @@ layout = "${activePage.value.layout}"
 
                 // Publish functions
                 const publishSite = async () => {
+                    isPublishing.value = true;
                     try {
                         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
                             getCookie('csrftoken');
@@ -2758,6 +2768,8 @@ layout = "${activePage.value.layout}"
                     } catch(error) {
                         console.error('Publish error:', error);
                         showToast('Publish failed: ' + error.message, 'error');
+                    } finally {
+                        isPublishing.value = false;
                     }
                 };
 
@@ -2796,6 +2808,8 @@ layout = "${activePage.value.layout}"
                     } catch(error) {
                         console.error('Publish error:', error);
                         showToast('Publish failed: ' + error.message, 'error');
+                    } finally {
+                        isPublishing.value = false;
                     }
                 };
 
@@ -2902,7 +2916,7 @@ layout = "${activePage.value.layout}"
 
                     saveSettings: async () => {
                         if(!currentWebsite.value) return;
-                        isPublishing.value = true;
+                        isSavingSettings.value = true;
 
                         try {
                             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
@@ -3024,6 +3038,8 @@ layout = "${activePage.value.layout}"
                         } catch(error) {
                             console.error('Error saving settings:', error);
                             showToast('Error saving settings', 'error');
+                        } finally {
+                            isSavingSettings.value = false;
                         }
                     },
 
