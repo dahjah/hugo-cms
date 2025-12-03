@@ -2941,6 +2941,8 @@ layout = "${activePage.value.layout}"
                     if(type === 'process_steps' && key === 'steps') return false;
                     if(type === 'stats_counter' && key === 'stats') return false;
                     if(type === 'menu_grid' && key === 'items') return false;
+                    // Hide cta_hero parameters that have custom editors
+                    if(type === 'cta_hero' && ['background_image', 'headline', 'subheadline', 'cta_text', 'cta_url'].includes(key)) return false;
                     return true;
                 };
 
