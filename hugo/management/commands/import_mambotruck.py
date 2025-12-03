@@ -33,7 +33,7 @@ class Command(BaseCommand):
                     'subheadline': 'Say goodbye to boring catering and overwhelming planning',
                     'cta_text': 'BOOK THE TRUCK',
                     'cta_url': '/packages',
-                    '  background_image': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1200&q=80'
+                    'background_image': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1200&q=80'
                 }
             },
             {

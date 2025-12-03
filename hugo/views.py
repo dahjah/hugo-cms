@@ -943,6 +943,65 @@ draft = false
                         items_toml += "]\n"
                         output += f'{indent}  items = {items_toml}'
                 
+                # Handle features_grid-specific parameters
+                if block.definition_id == 'features_grid':
+                    features = params.get('features', [])
+                    if features:
+                        features_toml = "["
+                        for i, feature in enumerate(features):
+                            if i > 0:
+                                features_toml += ", "
+                            icon = str(feature.get("icon", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            title = str(feature.get("title", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            description = str(feature.get("description", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            features_toml += f'{{icon = "{icon}", title = "{title}", description = "{description}"}}'
+                        features_toml += "]\n"
+                        output += f'{indent}  features = {features_toml}'
+                
+                # Handle process_steps-specific parameters
+                if block.definition_id == 'process_steps':
+                    steps = params.get('steps', [])
+                    if steps:
+                        steps_toml = "["
+                        for i, step in enumerate(steps):
+                            if i > 0:
+                                steps_toml += ", "
+                            title = str(step.get("title", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            description = str(step.get("description", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            steps_toml += f'{{title = "{title}", description = "{description}"}}'
+                        steps_toml += "]\n"
+                        output += f'{indent}  steps = {steps_toml}'
+                
+                # Handle stats_counter-specific parameters
+                if block.definition_id == 'stats_counter':
+                    stats = params.get('stats', [])
+                    if stats:
+                        stats_toml = "["
+                        for i, stat in enumerate(stats):
+                            if i > 0:
+                                stats_toml += ", "
+                            value = str(stat.get("value", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            suffix = str(stat.get("suffix", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            label = str(stat.get("label", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            stats_toml += f'{{value = "{value}", suffix = "{suffix}", label = "{label}"}}'
+                        stats_toml += "]\n"
+                        output += f'{indent}  stats = {stats_toml}'
+                
+                # Handle menu_grid-specific parameters
+                if block.definition_id == 'menu_grid':
+                    items = params.get('items', [])
+                    if items:
+                        items_toml = "["
+                        for i, item in enumerate(items):
+                            if i > 0:
+                                items_toml += ", "
+                            name = str(item.get("name", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            image = str(item.get("image", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            description = str(item.get("description", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            items_toml += f'{{name = "{name}", image = "{image}", description = "{description}"}}'
+                        items_toml += "]\n"
+                        output += f'{indent}  items = {items_toml}'
+                
                 
                 # Handle nested children (flex_columns)
                 children = block.children.all().order_by('sort_order')
