@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
@@ -1001,10 +1001,22 @@ class PageViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(website_id=website_id)
         return queryset
     
+    
     def get_serializer_class(self):
         if self.action == 'list':
             return PageListSerializer
         return PageDetailSerializer
+    
+    def perform_create(self, serializer):
+        """
+        Ensure that newly created pages have a website assigned.
+        The frontend should pass the website field.
+        """
+        if not serializer.validated_data.get('website'):
+            raise serializers.ValidationError({
+                'website': 'Website is required when creating a page'
+            })
+        serializer.save()
 
     @action(detail=True, methods=['get'])
     def content(self, request, pk=None):

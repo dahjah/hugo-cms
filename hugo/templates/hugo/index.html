@@ -2426,7 +2426,8 @@ layout = "${activePage.value.layout}"
                             status: 'draft',
                             date: new Date().toISOString().split('T')[0],
                             description: '',
-                            tags: []
+                            tags: [],
+                            website: currentWebsite.value?.id  // Add current website
                         };
 
                         const response = await fetchApi(`${API_BASE_URL}pages/`, 'POST', newPage);

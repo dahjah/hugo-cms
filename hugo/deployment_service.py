@@ -417,8 +417,9 @@ class CloudflarePagesDeployer:
                 errors = error_data.get('errors', [{}])
                 error_msg = errors[0].get('message', 'Unknown error') if errors else 'Unknown error'
                 
-                # Check if domain already exists
-                if "already exists" in str(error_msg).lower() or "already exists" in str(errors).lower():
+                # Check if domain already exists (various error messages)
+                error_text = str(error_msg).lower() + str(errors).lower()
+                if any(phrase in error_text for phrase in ["already exists", "already added", "already configured"]):
                     logger.info(f"Custom domain already configured: {domain}")
                     return {'success': True, 'already_exists': True}
                     
