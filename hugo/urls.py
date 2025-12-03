@@ -12,5 +12,6 @@ router.register(r'files', FileUploadViewSet, basename='file-upload')
 
 urlpatterns = [
     path('', editor_view, name='editor'),  # Serve the Vue app at root
+    path('<str:website_id>/', editor_view, name='editor-with-website'),  # With website ID
     path('api/', include(router.urls)),    # API endpoints
 ]

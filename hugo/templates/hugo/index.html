@@ -22,6 +22,7 @@
         // Global helper to retrieve the CSRF token from the template
         const getCsrfToken = () => document.querySelector('[name=csrfmiddlewaretoken]').value;
         const API_BASE_URL = '/api/'; // Django API root
+        const WEBSITE_ID = "{{ website_id|default_if_none:'' }}";
     </script>
 
     <style>
@@ -2384,7 +2385,7 @@ layout = "${activePage.value.layout}"
 
                 const initialLoad = async () => {
                     try {
-                        await fetchConfig();
+                        await fetchConfig(WEBSITE_ID || null);
                         await fetchPages();
 
                         if(pages.value.length > 0) {
@@ -2818,6 +2819,11 @@ layout = "${activePage.value.layout}"
                     publishCurrentPage,
                     changeWebsite: async (websiteId) => {
                         if(currentWebsite.value && currentWebsite.value.id === websiteId) return;
+
+                        // Update URL
+                        const newUrl = websiteId ? `/${websiteId}/` : '/';
+                        window.history.pushState({path: newUrl}, '', newUrl);
+
                         isLoaded.value = false;
                         activePageId.value = null;
                         await fetchConfig(websiteId);

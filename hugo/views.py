@@ -23,9 +23,9 @@ from .serializers import (
 )
 from .importer import import_hugo_theme_structure
 
-def editor_view(request):
+def editor_view(request, website_id=None):
     """Serves the Vue.js frontend application."""
-    return render(request, 'hugo/index.html')
+    return render(request, 'hugo/index.html', {'website_id': website_id})
 class WebsiteViewSet(viewsets.ModelViewSet):
     queryset = Website.objects.all()
     serializer_class = WebsiteSerializer
