@@ -9,24 +9,30 @@ class DeploymentProvider(models.Model):
     Configuration for deployment provider (Cloudflare R2, Netlify, Vercel, etc.)
     """
     PROVIDER_TYPES = [
-        ('cloudflare_r2', 'Cloudflare R2'),
+        ('cloudflare_pages', 'Cloudflare Pages'),
+        ('cloudflare_r2', 'Cloudflare R2 (Legacy)'),
         ('netlify', 'Netlify'),
         ('vercel', 'Vercel'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200, default="New Provider")
-    provider_type = models.CharField(max_length=50, choices=PROVIDER_TYPES, default='cloudflare_r2')
+    provider_type = models.CharField(max_length=50, choices=PROVIDER_TYPES, default='cloudflare_pages')
     enabled = models.BooleanField(default=False, help_text="Enable automatic deployment on publish")
     
-    # Cloudflare R2 specific fields
+    # Cloudflare configuration (shared between Pages and R2)
     cf_account_id = models.CharField(max_length=200, blank=True, help_text="Cloudflare Account ID")
-    cf_zone_id = models.CharField(max_length=200, blank=True, help_text="Cloudflare Zone ID for monu.dev domain")
-    cf_r2_access_key = models.CharField(max_length=200, blank=True, help_text="R2 Access Key ID")
-    cf_r2_secret_key = models.CharField(max_length=200, blank=True, help_text="R2 Secret Access Key")
-    cf_api_token = models.CharField(max_length=200, blank=True, help_text="Cloudflare API Token for domain config")
-    cf_bucket_name = models.CharField(max_length=200, blank=True, help_text="R2 Bucket Name")
-    custom_domain = models.CharField(max_length=200, blank=True, help_text="Custom domain (e.g., mysite.monu.dev)")
+    cf_api_token = models.CharField(max_length=200, blank=True, help_text="Cloudflare API Token with Pages and DNS permissions")
+    cf_zone_id = models.CharField(max_length=200, blank=True, help_text="Cloudflare Zone ID (for custom domain DNS)")
+    custom_domain = models.CharField(max_length=200, blank=True, help_text="Base custom domain (e.g., monu.dev)")
+    
+    # Cloudflare Pages specific fields  
+    pages_project_name = models.CharField(max_length=200, blank=True, help_text="Pages project name (optional, auto-generated if empty)")
+    
+    # Legacy R2 fields (kept for backward compatibility)
+    cf_r2_access_key = models.CharField(max_length=200, blank=True, help_text="[Legacy] R2 Access Key ID")
+    cf_r2_secret_key = models.CharField(max_length=200, blank=True, help_text="[Legacy] R2 Secret Access Key")
+    cf_bucket_name = models.CharField(max_length=200, blank=True, help_text="[Legacy] R2 Bucket Name")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
