@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website, UploadedFile, StorageSettings
+from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website, UploadedFile, StorageSettings, SiteTemplate, TemplateCategory
 from .deployment_models import DeploymentProvider
 
 class DeploymentProviderSerializer(serializers.ModelSerializer):
@@ -32,7 +32,7 @@ class WebsiteSerializer(serializers.ModelSerializer):
 class BlockDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlockDefinition
-        fields = ['id', 'label', 'icon', 'has_visual_preview', 'default_params']
+        fields = ['id', 'label', 'icon', 'has_visual_preview', 'default_params', 'schema', 'is_container']
 
 class LayoutTemplateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -83,3 +83,54 @@ class SiteConfigSerializer(serializers.Serializer):
     footer = BlockInstanceSerializer(many=True)
     websites = WebsiteSerializer(many=True)
     current_website = WebsiteSerializer()
+
+
+# --- Template Serializers ---
+
+class TemplateCategorySerializer(serializers.ModelSerializer):
+    """Serializer for template categories."""
+    template_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = TemplateCategory
+        fields = ['slug', 'name', 'description', 'order', 'template_count']
+    
+    def get_template_count(self, obj):
+        return obj.templates.filter(is_public=True).count()
+
+
+class SiteTemplateListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for template gallery listing."""
+    category_name = serializers.CharField(source='category.name', read_only=True, default=None)
+    
+    class Meta:
+        model = SiteTemplate
+        fields = ['id', 'name', 'description', 'thumbnail_url', 'category', 'category_name', 'is_featured', 'created_by']
+
+
+class SiteTemplateDetailSerializer(serializers.ModelSerializer):
+    """Full serializer for template detail and import."""
+    category_name = serializers.CharField(source='category.name', read_only=True, default=None)
+    
+    class Meta:
+        model = SiteTemplate
+        fields = ['id', 'name', 'description', 'thumbnail_url', 'category', 'category_name', 
+                  'base_css', 'pages_json', 'created_by', 'is_featured', 'is_public', 
+                  'created_at', 'updated_at']
+
+
+class CreateTemplateFromWebsiteSerializer(serializers.Serializer):
+    """Serializer for creating a template from an existing website."""
+    website_id = serializers.UUIDField()
+    template_id = serializers.CharField(max_length=50)
+    name = serializers.CharField(max_length=100)
+    description = serializers.CharField(required=False, allow_blank=True, default='')
+    category = serializers.CharField(max_length=50, required=False, allow_blank=True, default=None)
+    thumbnail_url = serializers.CharField(max_length=500, required=False, allow_blank=True, default='')
+
+
+class CreateWebsiteFromTemplateSerializer(serializers.Serializer):
+    """Serializer for creating a new website from a template."""
+    template_id = serializers.CharField(max_length=50)
+    website_name = serializers.CharField(max_length=200)
+    website_slug = serializers.CharField(max_length=200)

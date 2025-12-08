@@ -805,7 +805,8 @@
                 <div class="p-4 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h3 class="font-bold text-slate-800">Edit Component</h3>
-                        <span class="text-xs text-slate-500 uppercase tracking-wide">{{ selectedBlock.label ||
+                        <span class="text-xs text-slate-500 uppercase tracking-wide">{{ selectedBlockDefinition?.label
+                            ||
                             selectedBlock.type }}</span>
                     </div>
                     <button @click="deleteBlock(selectedBlock.id)"
@@ -867,7 +868,7 @@
                     </div>
 
                     <!-- Special Editor for Menu Block Items -->
-                    <div v-if="selectedBlock.type === 'menu'" class="space-y-4">
+                    <div v-else-if="selectedBlock.type === 'menu'" class="space-y-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Menu Items</label>
                             <div class="space-y-2">
@@ -1005,309 +1006,72 @@
                         </div>
                     </div>
 
-                    <!-- CTA Hero Block Editor -->
-                    <div v-if="selectedBlock.type === 'cta_hero'" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Background Image
-                                URL</label>
-                            <input type="text" v-model="selectedBlock.params.background_image"
-                                class="w-full px-3 py-2 border border-slate-200 rounded-md text-sm" />
-                        </div>
-                    </div>
+                    <!-- Schema-Driven Editor -->
+                    <div v-else-if="selectedBlockDefinition?.schema">
+                        <div v-for="(field, key) in (selectedBlockDefinition.schema.properties || selectedBlockDefinition.schema)"
+                            :key="key" class="mb-4">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">{{ field.label ||
+                                key }}</label>
 
-                    <!-- Features Grid Block Editor -->
-                    <div v-if="selectedBlock.type === 'features_grid'" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Features</label>
-                            <div class="space-y-2">
-                                <div v-for="(feature, index) in (selectedBlock.params.features || [])" :key="index"
-                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-xs font-medium text-slate-600">Feature {{ index + 1 }}</span>
-                                        <button @click="selectedBlock.params.features.splice(index, 1)"
-                                            class="text-red-500 hover:text-red-700">
-                                            <icon name="trash-2" :size="14"></icon>
-                                        </button>
-                                    </div>
-                                    <input type="text" v-model="feature.title" placeholder="Title"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mb-2" />
-                                    <textarea v-model="feature.description" placeholder="Description"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm"
-                                        rows="2"></textarea>
-                                </div>
+                            <!-- String -->
+                            <input v-if="field.type === 'string' && !field.enum && field.format !== 'uri'" type="text"
+                                :value="selectedBlock.params[key]"
+                                @input="updateBlock(selectedBlock.id, key, $event.target.value)"
+                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+
+                            <!-- Text -->
+                            <textarea v-else-if="field.type === 'text'" :value="selectedBlock.params[key]"
+                                @input="updateBlock(selectedBlock.id, key, $event.target.value)" rows="4"
+                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+
+                            <!-- Number -->
+                            <input v-else-if="field.type === 'number'" type="number" :value="selectedBlock.params[key]"
+                                @input="updateBlock(selectedBlock.id, key, parseFloat($event.target.value))"
+                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+
+                            <!-- Boolean -->
+                            <div v-else-if="field.type === 'boolean'" class="flex items-center">
+                                <input type="checkbox" :checked="selectedBlock.params[key]"
+                                    @change="updateBlock(selectedBlock.id, key, $event.target.checked)"
+                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                                <span class="ml-2 text-sm text-slate-600">{{ field.label || key }}</span>
                             </div>
-                            <button
-                                @click="selectedBlock.params.features = [...(selectedBlock.params.features || []), {title: 'New Feature', description: 'Feature description', icon: 'check'}]"
-                                class="mt-2 px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
-                                + Add Feature
-                            </button>
-                        </div>
-                    </div>
 
-                    <!--  Process Steps Block Editor -->
-                    <div v-if="selectedBlock.type === 'process_steps'" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Steps</label>
-                            <div class="space-y-2">
-                                <div v-for="(step, index) in (selectedBlock.params.steps || [])" :key="index"
-                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-xs font-medium text-slate-600">Step {{ index + 1 }}</span>
-                                        <button @click="selectedBlock.params.steps.splice(index, 1)"
-                                            class="text-red-500 hover:text-red-700">
-                                            <icon name="trash-2" :size="14"></icon>
-                                        </button>
-                                    </div>
-                                    <input type="text" v-model="step.title" placeholder="Step Title"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mb-2" />
-                                    <textarea v-model="step.description" placeholder="Description"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm"
-                                        rows="2"></textarea>
-                                </div>
-                            </div>
-                            <button
-                                @click="selectedBlock.params.steps = [...(selectedBlock.params.steps || []), {title: 'New Step', description: 'Step description'}]"
-                                class="mt-2 px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
-                                + Add Step
-                            </button>
-                        </div>
-                    </div>
+                            <!-- Enum -->
+                            <select v-else-if="field.enum" :value="selectedBlock.params[key]"
+                                @change="updateBlock(selectedBlock.id, key, $event.target.value)"
+                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <option v-for="opt in field.enum" :key="opt" :value="opt">{{ opt }}</option>
+                            </select>
 
-                    <!-- Stats Counter Block Editor -->
-                    <div v-if="selectedBlock.type === 'stats_counter'" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Statistics</label>
-                            <div class="space-y-2">
-                                <div v-for="(stat, index) in (selectedBlock.params.stats || [])" :key="index"
-                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-xs font-medium text-slate-600">Stat {{ index + 1 }}</span>
-                                        <button @click="selectedBlock.params.stats.splice(index, 1)"
-                                            class="text-red-500 hover:text-red-700">
-                                            <icon name="trash-2" :size="14"></icon>
-                                        </button>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <input type="text" v-model="stat.value" placeholder="Value"
-                                            class="px-2 py-1 border border-slate-200 rounded text-sm" />
-                                        <input type="text" v-model="stat.suffix" placeholder="Suffix (k+, etc.)"
-                                            class="px-2 py-1 border border-slate-200 rounded text-sm" />
-                                    </div>
-                                    <input type="text" v-model="stat.label" placeholder="Label"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mt-2" />
-                                </div>
-                            </div>
-                            <button
-                                @click="selectedBlock.params.stats = [...(selectedBlock.params.stats || []), {value: '100', suffix: '+', label: 'New Stat'}]"
-                                class="mt-2 px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
-                                + Add Stat
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Menu Grid Block Editor -->
-                    <div v-if="selectedBlock.type === 'menu_grid'" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Menu Items</label>
-                            <div class="space-y-2">
-                                <div v-for="(item, index) in (selectedBlock.params.items || [])" :key="index"
-                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-xs font-medium text-slate-600">Item {{ index + 1 }}</span>
-                                        <button @click="selectedBlock.params.items.splice(index, 1)"
-                                            class="text-red-500 hover:text-red-700">
-                                            <icon name="trash-2" :size="14"></icon>
-                                        </button>
-                                    </div>
-                                    <input type="text" v-model="item.name" placeholder="Item Name"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mb-2" />
-                                    <input type="text" v-model="item.image" placeholder="Image URL"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mb-2" />
-                                    <input type="text" v-model="item.description" placeholder="Description"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm" />
-                                </div>
-                            </div>
-                            <button
-                                @click="selectedBlock.params.items = [...(selectedBlock.params.items || []), {name: 'New Item', image: '', description: ''}]"
-                                class="mt-2 px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
-                                + Add Item
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Social Links Block Editor -->
-                    <div v-if="selectedBlock.type === 'social_links'" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Social
-                                Links</label>
-                            <div class="space-y-2">
-                                <div v-for="(link, index) in (selectedBlock.params.links || [])" :key="index"
-                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-xs font-medium text-slate-600">Link {{ index + 1 }}</span>
-                                        <button @click="selectedBlock.params.links.splice(index, 1)"
-                                            class="text-red-500 hover:text-red-700">
-                                            <icon name="trash-2" :size="14"></icon>
-                                        </button>
-                                    </div>
-                                    <select v-model="link.platform"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mb-2">
-                                        <option value="facebook">Facebook</option>
-                                        <option value="instagram">Instagram</option>
-                                        <option value="twitter">Twitter</option>
-                                        <option value="linkedin">LinkedIn</option>
-                                        <option value="youtube">YouTube</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                    <input type="text" v-model="link.url" placeholder="https://..."
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm" />
-                                </div>
-                            </div>
-                            <button
-                                @click="selectedBlock.params.links = [...(selectedBlock.params.links || []), {platform: 'facebook', url: ''}]"
-                                class="mt-2 px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
-                                + Add Link
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- FAQ Block Editor -->
-                    <div v-if="selectedBlock.type === 'faq'" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Questions</label>
-                            <div class="space-y-3">
-                                <div v-for="(q, index) in (selectedBlock.params.questions || [])" :key="index"
-                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-xs font-medium text-slate-600">Q&A {{ index + 1 }}</span>
-                                        <button @click="selectedBlock.params.questions.splice(index, 1)"
-                                            class="text-red-500 hover:text-red-700">
-                                            <icon name="trash-2" :size="14"></icon>
-                                        </button>
-                                    </div>
-                                    <input type="text" v-model="q.question" placeholder="Question"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mb-2 font-medium" />
-                                    <textarea v-model="q.answer" placeholder="Answer" rows="3"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm resize-none"></textarea>
-                                </div>
-                            </div>
-                            <button
-                                @click="selectedBlock.params.questions = [...(selectedBlock.params.questions || []), {question: 'New Question?', answer: 'Answer here...'}]"
-                                class="mt-2 px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
-                                + Add Question
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Google Reviews Block Editor -->
-                    <div v-if="selectedBlock.type === 'google_reviews'" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Reviews</label>
-                            <div class="space-y-3">
-                                <div v-for="(review, index) in (selectedBlock.params.reviews || [])" :key="index"
-                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-xs font-medium text-slate-600">Review {{ index + 1 }}</span>
-                                        <button @click="selectedBlock.params.reviews.splice(index, 1)"
-                                            class="text-red-500 hover:text-red-700">
-                                            <icon name="trash-2" :size="14"></icon>
-                                        </button>
-                                    </div>
-                                    <input type="text" v-model="review.name" placeholder="Reviewer Name"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm mb-2" />
-                                    <div class="flex gap-2 mb-2">
-                                        <input type="number" v-model="review.rating" placeholder="Rating (1-5)" min="1"
-                                            max="5" class="w-20 px-2 py-1 border border-slate-200 rounded text-sm" />
-                                        <input type="text" v-model="review.date" placeholder="Date (e.g. 2 weeks ago)"
-                                            class="flex-1 px-2 py-1 border border-slate-200 rounded text-sm" />
-                                    </div>
-                                    <textarea v-model="review.text" placeholder="Review text" rows="3"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm resize-none mb-2"></textarea>
-                                    <input type="text" v-model="review.image" placeholder="Image URL (optional)"
-                                        class="w-full px-2 py-1 border border-slate-200 rounded text-sm" />
-                                </div>
-                            </div>
-                            <button
-                                @click="selectedBlock.params.reviews = [...(selectedBlock.params.reviews || []), {name: 'New Reviewer', rating: 5, text: 'Great experience!', date: 'Just now'}]"
-                                class="mt-2 px-3 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">
-                                + Add Review
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Generic Items Editor (for blocks with 'items' parameter that aren't menu or menu_grid) -->
-                    <div v-if="selectedBlock.params.items && selectedBlock.type !== 'menu' && selectedBlock.type !== 'menu_grid' && selectedBlock.type !== 'social_links'"
-                        class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Items</label>
-                            <div class="space-y-2">
-                                <div v-for="(item, index) in selectedBlock.params.items" :key="index"
-                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-xs font-medium text-slate-600">Item {{ index + 1 }}</span>
-                                        <button @click="selectedBlock.params.items.splice(index, 1)"
-                                            class="text-red-500 hover:text-red-700 transition-colors">
-                                            <icon name="x" :size="14"></icon>
-                                        </button>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <!-- Dynamically render fields for each property in the item -->
-                                        <div v-for="(val, prop) in item" :key="prop">
-                                            <label class="block text-xs text-slate-500 mb-1">{{ formatKey(prop)
-                                                }}</label>
-                                            <textarea v-if="typeof val === 'string' && val.length > 50"
-                                                v-model="item[prop]" rows="3"
-                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none"></textarea>
-                                            <input v-else type="text" v-model="item[prop]"
-                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <button @click="addGenericItem(selectedBlock)"
-                                    class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
-                                    <icon name="plus" :size="12"></icon>
-                                    <span>Add Item</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- General Block Parameters -->
-                    <div v-for="(value, key) in selectedBlock.params" :key="key">
-                        <!-- Skip custom-handled parameters for menu blocks and items for all blocks -->
-                        <template v-if="shouldShowParam(selectedBlock.type, key)">
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">
-                                {{ formatKey(key) }}
-                            </label>
-
-                            <!-- Image Upload for 'src' or 'bgImage' -->
-                            <div v-if="['src', 'bgImage'].includes(key)" class="space-y-2">
+                            <!-- Image -->
+                            <div v-else-if="field.type === 'image' || field.format === 'uri'" class="space-y-2">
                                 <div class="flex space-x-2">
-                                    <input type="text" :value="value"
-                                        @input="updateBlockParams(selectedBlock.id, key, $event.target.value)"
-                                        class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                    <input type="text" :value="selectedBlock.params[key]"
+                                        @input="updateBlock(selectedBlock.id, key, $event.target.value)"
+                                        class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
                                         placeholder="https://..." />
                                     <label
                                         class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
                                         title="Upload Image">
                                         <input type="file" class="hidden" accept="image/*" @change="async (e) => {
-                                            if (e.target.files.length > 0) {
-                                                try {
-                                                    const result = await uploadFile(e.target.files[0]);
-                                                    updateBlockParams(selectedBlock.id, key, result.file_url);
-                                                    showToast('Image uploaded successfully', 'success');
-                                                } catch (err) {
-                                                    showToast('Upload failed: ' + err.message, 'error');
+                                                if (e.target.files.length > 0) {
+                                                    try {
+                                                        const result = await uploadFile(e.target.files[0]);
+                                                        updateBlock(selectedBlock.id, key, result.file_url);
+                                                        showToast('Image uploaded successfully', 'success');
+                                                    } catch (err) {
+                                                        showToast('Upload failed: ' + err.message, 'error');
+                                                    }
+                                                    e.target.value = ''; // Reset input
                                                 }
-                                                e.target.value = ''; // Reset input
-                                            }
-                                        }">
+                                            }">
                                         <icon name="hard-drive" :size="16" class="text-slate-600"></icon>
                                     </label>
                                 </div>
-                                <div v-if="value"
+                                <div v-if="selectedBlock.params[key]"
                                     class="relative h-32 bg-slate-100 rounded-md overflow-hidden border border-slate-200 group">
-                                    <img :src="value" class="w-full h-full object-cover">
+                                    <img :src="selectedBlock.params[key]" class="w-full h-full object-cover">
                                     <div
                                         class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                         <span class="text-white text-xs font-medium">Preview</span>
@@ -1315,33 +1079,66 @@
                                 </div>
                             </div>
 
-                            <div v-else-if="key === 'content'">
+                            <!-- Rich Text -->
+                            <div v-else-if="field.type === 'rich_text'">
                                 <div :ref="el => { if (el) richTextEditors[selectedBlock.id + '_' + key] = el; }"
                                     class="quill-editor"></div>
                             </div>
 
-                            <textarea v-else-if="key === 'md' || (typeof value === 'string' && value.length > 50)"
-                                :value="value" @input="updateBlockParams(selectedBlock.id, key, $event.target.value)"
-                                rows="6"
-                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:focus:border-indigo-500 outline-none resize-none font-mono"></textarea>
-
-                            <input v-else type="text" :value="value"
-                                @input="updateBlockParams(selectedBlock.id, key, $event.target.value)"
-                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
-
-                            <div v-if="key.includes('Image')"
-                                class="mt-2 rounded-md overflow-hidden h-24 bg-slate-100 border border-slate-200 flex items-center justify-center relative group">
-                                <img :src="value" alt="Preview" class="h-full w-full object-cover"
-                                    @error="$event.target.style.display = 'none'" />
-                                <div
-                                    class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white text-xs">
-                                    Preview</div>
+                            <!-- Array -->
+                            <div v-else-if="field.type === 'array'">
+                                <div class="space-y-2">
+                                    <div v-for="(item, index) in (selectedBlock.params[key] || [])" :key="index"
+                                        class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-xs font-medium text-slate-600">Item {{ index + 1 }}</span>
+                                            <button @click="selectedBlock.params[key].splice(index, 1)"
+                                                class="text-red-500 hover:text-red-700 transition-colors">
+                                                <icon name="trash-2" :size="14"></icon>
+                                            </button>
+                                        </div>
+                                        <div class="space-y-2">
+                                            <div v-for="(val, prop) in item" :key="prop">
+                                                <label class="block text-xs text-slate-500 mb-1">{{ prop }}</label>
+                                                <textarea v-if="typeof val === 'string' && val.length > 50"
+                                                    v-model="item[prop]" rows="3"
+                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+                                                <input v-else type="text" v-model="item[prop]"
+                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        @click="selectedBlock.params[key] = [...(selectedBlock.params[key] || []), {}]"
+                                        class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
+                                        <icon name="plus" :size="12"></icon>
+                                        <span>Add Item</span>
+                                    </button>
+                                </div>
                             </div>
-                        </template>
+                        </div>
                     </div>
+
+                    <!-- Fallback -->
+                    <div v-else>
+                        <div v-for="(val, key) in selectedBlock.params" :key="key" class="mb-4">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">{{ key }}</label>
+                            <textarea v-if="key === 'content' || key === 'html' || key === 'md'"
+                                v-model="selectedBlock.params[key]" rows="6"
+                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none font-mono"></textarea>
+                            <input v-else type="text" v-model="selectedBlock.params[key]"
+                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                        </div>
+                    </div>
+
                 </div>
-            </aside>
-        </template>
+
+
+
+
+    </div>
+    </aside>
+    </template>
     </div>
 
     <!-- Scripts -->
@@ -1734,6 +1531,66 @@
                         </div>
                     </div>
 
+                    <div v-else-if="block.type === 'row'" class="flex flex-wrap w-full relative group/row">
+                        <template v-for="(child, index) in block.children" :key="child.id">
+                            <div :style="{ width: (child.params.width || 100) + '%' }" class="relative">
+                                <block-renderer 
+                                    :block="child" 
+                                    :is-selected="false"
+                                    :is-editable="isEditable"
+                                    @select="$emit('select-block', $event)"
+                                    @drag-start-block="handleNestedDragStart"
+                                    @nested-drop="handleNestedDrop"
+                                ></block-renderer>
+                            </div>
+                            
+                            <!-- Resize Handle -->
+                            <div v-if="isEditable && index < block.children.length - 1"
+                                 class="absolute top-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity z-20 hover:bg-indigo-400/20"
+                                 :style="{ left: getHandlePosition(block, index) + '%', transform: 'translateX(-50%)' }"
+                                 @mousedown="startRowResize($event, block, index)"
+                                 @touchstart="startRowResize($event, block, index)">
+                                <div class="w-1 h-8 bg-indigo-400 rounded-full shadow-sm"></div>
+                            </div>
+                        </template>
+                        
+                         <!-- Empty Row State -->
+                        <div v-if="(!block.children || block.children.length === 0) && isEditable" class="w-full p-4 border-2 border-dashed border-slate-200 rounded text-center text-slate-400">
+                            Empty Row
+                            <drop-zone :blocks="block.children || []" :parent-block-id="block.id" zone="children" :is-active="true" class="mt-2"></drop-zone>
+                        </div>
+                    </div>
+
+                    <div v-else-if="block.type === 'column'" class="h-full">
+                        <div class="h-full border border-dashed border-slate-200 rounded-lg hover:border-indigo-300 transition-colors p-2">
+                            <drop-zone 
+                                zone="children" 
+                                :blocks="block.children || []" 
+                                :is-active="isEditable"
+                                :parent-block-id="block.id"
+                                :is-nested="true"
+                                @drop-item="handleNestedDrop"
+                                @select-block="handleSelectBlock"
+                                @drag-start-block="handleNestedDragStart"
+                                class="h-full min-h-[50px]"
+                            ></drop-zone>
+                        </div>
+                    </div>
+
+                    <div v-else-if="getDefinition(block.type).is_container" class="p-4 border border-slate-100 rounded-lg">
+                         <div class="text-xs font-bold text-slate-400 uppercase mb-2">{{ getDefinition(block.type).label || block.type }}</div>
+                         <drop-zone 
+                            zone="children" 
+                            :blocks="block.children || []" 
+                            :is-active="isEditable"
+                            :parent-block-id="block.id"
+                            :is-nested="true"
+                            @drop-item="handleNestedDrop"
+                            @select-block="handleSelectBlock"
+                            @drag-start-block="handleNestedDragStart"
+                        ></drop-zone>
+                    </div>
+
                     <div v-else-if="block.type === 'flex_columns'">
                         <!-- Editor Mode: Show container with labels and borders -->
                         <div v-if="isEditable" class="p-4 bg-slate-50 border border-slate-200 rounded-md">
@@ -2097,6 +1954,70 @@
                 // Fix: Explicitly inject required functions
                 const {findBlockAndParent, updateBlock, componentLibrary, getColWidths, updateSingleWidth} = Vue.inject('cmsState');
 
+                const getHandlePosition = (block, index) => {
+                    let pos = 0;
+                    if(!block.children) return 0;
+                    for(let i = 0; i <= index; i++) {
+                        pos += parseFloat(block.children[i].params.width || 0);
+                    }
+                    return pos;
+                };
+
+                const startRowResize = (e, rowBlock, index) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    const container = e.currentTarget.parentElement;
+                    const containerRect = container.getBoundingClientRect();
+                    const startX = e.clientX || e.touches[0].clientX;
+
+                    const leftColBlock = rowBlock.children[index];
+                    const rightColBlock = rowBlock.children[index + 1];
+
+                    const leftColStartWidth = parseFloat(leftColBlock.params.width || 50);
+                    const rightColStartWidth = parseFloat(rightColBlock.params.width || 50);
+
+                    const startLeftPx = containerRect.width * (leftColStartWidth / 100);
+
+                    const mouseMove = (e) => {
+                        const currentX = e.clientX || e.touches[0].clientX;
+                        const deltaX = currentX - startX;
+
+                        let newLeftPx = startLeftPx + deltaX;
+
+                        // Min width check (e.g. 5%)
+                        const minPx = containerRect.width * 0.05;
+                        if(newLeftPx < minPx) newLeftPx = minPx;
+
+                        // Convert back to %
+                        let newLeftPercent = (newLeftPx / containerRect.width) * 100;
+
+                        // Round
+                        newLeftPercent = Math.round(newLeftPercent * 10) / 10;
+
+                        let newRightPercent = (leftColStartWidth + rightColStartWidth) - newLeftPercent;
+                        if(newRightPercent < 5) {
+                            newRightPercent = 5;
+                            newLeftPercent = (leftColStartWidth + rightColStartWidth) - 5;
+                        }
+
+                        updateBlock(leftColBlock.id, 'width', newLeftPercent);
+                        updateBlock(rightColBlock.id, 'width', newRightPercent);
+                    };
+
+                    const mouseUp = () => {
+                        document.removeEventListener('mousemove', mouseMove);
+                        document.removeEventListener('mouseup', mouseUp);
+                        document.removeEventListener('touchmove', mouseMove);
+                        document.removeEventListener('touchend', mouseUp);
+                    };
+
+                    document.addEventListener('mousemove', mouseMove);
+                    document.addEventListener('mouseup', mouseUp);
+                    document.addEventListener('touchmove', mouseMove);
+                    document.addEventListener('touchend', mouseUp);
+                };
+
                 // --- Column Structure Helper (Flex Columns) ---
                 const getColumnStructure = (block) => {
                     const widthsStr = block.params.col_widths || '50.0, 50.0';
@@ -2285,6 +2206,8 @@
                             : 'border-transparent hover:border-indigo-300 hover:shadow-sm'
                             }`;
                     }),
+                    getHandlePosition,
+                    startRowResize,
                     getColumnStructure,
                     handleNestedDrop,
                     startResize,
@@ -2378,7 +2301,22 @@
                 const updateBlock = (blockId, key, value) => {
                     const result = findBlockAndParent(blockId);
                     if(result) {
-                        result.block.params[key] = value;
+                        // Handle nested updates (e.g. "style.color" or "items.0.text")
+                        if(key.includes('.')) {
+                            const keys = key.split('.');
+                            let target = result.block.params;
+                            for(let i = 0; i < keys.length - 1; i++) {
+                                if(!target[keys[i]]) {
+                                    // If we need to create an array or object, we might need to be careful
+                                    // For now, assume object structure exists or create empty object
+                                    target[keys[i]] = {};
+                                }
+                                target = target[keys[i]];
+                            }
+                            target[keys[keys.length - 1]] = value;
+                        } else {
+                            result.block.params[key] = value;
+                        }
                     }
                 };
 
@@ -2468,9 +2406,12 @@
                     if(!selectedBlockId.value) return null;
                     const result = findBlockAndParent(selectedBlockId.value);
                     if(!result) return null;
+                    return result.block;
+                });
 
-                    const definition = componentLibrary.value.find(def => def.id === result.block.type);
-                    return {...result.block, label: definition?.label, zone: result.zone};
+                const selectedBlockDefinition = computed(() => {
+                    if(!selectedBlock.value) return null;
+                    return componentLibrary.value.find(def => def.id === selectedBlock.value.type);
                 });
 
                 // Initialize Quill editor when text block is selected
@@ -3033,6 +2974,18 @@ layout = "${activePage.value.layout}"
                         return null;
                     }
 
+                    // Handle generic nested children
+                    if(zone === 'children' && parentBlockId) {
+                        const result = findBlockAndParent(parentBlockId);
+                        if(result && result.block) {
+                            if(!result.block.children) {
+                                result.block.children = [];
+                            }
+                            return result.block.children;
+                        }
+                        return null;
+                    }
+
                     // Handle top-level zones
                     if(contentZones.value[zone]) {
                         return contentZones.value[zone];
@@ -3508,12 +3461,14 @@ layout = "${activePage.value.layout}"
                     isEditingProvider,
                     editingProvider,
                     handleDrop,
+                    updateBlock,
                     updateBlockParams: updateBlock,
                     deleteBlock,
                     formatKey,
                     shouldShowParam,
                     addGenericItem,
                     setSelectedBlockId: (id) => selectedBlockId.value = id,
+                    selectedBlockDefinition,
                     getColWidths,
                     updateColWidths: updateBlock,
                     updateColCount,

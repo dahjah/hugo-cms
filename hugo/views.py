@@ -6,7 +6,7 @@ from django.db import transaction
 from django.conf import settings
 from pathlib import Path
 import uuid 
-from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website, UploadedFile, StorageSettings
+from .models import Website, Page, BlockDefinition, BlockInstance, SiteTemplate, TemplateCategory, LayoutTemplate, UploadedFile, StorageSettings
 from .deployment_models import DeploymentProvider, DeploymentHistory
 from .deployment_service import CloudflareR2Deployer, HugoBuilder, DeploymentOrchestrator
 from django.utils import timezone
@@ -1011,7 +1011,6 @@ draft = false
                             
                             block_str += "}"
                             footer_toml += block_str
-                        
                         footer_toml += "]\n"
                         output += f'{indent}  sidebarFooterBlocks = {footer_toml}'
                 
@@ -1134,40 +1133,53 @@ draft = false
                         output += f'{indent}  reviews = {reviews_toml}'
                 
                 
-                # Handle nested children (flex_columns)
-                children = block.children.all().order_by('sort_order')
-                if children.exists():
-                    if block.definition_id == 'flex_columns':
-                        # Group children by their placement_key (col_0, col_1, etc.)
-                        from collections import defaultdict
-                        cols = defaultdict(list)
-                        for child in children:
-                            col_key = child.placement_key or 'col_0'
-                            cols[col_key].append(child)
-                        
-                        # Render each column's blocks
-                        for col_key, col_blocks in cols.items():
-                            output += render_blocks(col_blocks, f'{zone_name}.{col_key}', depth + 1)
-                    else:
-                        # For other block types, render children normally
-                        output += render_blocks(children, f'{zone_name}.children', depth + 1)
+            # --- Recursive Child Rendering ---
+            # Check for children (nested blocks)
+            children = block.children.all().order_by('sort_order')
+            if children.exists():
+                # Render children into a 'blocks' array of the current block
+                # In TOML, [[parent.blocks]] appends to the 'blocks' array of the most recently defined 'parent'
+                output += render_blocks(children, f"{zone_name}.blocks", depth + 1)
                 
                 output += "\n"
             
             return output
         
-        # Render blocks from different zones
-        # Use flat naming convention to avoid TOML nesting issues and reserved words
-        for zone in ['header', 'main', 'sidebar', 'footer']:
-            if zone in ['header', 'footer']:
-                # Global blocks (page=None)
-                zone_blocks = global_blocks.filter(placement_key=zone)
-            else:
-                # Page-specific blocks (main/sidebar)
-                zone_blocks = page_blocks.filter(placement_key=zone)
+            # Get layout definition
+        try:
+            layout_def = LayoutTemplate.objects.get(id=page.layout)
+        except LayoutTemplate.DoesNotExist:
+            # Fallback to standard layout if not found
+            # Try 'single' or 'home' depending on page type, or just log warning
+            try:
+                layout_def = LayoutTemplate.objects.get(id='single')
+            except LayoutTemplate.DoesNotExist:
+                # Should not happen if seeded correctly, but handle gracefully
+                layout_def = None
+
+        # Render blocks from dynamic zones defined in layout
+        if layout_def:
+            for zone in layout_def.zones:
+                zone_name = zone['name']
+                scope = zone.get('scope', 'page')
                 
-            if zone_blocks.exists():
-                content += render_blocks(zone_blocks, f'{zone}_blocks')
+                if scope == 'global':
+                    zone_blocks = global_blocks.filter(placement_key=zone_name)
+                else:
+                    zone_blocks = page_blocks.filter(placement_key=zone_name)
+                    
+                if zone_blocks.exists():
+                    content += render_blocks(zone_blocks, f'{zone_name}_blocks')
+        else:
+            # Fallback for legacy/undefined layouts
+            for zone in ['header', 'main', 'sidebar', 'footer']:
+                if zone in ['header', 'footer']:
+                    zone_blocks = global_blocks.filter(placement_key=zone)
+                else:
+                    zone_blocks = page_blocks.filter(placement_key=zone)
+                    
+                if zone_blocks.exists():
+                    content += render_blocks(zone_blocks, f'{zone}_blocks')
         
         # Close frontmatter
         return frontmatter + content + "+++\n"
@@ -1547,3 +1559,136 @@ class PageViewSet(viewsets.ModelViewSet):
 class DeploymentProviderViewSet(viewsets.ModelViewSet):
     queryset = DeploymentProvider.objects.all()
     serializer_class = DeploymentProviderSerializer
+
+
+# --- Template Viewsets ---
+
+from .models import SiteTemplate, TemplateCategory
+from .serializers import (
+    TemplateCategorySerializer,
+    SiteTemplateListSerializer,
+    SiteTemplateDetailSerializer,
+    CreateTemplateFromWebsiteSerializer,
+    CreateWebsiteFromTemplateSerializer
+)
+from .template_service import export_website_to_template, create_website_from_template
+
+
+class TemplateCategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    List and retrieve template categories.
+    """
+    queryset = TemplateCategory.objects.all()
+    serializer_class = TemplateCategorySerializer
+
+
+class SiteTemplateViewSet(viewsets.ModelViewSet):
+    """
+    List, retrieve, create, update, and delete site templates.
+    Also provides actions to export a website to a template and create a website from a template.
+    """
+    queryset = SiteTemplate.objects.filter(is_public=True)
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return SiteTemplateListSerializer
+        return SiteTemplateDetailSerializer
+    
+    @action(detail=False, methods=['post'])
+    def from_website(self, request):
+        """
+        Export a website to create a new template.
+        
+        POST /api/templates/from-website/
+        {
+            "website_id": "uuid",
+            "template_id": "therapy",
+            "name": "Therapy Practice",
+            "description": "A template for therapy websites",
+            "category": "healthcare",
+            "thumbnail_url": "https://..."
+        }
+        """
+        serializer = CreateTemplateFromWebsiteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            template = export_website_to_template(
+                website_id=serializer.validated_data['website_id'],
+                template_id=serializer.validated_data['template_id'],
+                name=serializer.validated_data['name'],
+                description=serializer.validated_data.get('description', ''),
+                category_slug=serializer.validated_data.get('category'),
+                thumbnail_url=serializer.validated_data.get('thumbnail_url', ''),
+                created_by=request.user.username if request.user.is_authenticated else ''
+            )
+            
+            return Response({
+                'success': True,
+                'message': f'Template "{template.name}" created successfully',
+                'template': SiteTemplateDetailSerializer(template).data
+            }, status=status.HTTP_201_CREATED)
+            
+        except Website.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'Website not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=['post'])
+    def create_website(self, request, pk=None):
+        """
+        Create a new website from this template.
+        
+        POST /api/templates/{id}/create-website/
+        {
+            "website_name": "My Therapy Site",
+            "website_slug": "my-therapy-site"
+        }
+        """
+        try:
+            template = self.get_object()
+            
+            website_name = request.data.get('website_name')
+            website_slug = request.data.get('website_slug')
+            
+            if not website_name or not website_slug:
+                return Response({
+                    'success': False,
+                    'error': 'website_name and website_slug are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check if slug already exists
+            if Website.objects.filter(slug=website_slug).exists():
+                return Response({
+                    'success': False,
+                    'error': f'Website with slug "{website_slug}" already exists'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            website = create_website_from_template(
+                template_id=template.id,
+                website_name=website_name,
+                website_slug=website_slug
+            )
+            
+            return Response({
+                'success': True,
+                'message': f'Website "{website.name}" created from template "{template.name}"',
+                'website': WebsiteSerializer(website).data
+            }, status=status.HTTP_201_CREATED)
+            
+        except SiteTemplate.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'Template not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

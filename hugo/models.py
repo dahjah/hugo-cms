@@ -12,6 +12,8 @@ class BlockDefinition(models.Model):
     label = models.CharField(max_length=100)
     icon = models.CharField(max_length=50, help_text="Lucide icon name (e.g., 'layout')")
     has_visual_preview = models.BooleanField(default=False, help_text="Does the frontend have a specific renderer for this?")
+    is_container = models.BooleanField(default=False, help_text="Can this block contain other blocks?")
+    schema = JSONField(default=dict, help_text="JSON Schema defining the fields (title, type, default, etc.)")
     default_params = JSONField(default=dict, help_text="Default values when a user drags this block in")
 
     def __str__(self):
@@ -176,3 +178,58 @@ class StorageSettings(models.Model):
 
     def __str__(self):
         return f"Storage Settings for {self.website.name}"
+
+
+class TemplateCategory(models.Model):
+    """
+    Categories for organizing site templates (e.g., Healthcare, Food & Beverage).
+    """
+    slug = models.CharField(max_length=50, primary_key=True, help_text="URL-friendly identifier")
+    name = models.CharField(max_length=100, help_text="Display name for the category")
+    description = models.TextField(blank=True)
+    order = models.IntegerField(default=0, help_text="Sort order in template gallery")
+
+    class Meta:
+        ordering = ['order', 'name']
+        verbose_name_plural = "Template Categories"
+
+    def __str__(self):
+        return self.name
+
+
+class SiteTemplate(models.Model):
+    """
+    Predefined site templates that users can import to create new websites.
+    Contains serialized pages, blocks, and CSS that can be applied to a new website.
+    """
+    id = models.CharField(max_length=50, primary_key=True, help_text="URL-friendly identifier (e.g., 'therapy', 'food-truck')")
+    name = models.CharField(max_length=100, help_text="Display name for the template")
+    description = models.TextField(blank=True)
+    thumbnail_url = models.CharField(max_length=500, blank=True, help_text="Preview image URL")
+    category = models.ForeignKey(
+        TemplateCategory, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='templates'
+    )
+    
+    # Serialized template content
+    base_css = models.TextField(blank=True, help_text="CSS variables and base styles")
+    pages_json = JSONField(
+        default=list, 
+        help_text="Serialized pages with blocks: [{slug, title, layout, blocks: [...]}]"
+    )
+    
+    # Metadata
+    created_by = models.CharField(max_length=100, blank=True, help_text="Attribution for template creator")
+    is_featured = models.BooleanField(default=False, help_text="Show prominently in template gallery")
+    is_public = models.BooleanField(default=True, help_text="Available to all users")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-is_featured', 'name']
+
+    def __str__(self):
+        return self.name
