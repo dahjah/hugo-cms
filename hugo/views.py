@@ -449,6 +449,22 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         </div>
     {{ end }}
 </div>""",
+                'brand_logo': """
+{{ $logoSize := .logo_size | default "80" }}
+{{ $linkUrl := .link_url | default "/" }}
+<a class="brand-logo inline-flex items-center gap-2 no-underline transition-opacity hover:opacity-85 {{ .css_classes }}" href="{{ $linkUrl }}">
+    {{ if .logo_image }}
+    <img src="{{ .logo_image }}" alt="{{ .brand_name }}" class="logo-icon" style="width: {{ $logoSize }}px; height: {{ $logoSize }}px; object-fit: contain;">
+    {{ end }}
+    <div class="logo-text flex flex-col gap-0.5">
+        {{ if .brand_name }}
+        <div class="brand-name font-serif font-bold text-xl text-slate-800" style="line-height: 1.2;">{{ .brand_name }}</div>
+        {{ end }}
+        {{ if .tagline }}
+        <div class="brand-tagline text-xs text-slate-500 tracking-wider uppercase font-medium" style="line-height: 1;">{{ .tagline }}</div>
+        {{ end }}
+    </div>
+</a>""",
                 'youtube': """<div class="mb-8 {{ .css_classes }}" style="width: {{ .width | default "100%" }}; margin: 0 auto;">
     <div class="aspect-w-16 aspect-h-9 relative" style="padding-bottom: {{ if eq .aspect_ratio "4/3" }}75%{{ else }}56.25%{{ end }};">
         <iframe 
