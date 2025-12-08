@@ -12,14 +12,7 @@ layout = "list"
   hamburgerDirection = "dropdown"
   sidebarSide = "left"
   position = "normal"
-  items = [{label = "Home", url = "/", type = "page"}, {label = "About", url = "/test-page", type = "page"}, {label = "Contact", url = "https://youtu.be/dQw4w9WgXcQ", type = "external"}]
-
-[[header_blocks]]
-  type = "image"
-  src = "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80"
-  caption = "A beautiful view"
-  width = "100%"
-  height = "auto"
+  items = [{label = "Home", url = "/", type = "page"}, {label = "About", url = "/test-page", type = "page"}, {label = "Contact", url = "https://youtu.be/dQw4w9WgXcQ", type = "external"}, {label = "Mambo Blocks", url = "/mambo", type = "page"}]
 
 [[main_blocks]]
   type = "text"
