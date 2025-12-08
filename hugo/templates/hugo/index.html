@@ -45,6 +45,27 @@
             background: #94a3b8;
         }
 
+        /* 3D Flip Card Utilities */
+        .perspective {
+            perspective: 1000px;
+        }
+
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        .group:hover .group-hover\:rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
         /* Custom Resizer Handle */
         .resize-handle {
             cursor: ew-resize;
@@ -1006,6 +1027,83 @@
                         </div>
                     </div>
 
+                    <!-- Special Editor for Carousel Block Slides -->
+                    <div v-else-if="selectedBlock.type === 'carousel'" class="space-y-4">
+                        <!-- Slides List -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Slides</label>
+                            <div class="space-y-3">
+                                <div v-for="(slide, index) in (selectedBlock.params.slides || [])"
+                                    :key="slide.id || index"
+                                    class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                                    <!-- Slide Header -->
+                                    <div
+                                        class="flex items-center justify-between p-3 bg-slate-50 border-b border-slate-200">
+                                        <span class="text-sm font-medium text-slate-700">Slide {{ index + 1 }}</span>
+                                        <button @click="selectedBlock.params.slides.splice(index, 1)"
+                                            class="text-red-500 hover:text-red-700 transition-colors">
+                                            <icon name="trash-2" :size="14"></icon>
+                                        </button>
+                                    </div>
+                                    <!-- Slide Content Drop Zone -->
+                                    <div class="p-2">
+                                        <drop-zone :title="'Slide ' + (index + 1) + ' Blocks'"
+                                            :zone="'carousel_slide_' + selectedBlock.id + '_' + index"
+                                            :blocks="slide.children || []" :is-active="true" :selected-id="null"
+                                            :parent-block-id="selectedBlock.id" @drop-item="handleDrop"
+                                            @select-block="() => {}" @drag-start-block="handleDragStartExisting"
+                                            class="min-h-[60px]">
+                                        </drop-zone>
+                                    </div>
+                                </div>
+                                <button
+                                    @click="selectedBlock.params.slides = [...(selectedBlock.params.slides || []), { id: Date.now().toString(36) + Math.random().toString(36).substr(2), children: [] }]"
+                                    class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
+                                    <icon name="plus" :size="12"></icon>
+                                    <span>Add Slide</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Carousel Configuration Options -->
+                        <div class="border-t border-slate-200 pt-4 space-y-4">
+                            <div>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" v-model="selectedBlock.params.auto_advance"
+                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                                    <span class="text-sm text-slate-700">Auto Advance</span>
+                                </label>
+                                <p class="text-xs text-slate-400 mt-1">Automatically advance to next slide</p>
+                            </div>
+
+                            <div v-if="selectedBlock.params.auto_advance">
+                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Interval
+                                    (seconds)</label>
+                                <input type="number" v-model.number="selectedBlock.params.interval_seconds" min="1"
+                                    max="30" step="1"
+                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                            </div>
+
+                            <div>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" v-model="selectedBlock.params.show_dots"
+                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                                    <span class="text-sm text-slate-700">Show Dots</span>
+                                </label>
+                                <p class="text-xs text-slate-400 mt-1">Show navigation dots below carousel</p>
+                            </div>
+
+                            <div>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" v-model="selectedBlock.params.show_arrows"
+                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                                    <span class="text-sm text-slate-700">Show Arrows</span>
+                                </label>
+                                <p class="text-xs text-slate-400 mt-1">Show prev/next navigation arrows</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Schema-Driven Editor -->
                     <div v-else-if="selectedBlockDefinition?.schema">
                         <div v-for="(field, key) in (selectedBlockDefinition.schema.properties || selectedBlockDefinition.schema)"
@@ -1100,7 +1198,25 @@
                                         <div class="space-y-2">
                                             <div v-for="(val, prop) in item" :key="prop">
                                                 <label class="block text-xs text-slate-500 mb-1">{{ prop }}</label>
-                                                <textarea v-if="typeof val === 'string' && val.length > 50"
+
+                                                <!-- Handle Nested Objects (Recursion-lite) -->
+                                                <div v-if="typeof val === 'object' && val !== null"
+                                                    class="pl-2 border-l-2 border-slate-200 space-y-2 mb-2">
+                                                    <div v-for="(subVal, subProp) in val" :key="subProp">
+                                                        <label
+                                                            class="block text-[10px] text-slate-400 mb-1 uppercase">{{
+                                                            subProp }}</label>
+                                                        <textarea
+                                                            v-if="typeof subVal === 'string' && subVal.length > 50"
+                                                            v-model="val[subProp]" rows="2"
+                                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+                                                        <input v-else type="text" v-model="val[subProp]"
+                                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                                    </div>
+                                                </div>
+
+                                                <!-- Handle Strings/Numbers -->
+                                                <textarea v-else-if="typeof val === 'string' && val.length > 50"
                                                     v-model="item[prop]" rows="3"
                                                     class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
                                                 <input v-else type="text" v-model="item[prop]"
@@ -1577,7 +1693,7 @@
                         </div>
                     </div>
 
-                    <div v-else-if="getDefinition(block.type).is_container" class="p-4 border border-slate-100 rounded-lg">
+                    <div v-else-if="getDefinition(block.type).is_container && block.type !== 'carousel'" class="p-4 border border-slate-100 rounded-lg">
                          <div class="text-xs font-bold text-slate-400 uppercase mb-2">{{ getDefinition(block.type).label || block.type }}</div>
                          <drop-zone 
                             zone="children" 
@@ -1798,7 +1914,191 @@
                             </div>
                         </div>
                         <div v-if="!block.params.features || block.params.features.length === 0" class="text-center text-slate-400 py-8">
-                            No features added yet
+                            No features added yet.
+                        </div>
+                    </div>
+
+                    <!-- Flip Cards Grid -->
+                    <div v-else-if="block.type === 'flip_cards'" class="p-6">
+                        <div class="grid gap-6" :style="{ gridTemplateColumns: 'repeat(' + (block.params.columns || 3) + ', minmax(0, 1fr))' }">
+                            <div v-for="(card, idx) in (block.params.cards || [])" :key="idx" class="group h-64 perspective">
+                                <div class="relative w-full h-full transition-all duration-500 transform-style-3d group-hover:rotate-y-180">
+                                    <!-- Front -->
+                                    <div class="absolute inset-0 backface-hidden bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center border border-slate-100">
+                                        <div v-if="card.front?.icon" class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4 text-indigo-600">
+                                            <icon :name="card.front.icon" :size="32"></icon>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-slate-800">{{ card.front?.title || 'Card Title' }}</h3>
+                                    </div>
+                                    
+                                    <!-- Back -->
+                                    <div class="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center text-white">
+                                        <p class="text-sm mb-4">{{ card.back?.description || 'Description goes here...' }}</p>
+                                        <a v-if="card.back?.cta_text" :href="card.back?.cta_url || '#'" class="px-4 py-2 bg-white text-indigo-600 rounded-full text-sm font-bold hover:bg-indigo-50 transition-colors">
+                                            {{ card.back?.cta_text }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="!block.params.cards || block.params.cards.length === 0" class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg">
+                            Add cards via the sidebar editor
+                        </div>
+                    </div>
+
+                    <!-- Carousel (Slides managed in sidebar) -->
+                    <div v-else-if="block.type === 'carousel'" class="relative overflow-hidden rounded-lg">
+                        <!-- Editor Mode: Show current slide -->
+                        <div v-if="isEditable" class="border border-slate-200 rounded-lg bg-slate-50">
+                            <!-- Header with slide navigation -->
+                            <div class="flex items-center justify-between p-3 border-b border-slate-200 bg-white rounded-t-lg">
+                                <span class="text-xs font-semibold text-slate-500 uppercase">Carousel</span>
+                                <div v-if="block.params.slides?.length > 1" class="flex items-center space-x-2">
+                                    <button @click="block._currentSlide = ((block._currentSlide || 0) - 1 + block.params.slides.length) % block.params.slides.length"
+                                            class="p-1 hover:bg-slate-100 rounded transition-colors">
+                                        <icon name="chevron-left" :size="16" class="text-slate-600"></icon>
+                                    </button>
+                                    <span class="text-sm text-slate-600">{{ (block._currentSlide || 0) + 1 }} / {{ block.params.slides.length }}</span>
+                                    <button @click="block._currentSlide = ((block._currentSlide || 0) + 1) % block.params.slides.length"
+                                            class="p-1 hover:bg-slate-100 rounded transition-colors">
+                                        <icon name="chevron-right" :size="16" class="text-slate-600"></icon>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Current slide content -->
+                            <div class="min-h-[200px] p-4">
+                                <template v-if="block.params.slides?.length > 0">
+                                    <template v-for="child in (block.params.slides[block._currentSlide || 0]?.children || [])" :key="child.id">
+                                        <block-renderer 
+                                            :block="child" 
+                                            :is-selected="false"
+                                            :is-editable="false"
+                                            @select="$emit('select-block', $event)"
+                                        ></block-renderer>
+                                    </template>
+                                    <div v-if="!block.params.slides[block._currentSlide || 0]?.children?.length" 
+                                         class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg bg-white">
+                                        Slide {{ (block._currentSlide || 0) + 1 }} is empty - drag blocks to this slide in the sidebar
+                                    </div>
+                                </template>
+                                <div v-else class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg bg-white">
+                                    <icon name="gallery-horizontal" :size="32" class="mx-auto mb-2 opacity-50"></icon>
+                                    <p>No slides yet - add slides in the sidebar</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Preview Mode: Show actual carousel with auto-advance -->
+                        <div v-else class="carousel-container"
+                             :data-carousel-id="block.id"
+                             :data-auto-advance="block.params.auto_advance ? 'true' : 'false'"
+                             :data-interval="block.params.interval_seconds || 5"
+                             :data-slide-count="(block.params.slides || []).length">
+                            
+                            <!-- Carousel Wrapper (stacked slides with arrows) -->
+                            <div class="relative" style="display: grid; grid-template-areas: 'stack'; place-items: center; min-height: 300px; overflow: hidden;">
+                                <!-- Slides -->
+                                <template v-for="(slide, idx) in (block.params.slides || [])" :key="slide.id || idx">
+                                    <div class="carousel-slide"
+                                         style="grid-area: stack; width: 85%; max-width: 900px; transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;"
+                                         :style="{
+                                             transform: (block._currentSlide || 0) === idx ? 'translateX(0)' : ((block._currentSlide || 0) > idx ? 'translateX(-100%)' : 'translateX(100%)'),
+                                             opacity: (block._currentSlide || 0) === idx ? 1 : 0,
+                                             pointerEvents: (block._currentSlide || 0) === idx ? 'auto' : 'none',
+                                             zIndex: (block._currentSlide || 0) === idx ? 2 : 1
+                                         }">
+                                        <template v-for="child in (slide.children || [])" :key="child.id">
+                                            <block-renderer 
+                                                :block="child" 
+                                                :is-selected="false"
+                                                :is-editable="false"
+                                                @select="$emit('select-block', $event)"
+                                            ></block-renderer>
+                                        </template>
+                                        <div v-if="!slide.children?.length" class="py-16 px-8 flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700 text-white text-xl rounded-lg">
+                                            Slide {{ idx + 1 }}
+                                        </div>
+                                    </div>
+                                </template>
+                                
+                                <!-- Empty State -->
+                                <div v-if="!block.params.slides || block.params.slides.length === 0" 
+                                     style="grid-area: stack;"
+                                     class="py-16 px-8 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 rounded-lg">
+                                    No slides added
+                                </div>
+                                
+                                <!-- Arrows (positioned within grid area) -->
+                                <template v-if="block.params.show_arrows && block.params.slides?.length > 1">
+                                    <button @click="block._currentSlide = ((block._currentSlide || 0) - 1 + block.params.slides.length) % block.params.slides.length"
+                                            data-carousel-prev
+                                            style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
+                                            class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
+                                        <icon name="chevron-left" :size="24" class="text-slate-600"></icon>
+                                    </button>
+                                    <button @click="block._currentSlide = ((block._currentSlide || 0) + 1) % block.params.slides.length"
+                                            data-carousel-next
+                                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
+                                            class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
+                                        <icon name="chevron-right" :size="24" class="text-slate-600"></icon>
+                                    </button>
+                                </template>
+                            </div>
+                            
+                            <!-- Dots (outside carousel, below) -->
+                            <div v-if="block.params.show_dots && block.params.slides?.length > 1" 
+                                 class="flex justify-center gap-3 mt-6">
+                                <button v-for="(slide, idx) in block.params.slides" :key="slide.id || idx"
+                                        @click="block._currentSlide = idx"
+                                        data-carousel-dot
+                                        class="transition-all duration-200 border-0 cursor-pointer p-0"
+                                        :style="{
+                                            width: (block._currentSlide || 0) === idx ? '32px' : '12px',
+                                            height: '12px',
+                                            borderRadius: (block._currentSlide || 0) === idx ? '6px' : '50%',
+                                            background: (block._currentSlide || 0) === idx ? 'var(--color-primary, #6366f1)' : '#e2e8f0'
+                                        }">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Testimonial -->
+                    <div v-else-if="block.type === 'testimonial'" class="p-8 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
+                        <div class="max-w-2xl mx-auto text-center">
+                            <div class="text-indigo-400 mb-4">
+                                <icon name="quote" :size="48"></icon>
+                            </div>
+                            <blockquote class="text-xl text-slate-700 italic mb-6 leading-relaxed">
+                                "{{ block.params.quote || 'Testimonial quote goes here...' }}"
+                            </blockquote>
+                            <div class="flex items-center justify-center space-x-4">
+                                <div v-if="block.params.image" class="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-md">
+                                    <img :src="block.params.image" :alt="block.params.author" class="w-full h-full object-cover" />
+                                </div>
+                                <div class="text-left">
+                                    <div class="font-semibold text-slate-800">{{ block.params.author || 'Author Name' }}</div>
+                                    <div v-if="block.params.author_title" class="text-sm text-slate-500">{{ block.params.author_title }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else-if="block.type === 'accordion'" class="max-w-3xl mx-auto p-6">
+                        <h2 v-if="block.params.title" class="text-2xl font-bold text-center mb-8 text-slate-900">{{ block.params.title }}</h2>
+                        <div class="space-y-4">
+                            <div v-for="(item, idx) in (block.params.items || [])" :key="idx" class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                                <button @click="item._isOpen = !item._isOpen" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                    <span class="font-semibold text-slate-800">{{ item.title || 'Question' }}</span>
+                                    <icon :name="item._isOpen ? 'chevron-up' : 'chevron-down'" :size="20" class="text-slate-400"></icon>
+                                </button>
+                                <div v-show="item._isOpen" class="px-6 pb-4 text-slate-600 border-t border-slate-100 pt-4">
+                                    {{ item.content }}
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="!block.params.items || block.params.items.length === 0" class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg">
+                            Add accordion items via the sidebar editor
                         </div>
                     </div>
 
@@ -2961,6 +3261,29 @@ layout = "${activePage.value.layout}"
                         return null;
                     }
 
+                    // Handle carousel slide zones (nested within carousel block)
+                    if(zone.startsWith('carousel_slide_')) {
+                        // Zone format: carousel_slide_{blockId}_{slideIndex}
+                        const parts = zone.replace('carousel_slide_', '').split('_');
+                        const slideIndex = parseInt(parts.pop());
+                        const carouselBlockId = parts.join('_');
+                        const result = findBlockAndParent(carouselBlockId);
+                        if(result && result.block && result.block.type === 'carousel') {
+                            if(!result.block.params.slides) {
+                                result.block.params.slides = [];
+                            }
+                            if(!result.block.params.slides[slideIndex]) {
+                                result.block.params.slides[slideIndex] = {id: generateId(), children: []};
+                            }
+                            if(!result.block.params.slides[slideIndex].children) {
+                                result.block.params.slides[slideIndex].children = [];
+                            }
+                            return result.block.params.slides[slideIndex].children;
+                        }
+                        console.error('Carousel block not found for slide zone:', zone);
+                        return null;
+                    }
+
                     // Handle column zones (nested within columns block)
                     if(zone.startsWith('col_') && parentBlockId) {
                         const result = findBlockAndParent(parentBlockId);
@@ -3501,6 +3824,100 @@ layout = "${activePage.value.layout}"
 
 
         app.mount('#app');
+
+        // Carousel Auto-Advance (vanilla JS - works same in editor and production)
+        function initCarouselAutoAdvance() {
+            const carousels = document.querySelectorAll('.carousel-container');
+
+            carousels.forEach(carousel => {
+                // Skip if already initialized
+                if(carousel._carouselInitialized) return;
+                carousel._carouselInitialized = true;
+
+                const autoAdvance = carousel.dataset.autoAdvance === 'true';
+                const interval = parseInt(carousel.dataset.interval) || 5;
+                const slideCount = parseInt(carousel.dataset.slideCount) || 0;
+
+                if(!autoAdvance || slideCount <= 1) return;
+
+                // Function to start/restart the timer
+                function startTimer() {
+                    // Clear any existing interval
+                    if(carousel._autoAdvanceInterval) {
+                        clearInterval(carousel._autoAdvanceInterval);
+                    }
+
+                    // Set up auto-advance
+                    carousel._autoAdvanceInterval = setInterval(() => {
+                        const nextBtn = carousel.querySelector('[data-carousel-next]');
+                        if(nextBtn) {
+                            nextBtn.click();
+                        } else {
+                            const carouselId = carousel.dataset.carouselId;
+                            const event = new CustomEvent('carousel-advance', {
+                                detail: {id: carouselId},
+                                bubbles: true
+                            });
+                            carousel.dispatchEvent(event);
+                        }
+                    }, interval * 1000);
+                }
+
+                function stopTimer() {
+                    if(carousel._autoAdvanceInterval) {
+                        clearInterval(carousel._autoAdvanceInterval);
+                        carousel._autoAdvanceInterval = null;
+                    }
+                }
+
+                // Start timer initially
+                startTimer();
+
+                // Reset timer when prev/next buttons are clicked
+                const prevBtn = carousel.querySelector('[data-carousel-prev]');
+                const nextBtn = carousel.querySelector('[data-carousel-next]');
+
+                if(prevBtn) {
+                    prevBtn.addEventListener('click', () => {
+                        startTimer(); // Reset timer on manual navigation
+                    });
+                }
+
+                if(nextBtn) {
+                    nextBtn.addEventListener('click', () => {
+                        startTimer(); // Reset timer on manual navigation
+                    });
+                }
+
+                // Also reset timer when dots are clicked
+                const dots = carousel.querySelectorAll('[data-carousel-dot]');
+                dots.forEach(dot => {
+                    dot.addEventListener('click', () => {
+                        startTimer(); // Reset timer on dot click
+                    });
+                });
+
+                // Pause on hover
+                carousel.addEventListener('mouseenter', () => {
+                    stopTimer();
+                });
+
+                carousel.addEventListener('mouseleave', () => {
+                    if(autoAdvance && slideCount > 1) {
+                        startTimer();
+                    }
+                });
+            });
+        }
+
+        // Re-init carousels when DOM updates
+        const carouselObserver = new MutationObserver(() => {
+            initCarouselAutoAdvance();
+        });
+        carouselObserver.observe(document.body, {childList: true, subtree: true});
+
+        // Initial init
+        setTimeout(initCarouselAutoAdvance, 1000);
     </script>
 </body>
 {% endverbatim %}
