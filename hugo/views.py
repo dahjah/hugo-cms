@@ -683,6 +683,295 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         </div>
         {{ end }}
     </div>
+</div>""",
+                'flip_cards': """
+<div class="py-8 {{ .css_classes }}">
+    {{ if .title }}
+    <h2 class="text-3xl font-bold text-center mb-8 text-slate-900">{{ .title }}</h2>
+    {{ end }}
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {{ range .cards }}
+        <div class="group perspective-1000 h-64 cursor-pointer">
+            <div class="relative w-full h-full transition-transform duration-500 transform-style-preserve-3d group-hover:rotate-y-180">
+                <!-- Front -->
+                <div class="absolute inset-0 backface-hidden bg-white rounded-lg shadow-md p-6 flex flex-col items-center justify-center text-center">
+                    {{ if .front.icon }}
+                    <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    {{ end }}
+                    <h3 class="text-xl font-semibold text-slate-800">{{ .front.title }}</h3>
+                </div>
+                <!-- Back -->
+                <div class="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 rounded-lg shadow-md p-6 flex flex-col items-center justify-center text-center text-white">
+                    <p class="mb-4">{{ .back.description }}</p>
+                    {{ if .back.cta_text }}
+                    <a href="{{ .back.cta_url | default "#" }}" class="px-4 py-2 bg-white text-indigo-600 rounded-full text-sm font-bold hover:bg-indigo-50 transition-colors">
+                        {{ .back.cta_text }}
+                    </a>
+                    {{ end }}
+                </div>
+            </div>
+        </div>
+        {{ end }}
+    </div>
+</div>
+<style>
+.perspective-1000 { perspective: 1000px; }
+.transform-style-preserve-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; }
+.rotate-y-180 { transform: rotateY(180deg); }
+.group:hover .group-hover\\:rotate-y-180 { transform: rotateY(180deg); }
+</style>""",
+                'accordion': """
+<div class="py-8 {{ .css_classes }}">
+    {{ if .title }}
+    <h2 class="text-3xl font-bold text-center mb-8 text-slate-900">{{ .title }}</h2>
+    {{ end }}
+    <div class="max-w-3xl mx-auto space-y-4">
+        {{ range $index, $item := .items }}
+        <details class="group bg-white rounded-lg shadow-md overflow-hidden" {{ if eq $index 0 }}open{{ end }}>
+            <summary class="cursor-pointer p-6 font-semibold text-slate-900 hover:bg-slate-50 transition-colors flex items-center justify-between list-none">
+                <span>{{ .title }}</span>
+                <svg class="w-5 h-5 text-slate-500 transform transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </summary>
+            <div class="px-6 pb-6 text-slate-600 border-t border-slate-100 pt-4">
+                {{ .content | safeHTML }}
+            </div>
+        </details>
+        {{ end }}
+    </div>
+</div>""",
+                'carousel': """
+{{ $autoAdvance := .auto_advance | default false }}
+{{ $interval := .interval_seconds | default 5 }}
+{{ $showDots := .show_dots | default true }}
+{{ $showArrows := .show_arrows | default true }}
+{{ $uniqueId := .id | default (now.UnixNano | printf "%d") }}
+
+<div class="carousel-container py-8 {{ .css_classes }}" 
+     data-carousel-id="{{ $uniqueId }}"
+     data-auto-advance="{{ $autoAdvance }}"
+     data-interval="{{ $interval }}">
+    
+    <!-- Carousel Wrapper -->
+    <div class="relative" style="display: grid; grid-template-areas: 'stack'; place-items: center; min-height: 300px; overflow: hidden;">
+        {{ range $index, $slide := .slides }}
+        <div class="carousel-slide" 
+             data-slide-index="{{ $index }}"
+             style="grid-area: stack; width: 85%; max-width: 900px; transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out; {{ if eq $index 0 }}transform: translateX(0); opacity: 1;{{ else }}transform: translateX(100%); opacity: 0; pointer-events: none;{{ end }}">
+            {{ range .children }}
+                {{ partial "blocks/render-block.html" . }}
+            {{ end }}
+            {{ if not .children }}
+            <div class="py-16 px-8 flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700 text-white text-xl rounded-lg">
+                Slide {{ add $index 1 }}
+            </div>
+            {{ end }}
+        </div>
+        {{ end }}
+        
+        {{ if not .slides }}
+        <div class="py-16 px-8 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 rounded-lg">
+            No slides added
+        </div>
+        {{ end }}
+        
+        <!-- Arrows -->
+        {{ if and $showArrows .slides (gt (len .slides) 1) }}
+        <button data-carousel-prev
+                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
+                class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
+            <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+        <button data-carousel-next
+                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
+                class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
+            <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </button>
+        {{ end }}
+    </div>
+    
+    <!-- Dots -->
+    {{ if and $showDots .slides (gt (len .slides) 1) }}
+    <div class="flex justify-center gap-3 mt-6">
+        {{ range $index, $slide := .slides }}
+        <button data-carousel-dot="{{ $index }}"
+                class="transition-all duration-200 border-0 cursor-pointer p-0"
+                style="{{ if eq $index 0 }}width: 32px; border-radius: 6px; background: var(--color-primary, #6366f1);{{ else }}width: 12px; border-radius: 50%; background: #e2e8f0;{{ end }} height: 12px;">
+        </button>
+        {{ end }}
+    </div>
+    {{ end }}
+</div>
+
+<script>
+(function() {
+    const carousel = document.querySelector('[data-carousel-id="{{ $uniqueId }}"]');
+    if (!carousel) return;
+    
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    const dots = carousel.querySelectorAll('[data-carousel-dot]');
+    const prevBtn = carousel.querySelector('[data-carousel-prev]');
+    const nextBtn = carousel.querySelector('[data-carousel-next]');
+    const autoAdvance = carousel.dataset.autoAdvance === 'true';
+    const interval = parseInt(carousel.dataset.interval) || 5;
+    
+    if (slides.length <= 1) return;
+    
+    let currentSlide = 0;
+    let autoAdvanceTimer = null;
+    
+    function goToSlide(index) {
+        slides.forEach((slide, i) => {
+            if (i === index) {
+                slide.style.transform = 'translateX(0)';
+                slide.style.opacity = '1';
+                slide.style.pointerEvents = 'auto';
+            } else if (i < index) {
+                slide.style.transform = 'translateX(-100%)';
+                slide.style.opacity = '0';
+                slide.style.pointerEvents = 'none';
+            } else {
+                slide.style.transform = 'translateX(100%)';
+                slide.style.opacity = '0';
+                slide.style.pointerEvents = 'none';
+            }
+        });
+        
+        dots.forEach((dot, i) => {
+            if (i === index) {
+                dot.style.width = '32px';
+                dot.style.borderRadius = '6px';
+                dot.style.background = 'var(--color-primary, #6366f1)';
+            } else {
+                dot.style.width = '12px';
+                dot.style.borderRadius = '50%';
+                dot.style.background = '#e2e8f0';
+            }
+        });
+        
+        currentSlide = index;
+        resetTimer();
+    }
+    
+    function nextSlide() {
+        goToSlide((currentSlide + 1) % slides.length);
+    }
+    
+    function prevSlide() {
+        goToSlide((currentSlide - 1 + slides.length) % slides.length);
+    }
+    
+    function resetTimer() {
+        if (autoAdvanceTimer) clearInterval(autoAdvanceTimer);
+        if (autoAdvance) {
+            autoAdvanceTimer = setInterval(nextSlide, interval * 1000);
+        }
+    }
+    
+    if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+    if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+    dots.forEach((dot, i) => dot.addEventListener('click', () => goToSlide(i)));
+    
+    carousel.addEventListener('mouseenter', () => {
+        if (autoAdvanceTimer) clearInterval(autoAdvanceTimer);
+    });
+    carousel.addEventListener('mouseleave', resetTimer);
+    
+    resetTimer();
+})();
+</script>""",
+                'testimonial': """
+<div class="py-8 {{ .css_classes }}">
+    <div class="max-w-2xl mx-auto">
+        <blockquote class="bg-slate-50 border-l-4 border-indigo-500 p-8 rounded-lg shadow-sm">
+            <div class="text-indigo-400 mb-4">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                </svg>
+            </div>
+            <p class="text-xl text-slate-700 italic mb-6 leading-relaxed">"{{ .quote }}"</p>
+            <footer class="flex items-center">
+                {{ if .avatar }}
+                <img src="{{ .avatar }}" alt="{{ .author }}" class="w-12 h-12 rounded-full mr-4 object-cover">
+                {{ end }}
+                <div>
+                    <cite class="font-semibold text-slate-900 not-italic">{{ .author }}</cite>
+                    {{ if .role }}
+                    <p class="text-sm text-slate-500">{{ .role }}</p>
+                    {{ end }}
+                </div>
+            </footer>
+        </blockquote>
+    </div>
+</div>""",
+                'section': """
+{{ $bgColor := .background_color | default "transparent" }}
+{{ $padding := .padding | default "py-8" }}
+<section class="{{ $padding }} {{ .css_classes }}" style="background-color: {{ $bgColor }};">
+    <div class="container mx-auto px-4">
+        {{ range .children }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </div>
+</section>""",
+                'two_col': """
+{{ $leftWidth := .left_width | default "50" }}
+{{ $rightWidth := sub 100 (int $leftWidth) }}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 {{ .css_classes }}" style="grid-template-columns: {{ $leftWidth }}fr {{ $rightWidth }}fr;">
+    <div class="flex flex-col gap-4">
+        {{ range .left }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </div>
+    <div class="flex flex-col gap-4">
+        {{ range .right }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </div>
+</div>""",
+                'row': """
+<div class="flex flex-wrap gap-4 mb-8 {{ .css_classes }}">
+    {{ range .children }}
+        {{ partial "blocks/render-block.html" . }}
+    {{ end }}
+</div>""",
+                'col': """
+{{ $width := .width | default "auto" }}
+<div class="flex flex-col gap-4 {{ .css_classes }}" style="width: {{ $width }}; flex: {{ if eq $width "auto" }}1{{ else }}none{{ end }};">
+    {{ range .children }}
+        {{ partial "blocks/render-block.html" . }}
+    {{ end }}
+</div>""",
+                'theme_features': """
+<div class="py-16 px-4 {{ .css_classes }}">
+    {{ if .title }}
+    <h2 class="text-3xl font-bold text-center mb-12 text-slate-900">{{ .title }}</h2>
+    {{ end }}
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+        {{ range .items }}
+        <div class="text-center p-6 rounded-lg hover:shadow-lg transition-shadow bg-white">
+            {{ if .icon }}
+            <div class="w-16 h-16 mx-auto mb-4 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            {{ end }}
+            <h4 class="text-xl font-semibold mb-3 text-slate-800">{{ .title }}</h4>
+            <p class="text-slate-600">{{ .description }}</p>
+        </div>
+        {{ end }}
+    </div>
 </div>"""
             }
 
@@ -964,7 +1253,11 @@ draft = false
                         continue
                     
                     # Prepend base_url to local media paths
-                    value_str = str(value)
+                    # Convert booleans to lowercase strings for JS compatibility
+                    if isinstance(value, bool):
+                        value_str = "true" if value else "false"
+                    else:
+                        value_str = str(value)
                     if value_str.startswith(settings.MEDIA_URL):
                         value_str = f"{base_url.rstrip('/')}{value_str}"
                         
@@ -1131,6 +1424,74 @@ draft = false
                             reviews_toml += f'{{name = "{name}", rating = "{rating}", text = "{text}", date = "{date}", image = "{image}"}}'
                         reviews_toml += "]\n"
                         output += f'{indent}  reviews = {reviews_toml}'
+                
+                # Handle flip_cards-specific parameters
+                if block.definition_id == 'flip_cards':
+                    cards = params.get('cards', [])
+                    if cards:
+                        cards_toml = "["
+                        for i, card in enumerate(cards):
+                            if i > 0:
+                                cards_toml += ", "
+                            front = card.get("front", {})
+                            back = card.get("back", {})
+                            front_title = str(front.get("title", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            front_icon = str(front.get("icon", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            back_desc = str(back.get("description", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            back_cta_text = str(back.get("cta_text", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            back_cta_url = str(back.get("cta_url", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            cards_toml += f'{{front = {{title = "{front_title}", icon = "{front_icon}"}}, back = {{description = "{back_desc}", cta_text = "{back_cta_text}", cta_url = "{back_cta_url}"}}}}'
+                        cards_toml += "]\n"
+                        output += f'{indent}  cards = {cards_toml}'
+                
+                # Handle accordion-specific parameters
+                if block.definition_id == 'accordion':
+                    items = params.get('items', [])
+                    if items:
+                        items_toml = "["
+                        for i, item in enumerate(items):
+                            if i > 0:
+                                items_toml += ", "
+                            title = str(item.get("title", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            content = str(item.get("content", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            items_toml += f'{{title = "{title}", content = "{content}"}}'
+                        items_toml += "]\n"
+                        output += f'{indent}  items = {items_toml}'
+                
+                # Handle carousel-specific parameters (slides with nested children)
+                if block.definition_id == 'carousel':
+                    slides = params.get('slides', [])
+                    if slides:
+                        # For carousel, we need to serialize slides as an array
+                        # Each slide can have children blocks
+                        slides_toml = "["
+                        for i, slide in enumerate(slides):
+                            if i > 0:
+                                slides_toml += ", "
+                            slide_id = str(slide.get("id", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            # For now, just serialize the slide ID - children are handled separately
+                            children = slide.get("children", [])
+                            if children:
+                                # Serialize children inline
+                                children_toml = "["
+                                for j, child in enumerate(children):
+                                    if j > 0:
+                                        children_toml += ", "
+                                    child_type = str(child.get("type", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                                    child_params = child.get("params", {})
+                                    child_toml = f'{{type = "{child_type}"'
+                                    for k, v in child_params.items():
+                                        if not isinstance(v, (dict, list)):
+                                            v_str = str(v).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                                            child_toml += f', {k} = "{v_str}"'
+                                    child_toml += "}"
+                                    children_toml += child_toml
+                                children_toml += "]"
+                                slides_toml += f'{{id = "{slide_id}", children = {children_toml}}}'
+                            else:
+                                slides_toml += f'{{id = "{slide_id}", children = []}}'
+                        slides_toml += "]\n"
+                        output += f'{indent}  slides = {slides_toml}'
                 
                 
             # --- Recursive Child Rendering ---
