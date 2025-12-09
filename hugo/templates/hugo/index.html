@@ -3421,6 +3421,14 @@ layout = "${activePage.value.layout}"
                         });
                     } else {
                         cssEditorInstance = null;
+                        // Clean up the DOM element if needed, though Vue handles the div removal
+                    }
+                });
+
+                // Watch for changes to customCss (e.g. from fetch) and update editor
+                Vue.watch(customCss, (newValue) => {
+                    if(cssEditorInstance && newValue !== cssEditorInstance.getValue()) {
+                        cssEditorInstance.setValue(newValue || '');
                     }
                 });
                 const fetchConfig = async (websiteId = null) => {
