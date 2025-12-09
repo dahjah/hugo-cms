@@ -31,8 +31,10 @@
     {{ $widthClass = "w-full" }}
 {{ end }}
 
-<a href="{{ .url | default "#" }}" 
-   class="{{ $baseClasses }} {{ $sizeClasses }} {{ $styleClasses }} {{ $widthClass }} {{ .css_classes }}"
-   {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
-    {{ .text | default "Button" }}
-</a>
+<div class="mb-4 {{ .css_classes }}">
+    <a href="{{ .url | default "#" }}" 
+       class="{{ $baseClasses }} {{ $sizeClasses }} {{ $styleClasses }} {{ $widthClass }}"
+       {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
+        {{ .text | default "Button" }}
+    </a>
+</div>

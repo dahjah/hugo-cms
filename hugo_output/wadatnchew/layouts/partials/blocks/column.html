@@ -1,0 +1,6 @@
+
+<div class="flex flex-col gap-4 {{ .css_classes }}">
+    {{ range .blocks }}
+        {{ partial "blocks/render-block.html" . }}
+    {{ end }}
+</div>

@@ -293,14 +293,16 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 
             # 5. Generate basic templates for known block types
             block_templates = {
-                'hero': """<div class="hero-section {{ .css_classes }}">
+                'hero': """<div class="relative overflow-hidden mb-8 {{ .css_classes }}">
     {{ if .bgImage }}
-    <img src="{{ .bgImage }}" alt="{{ .title }}" class="hero-image" loading="eager">
+    <img src="{{ .bgImage }}" alt="{{ .title }}" class="w-full h-64 md:h-96 object-cover" loading="eager">
+    {{ else }}
+    <div class="w-full h-64 md:h-96 bg-gradient-to-r from-indigo-600 to-purple-600"></div>
     {{ end }}
-    <div class="hero-overlay">
-        <h1 class="hero-title">{{ .title }}</h1>
+    <div class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
+        <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">{{ .title }}</h1>
         {{ if .subtitle }}
-        <p class="hero-subtitle">{{ .subtitle }}</p>
+        <p class="text-lg md:text-xl text-white/90 max-w-2xl drop-shadow">{{ .subtitle }}</p>
         {{ end }}
     </div>
 </div>""",
@@ -515,11 +517,13 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     {{ $widthClass = "w-full" }}
 {{ end }}
 
-<a href="{{ .url | default "#" }}" 
-   class="{{ $baseClasses }} {{ $sizeClasses }} {{ $styleClasses }} {{ $widthClass }} {{ .css_classes }}"
-   {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
-    {{ .text | default "Button" }}
-</a>""",
+<div class="mb-4 {{ .css_classes }}">
+    <a href="{{ .url | default "#" }}" 
+       class="{{ $baseClasses }} {{ $sizeClasses }} {{ $styleClasses }} {{ $widthClass }}"
+       {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
+        {{ .text | default "Button" }}
+    </a>
+</div>""",
                 'youtube': """<div class="mb-8 {{ .css_classes }}" style="width: {{ .width | default "100%" }}; margin: 0 auto;">
     <div class="aspect-w-16 aspect-h-9 relative" style="padding-bottom: {{ if eq .aspect_ratio "4/3" }}75%{{ else }}56.25%{{ end }};">
         <iframe 
@@ -777,21 +781,19 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             <div class="relative w-full h-full transition-transform duration-500 transform-style-preserve-3d group-hover:rotate-y-180">
                 <!-- Front -->
                 <div class="absolute inset-0 backface-hidden bg-white rounded-lg shadow-md p-6 flex flex-col items-center justify-center text-center">
-                    {{ if .front.icon }}
+                    {{ if .front_icon }}
                     <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mb-4">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
+                        <i data-lucide="{{ .front_icon }}" class="w-8 h-8"></i>
                     </div>
                     {{ end }}
-                    <h3 class="text-xl font-semibold text-slate-800">{{ .front.title }}</h3>
+                    <h3 class="text-xl font-semibold text-slate-800">{{ .front_title }}</h3>
                 </div>
                 <!-- Back -->
                 <div class="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 rounded-lg shadow-md p-6 flex flex-col items-center justify-center text-center text-white">
-                    <p class="mb-4">{{ .back.description }}</p>
-                    {{ if .back.cta_text }}
-                    <a href="{{ .back.cta_url | default "#" }}" class="px-4 py-2 bg-white text-indigo-600 rounded-full text-sm font-bold hover:bg-indigo-50 transition-colors">
-                        {{ .back.cta_text }}
+                    <p class="mb-4">{{ .back_description }}</p>
+                    {{ if .back_cta_text }}
+                    <a href="{{ .back_cta_url | default "#" }}" class="px-4 py-2 bg-white text-indigo-600 rounded-full text-sm font-bold hover:bg-indigo-50 transition-colors">
+                        {{ .back_cta_text }}
                     </a>
                     {{ end }}
                 </div>
@@ -1024,6 +1026,12 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
 </div>""",
+                'column': """
+<div class="flex flex-col gap-4 {{ .css_classes }}">
+    {{ range .blocks }}
+        {{ partial "blocks/render-block.html" . }}
+    {{ end }}
+</div>""",
                 'theme_features': """
 <div class="py-16 px-4 {{ .css_classes }}">
     {{ if .title }}
@@ -1044,6 +1052,33 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         </div>
         {{ end }}
     </div>
+</div>""",
+                'stats': """
+<div class="py-12 bg-white {{ .css_classes }}">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            {{ range .items }}
+            <div class="p-6">
+                <div class="text-4xl font-extrabold text-indigo-600 mb-2">
+                    {{ .value }}<span class="text-2xl ml-1 text-indigo-400">{{ .suffix }}</span>
+                </div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider">{{ .label }}</div>
+            </div>
+            {{ end }}
+        </div>
+    </div>
+</div>""",
+                'embed': """
+<div class="w-full my-8 {{ .css_classes }}">
+    {{ if eq .embed_type "iframe" }}
+    <div class="relative w-full overflow-hidden rounded-lg shadow-lg border border-slate-200" style="height: {{ .height | default "400" }}px;">
+        <iframe src="{{ .src }}" title="{{ .title }}" class="absolute top-0 left-0 w-full h-full border-0" allowfullscreen></iframe>
+    </div>
+    {{ else }}
+    <div class="w-full flex justify-center">
+        {{ .src | safeHTML }}
+    </div>
+    {{ end }}
 </div>"""
             }
 
@@ -1397,18 +1432,18 @@ draft = false
                 
                 # Handle features_grid-specific parameters
                 if block.definition_id == 'features_grid':
-                    features = params.get('features', [])
-                    if features:
-                        features_toml = "["
-                        for i, feature in enumerate(features):
+                    items = params.get('items', [])
+                    if items:
+                        items_toml = "["
+                        for i, item in enumerate(items):
                             if i > 0:
-                                features_toml += ", "
-                            icon = str(feature.get("icon", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                            title = str(feature.get("title", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                            description = str(feature.get("description", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                            features_toml += f'{{icon = "{icon}", title = "{title}", description = "{description}"}}'
-                        features_toml += "]\n"
-                        output += f'{indent}  features = {features_toml}'
+                                items_toml += ", "
+                            icon = str(item.get("icon", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            title = str(item.get("title", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            description = str(item.get("description", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            items_toml += f'{{icon = "{icon}", title = "{title}", description = "{description}"}}'
+                        items_toml += "]\n"
+                        output += f'{indent}  items = {items_toml}'
                 
                 # Handle process_steps-specific parameters
                 if block.definition_id == 'process_steps':
@@ -1424,7 +1459,22 @@ draft = false
                         steps_toml += "]\n"
                         output += f'{indent}  steps = {steps_toml}'
                 
-                # Handle stats_counter-specific parameters
+                # Handle stats-specific parameters (new canonical block)
+                if block.definition_id == 'stats':
+                    items = params.get('items', [])
+                    if items:
+                        items_toml = "["
+                        for i, item in enumerate(items):
+                            if i > 0:
+                                items_toml += ", "
+                            value = str(item.get("value", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            suffix = str(item.get("suffix", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            label = str(item.get("label", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            items_toml += f'{{value = "{value}", suffix = "{suffix}", label = "{label}"}}'
+                        items_toml += "]\n"
+                        output += f'{indent}  items = {items_toml}'
+                
+                # Handle stats_counter-specific parameters (legacy block)
                 if block.definition_id == 'stats_counter':
                     stats = params.get('stats', [])
                     if stats:
@@ -1507,14 +1557,12 @@ draft = false
                         for i, card in enumerate(cards):
                             if i > 0:
                                 cards_toml += ", "
-                            front = card.get("front", {})
-                            back = card.get("back", {})
-                            front_title = str(front.get("title", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                            front_icon = str(front.get("icon", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                            back_desc = str(back.get("description", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                            back_cta_text = str(back.get("cta_text", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                            back_cta_url = str(back.get("cta_url", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                            cards_toml += f'{{front = {{title = "{front_title}", icon = "{front_icon}"}}, back = {{description = "{back_desc}", cta_text = "{back_cta_text}", cta_url = "{back_cta_url}"}}}}'
+                            front_title = str(card.get("front_title", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            front_icon = str(card.get("front_icon", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            back_desc = str(card.get("back_description", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            back_cta_text = str(card.get("back_cta_text", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            back_cta_url = str(card.get("back_cta_url", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                            cards_toml += f'{{front_title = "{front_title}", front_icon = "{front_icon}", back_description = "{back_desc}", back_cta_text = "{back_cta_text}", back_cta_url = "{back_cta_url}"}}'
                         cards_toml += "]\n"
                         output += f'{indent}  cards = {cards_toml}'
                 

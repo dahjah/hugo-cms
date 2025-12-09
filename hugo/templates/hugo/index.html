@@ -2462,6 +2462,37 @@
                         </div>
                     </div>
 
+                    <!-- Stats Counter Block -->
+                    <div v-else-if="block.type === 'stats'" class="p-6 bg-white rounded-lg">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                            <div v-for="(item, idx) in (block.params.items || [])" :key="idx" class="p-4 rounded-lg bg-slate-50 border border-slate-100">
+                                <div class="text-3xl font-bold text-indigo-600 mb-1">
+                                    {{ item.value }}<span v-if="item.suffix" class="text-lg text-indigo-400 ml-1">{{ item.suffix }}</span>
+                                </div>
+                                <div class="text-sm font-semibold text-slate-600 uppercase tracking-wide">{{ item.label }}</div>
+                            </div>
+                        </div>
+                        <div v-if="!block.params.items || block.params.items.length === 0" class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg">
+                            Add stats via the sidebar editor
+                        </div>
+                    </div>
+
+                    <!-- Embed Block -->
+                    <div v-else-if="block.type === 'embed'" class="w-full">
+                        <div v-if="block.params.embed_type === 'iframe'" :style="{ height: (block.params.height || '400') + 'px' }" class="w-full bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                             <iframe v-if="block.params.src" :src="block.params.src" :title="block.params.title || 'Embed'" class="w-full h-full" frameborder="0"></iframe>
+                             <div v-else class="flex items-center justify-center h-full text-slate-400">Enter a URL to display iframe</div>
+                        </div>
+                        <div v-else-if="block.params.embed_type === 'script'" class="p-8 bg-slate-50 rounded-lg border border-slate-200 text-center">
+                            <div class="mb-2 font-mono text-xs p-2 bg-slate-200 rounded text-slate-600 inline-block">Script Embed</div>
+                            <div class="text-slate-500 text-sm mb-2">Script embeds are not executed in preview mode.</div>
+                             <div class="text-xs text-slate-400 truncate max-w-md mx-auto">{{ block.params.src || 'No source URL' }}</div>
+                        </div>
+                        <div v-else class="p-8 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-lg">
+                            Select embed type and configure options
+                        </div>
+                    </div>
+
                     <!-- Brand Logo Block -->
                     <div v-else-if="block.type === 'brand_logo'" class="p-6 bg-white rounded-lg">
                         <a :href="block.params.link_url || '/'" class="inline-flex items-center gap-3 no-underline hover:opacity-85 transition-opacity">
