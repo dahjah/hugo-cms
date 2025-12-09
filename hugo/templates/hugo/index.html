@@ -159,15 +159,15 @@
         <!-- Settings Modal -->
         <div v-if="showSettingsModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
             @click.self="showSettingsModal = false">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-6">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center p-6 border-b border-slate-100 flex-shrink-0">
                     <h2 class="text-xl font-bold text-slate-800">Website Settings</h2>
                     <button @click="showSettingsModal = false" class="text-slate-400 hover:text-slate-600">
                         <icon name="x" :size="24"></icon>
                     </button>
                 </div>
 
-                <div class="space-y-6">
+                <div class="space-y-6 p-6 overflow-y-auto flex-1">
                     <!-- General Settings -->
                     <div>
                         <h3 class="text-lg font-semibold text-slate-800 mb-3 flex items-center">
@@ -430,7 +430,8 @@
                     </div>
                 </div>
 
-                <div class="mt-8 flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                <!-- Footer -->
+                <div class="p-6 border-t border-slate-100 bg-white flex justify-end space-x-3 flex-shrink-0">
                     <button @click="showSettingsModal = false"
                         class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md font-medium transition-colors">Close</button>
                     <button @click="saveSettings" :disabled="isSavingSettings"
