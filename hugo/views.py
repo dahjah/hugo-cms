@@ -1866,16 +1866,16 @@ class CmsInitViewSet(viewsets.ViewSet):
         if website_id:
             current_website = Website.objects.filter(id=website_id).first()
         else:
-            current_website = websites.first()
+            # Don't auto-select a website - let the frontend show empty state
+            current_website = None
             
-        if not current_website:
-            # Should not happen if migration ran, but handle gracefully
-            current_website = Website.objects.create(name="Default Site", slug="default")
-            websites = Website.objects.all()
-
-        # Global blocks are defined by having parent=null, page=null AND website=current_website
-        header_blocks = BlockInstance.objects.filter(placement_key='header', page=None, parent=None, website=current_website).order_by('sort_order')
-        footer_blocks = BlockInstance.objects.filter(placement_key='footer', page=None, parent=None, website=current_website).order_by('sort_order')
+        # Only fetch global blocks if we have a current website
+        header_blocks = []
+        footer_blocks = []
+        if current_website:
+            # Global blocks are defined by having parent=null, page=null AND website=current_website
+            header_blocks = BlockInstance.objects.filter(placement_key='header', page=None, parent=None, website=current_website).order_by('sort_order')
+            footer_blocks = BlockInstance.objects.filter(placement_key='footer', page=None, parent=None, website=current_website).order_by('sort_order')
         
         data = {
             'definitions': definitions,

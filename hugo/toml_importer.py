@@ -176,20 +176,9 @@ def create_blocks_from_toml(blocks_data, page, website, parent=None, placement_k
                 continue
             params[key] = value
         
-        # Create the block instance
-        instance = BlockInstance.objects.create(
-            definition=definition,
-            page=page if parent is None else None,
-            website=website,
-            parent=parent,
-            placement_key=placement_key,
-            sort_order=i,
-            params=params
-        )
-        created_blocks.append(instance)
-        
         # --- Special handling: carousel slides ---
         # Carousel stores slides in params.slides as JSON, not as BlockInstance children
+        # Must be done BEFORE creating the instance so params.slides is saved
         if block_type == 'carousel' and child_blocks:
             import uuid
             slides = []
@@ -202,8 +191,8 @@ def create_blocks_from_toml(blocks_data, page, website, parent=None, placement_k
                         'type': slide_child.get('type'),
                         'params': {k: v for k, v in slide_child.items() if k not in ('type', 'blocks')},
                         'children': None,  # Carousel slides can't have nested children in current implementation
-                        'placement_key': f'carousel_slide_{instance.id if "instance" in locals() else "unknown"}_{slide_idx}',
-                        'parent_id': instance.id if 'instance' in locals() else None,
+                        'placement_key': f'carousel_slide_pending_{slide_idx}',  # Will be updated after instance creation
+                        'parent_id': None,  # Will be updated after instance creation
                         'sort_order': 0
                     }]
                 }
@@ -212,6 +201,28 @@ def create_blocks_from_toml(blocks_data, page, website, parent=None, placement_k
             params['slides'] = slides
             # Don't recursively create children for carousel - they're in params now
             child_blocks = []
+        
+        # Create the block instance
+        instance = BlockInstance.objects.create(
+            definition=definition,
+            page=page if parent is None else None,
+            website=website,
+            parent=parent,
+            placement_key=placement_key,
+            sort_order=i,
+            params=params
+        )
+        created_blocks.append(instance)
+        
+        # Update carousel slide metadata with actual instance ID
+        if block_type == 'carousel' and 'slides' in params:
+            for slide_idx, slide in enumerate(params['slides']):
+                for child in slide.get('children', []):
+                    child['placement_key'] = f'carousel_slide_{instance.id}_{slide_idx}'
+                    child['parent_id'] = str(instance.id)
+            # Save the updated params
+            instance.params = params
+            instance.save()
         
         # Recursively create child blocks (for non-carousel containers)
         if child_blocks:
@@ -284,7 +295,79 @@ def import_toml_site(hugo_root, website_name, website_slug):
     # Find all markdown files
     md_files = list(content_dir.glob('**/*.md'))
     
+    # First pass: collect all frontmatter to check for global headers/footers
+    all_frontmatter = []
+    all_headers = []
+    all_footers = []
     for md_file in md_files:
+        with open(md_file, 'r') as f:
+            content = f.read()
+        frontmatter, body = parse_toml_frontmatter(content)
+        if frontmatter:
+            all_frontmatter.append((md_file, frontmatter, body))
+            header_blocks = frontmatter.get('header_blocks', [])
+            if header_blocks:
+                all_headers.append(header_blocks)
+            footer_blocks = frontmatter.get('footer_blocks', [])
+            if footer_blocks:
+                all_footers.append(footer_blocks)
+    
+    # Import global header if present and consistent
+    if all_headers:
+        # Check if all headers are the same
+        import json
+        headers_json = [json.dumps(h, sort_keys=True) for h in all_headers]
+        if len(set(headers_json)) == 1:
+            # All pages have the same header - import as global
+            print(f"Importing global header with {len(all_headers[0])} blocks")
+            create_blocks_from_toml(
+                all_headers[0],
+                page=None,  # Global header
+                website=website,
+                parent=None,
+                placement_key='header'
+            )
+        else:
+            print(f"WARNING: Pages have different headers. CMS only supports global headers.")
+            print(f"  Using header from first page. {len(set(headers_json))} unique headers found.")
+            # Use the first header as global
+            create_blocks_from_toml(
+                all_headers[0],
+                page=None,
+                website=website,
+                parent=None,
+                placement_key='header'
+            )
+    
+    # Import global footer if present and consistent
+    if all_footers:
+        # Check if all footers are the same
+        import json
+        footers_json = [json.dumps(f, sort_keys=True) for f in all_footers]
+        if len(set(footers_json)) == 1:
+            # All pages have the same footer - import as global
+            print(f"Importing global footer with {len(all_footers[0])} blocks")
+            create_blocks_from_toml(
+                all_footers[0],
+                page=None,  # Global footer
+                website=website,
+                parent=None,
+                placement_key='footer'
+            )
+        else:
+            print(f"WARNING: Pages have different footers. CMS only supports global footers.")
+            print(f"  Using footer from first page. {len(set(footers_json))} unique footers found.")
+            # Use the first footer as global
+            create_blocks_from_toml(
+                all_footers[0],
+                page=None,
+                website=website,
+                parent=None,
+                placement_key='footer'
+            )
+    
+    # Second pass: create pages and import blocks
+    for md_file, frontmatter, body in all_frontmatter:
         # Determine page slug from file path
         relative_path = md_file.relative_to(content_dir)
         
@@ -297,16 +380,6 @@ def import_toml_site(hugo_root, website_name, website_slug):
             slug = '/' + str(relative_path.parent)
         else:
             slug = '/' + str(relative_path.with_suffix(''))
-        
-        # Read and parse content
-        with open(md_file, 'r') as f:
-            content = f.read()
-        
-        frontmatter, body = parse_toml_frontmatter(content)
-        
-        if not frontmatter:
-            print(f"WARNING: No TOML frontmatter found in {md_file}")
-            continue
         
         # Create page
         page = Page.objects.create(
@@ -330,8 +403,9 @@ def import_toml_site(hugo_root, website_name, website_slug):
                 placement_key='main'
             )
         
-        # Handle other block zones if present (sidebar_blocks, footer_blocks, etc.)
-        for zone_key in ['sidebar_blocks', 'footer_blocks', 'header_blocks']:
+        # Handle other block zones (sidebar_blocks only)
+        # Note: header_blocks and footer_blocks are handled globally above
+        for zone_key in ['sidebar_blocks']:
             zone_blocks = frontmatter.get(zone_key, [])
             if zone_blocks:
                 # Remove '_blocks' suffix for placement key
@@ -347,3 +421,4 @@ def import_toml_site(hugo_root, website_name, website_slug):
         print(f"Imported page: {page.title} ({slug}) with {len(main_blocks)} blocks")
     
     return website
+

@@ -406,6 +406,28 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Danger Zone -->
+                    <div class="mt-8 pt-6 border-t border-red-100">
+                        <h3 class="text-lg font-semibold text-red-600 mb-3 flex items-center">
+                            <icon name="alert-triangle" :size="20" class="mr-2"></icon>
+                            Danger Zone
+                        </h3>
+                        <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-semibold text-slate-800 mb-1">Delete this website</h4>
+                                    <p class="text-xs text-slate-600">Once you delete a website, there is no going back.
+                                        This will permanently delete all pages, blocks, and settings for this site.</p>
+                                </div>
+                                <button @click="confirmDeleteWebsite"
+                                    class="ml-4 px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors flex items-center space-x-2">
+                                    <icon name="trash-2" :size="14"></icon>
+                                    <span>Delete Website</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-8 flex justify-end space-x-3 pt-4 border-t border-slate-100">
@@ -777,8 +799,26 @@
                 <!-- Canvas Area -->
                 <div class="flex-1 overflow-auto p-8 relative">
 
+                    <!-- Empty State - No Website Selected -->
+                    <div v-if="!currentWebsite" class="h-full flex items-center justify-center">
+                        <div class="text-center max-w-md">
+                            <div
+                                class="w-20 h-20 mx-auto mb-6 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <icon name="layout" :size="40" class="text-indigo-600"></icon>
+                            </div>
+                            <h2 class="text-2xl font-bold text-slate-800 mb-3">Welcome to Hugo CMS!</h2>
+                            <p class="text-slate-600 mb-6">Please select a website from the dropdown above to get
+                                started, or create a new website.</p>
+                            <button @click="showCreateWebsiteModal = true"
+                                class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-2 mx-auto">
+                                <icon name="plus" :size="18"></icon>
+                                <span>Create New Website</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Code View -->
-                    <div v-if="viewMode === 'code'"
+                    <div v-else-if="viewMode === 'code'"
                         class="max-w-4xl mx-auto bg-slate-800 rounded-lg shadow-xl overflow-hidden text-slate-300 font-mono text-sm">
                         <div class="bg-slate-900 px-4 py-2 border-b border-slate-700 flex justify-between">
                             <span>config.toml</span>
@@ -4148,6 +4188,52 @@ layout = "${activePage.value.layout}"
                             showToast('Error saving settings', 'error');
                         } finally {
                             isSavingSettings.value = false;
+                        }
+                    },
+
+                    confirmDeleteWebsite: async () => {
+                        if(!currentWebsite.value) return;
+
+                        const websiteName = currentWebsite.value.name;
+                        const confirmation = confirm(
+                            `Are you sure you want to delete "${websiteName}"?\n\n` +
+                            `This will permanently delete:\n` +
+                            `• All pages and content\n` +
+                            `• All blocks and settings\n` +
+                            `• All media files\n\n` +
+                            `This action cannot be undone!`
+                        );
+
+                        if(!confirmation) return;
+
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                            const response = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': csrfToken
+                                }
+                            });
+
+                            if(!response.ok) {
+                                throw new Error('Failed to delete website');
+                            }
+
+                            showToast(`Website "${websiteName}" deleted successfully`, 'success');
+                            showSettingsModal.value = false;
+
+                            // Remove from websites list
+                            websites.value = websites.value.filter(w => w.id !== currentWebsite.value.id);
+
+                            // Reload the page to switch to another website or show empty state
+                            // This is simpler than manually updating all state
+                            setTimeout(() => {
+                                window.location.href = '/';
+                            }, 500);
+                        } catch(error) {
+                            console.error('Error deleting website:', error);
+                            showToast('Error deleting website', 'error');
                         }
                     },
 

@@ -2,17 +2,15 @@
 title = "Home"
 date = ""
 draft = false
-type = "home"
+type = "single"
 [[header_blocks]]
   type = "menu"
-  style = "pills"
+  style = "default"
   responsive = true
-  hamburgerDirection = "sidebar"
+  hamburgerDirection = "dropdown"
   alignment = "center"
   position = "normal"
-  sidebarSide = "left"
   items = [{label = "Home", url = "/", type = "page"}]
-  sidebarFooterBlocks = [{type = "quote", text = "YOUR MOM", author = "Kevin"}]
 [[main_blocks]]
   type = "hero"
   title = "Welcome!"
@@ -138,14 +136,10 @@ type = "home"
   show_dots = true
   show_arrows = true
   [[main_blocks.blocks]]
-    type = "menu_grid"
-    title = "Our Menu Favorites"
-    items = [{name = "Cari-Bowl", image = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80", description = "Caribbean flavors in a bowl"}, {name = "Cuban Sandwich", image = "https://images.unsplash.com/photo-1509722747041-616f39b57569?w=400&q=80", description = "Traditional pressed sandwich"}, {name = "Supreme Nachos", image = "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=400&q=80", description = "Loaded with toppings"}, {name = "Mambo BBQ Sandwich", image = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80", description = "Smoky BBQ goodness"}]
-  [[main_blocks.blocks]]
     type = "google_reviews"
-    reviews = [{name = "YOUR MOM", rating = "5", text = "WOWEE", date = "", image = ""}]
     show_rating = true
-    columns = 3
+    columns = "3"
+    reviews = [{name = "WOOP WOOP", rating = "4", text = "", date = "", image = ""}]
 [[main_blocks]]
   type = "section"
   style = "default"
