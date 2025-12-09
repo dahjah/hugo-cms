@@ -798,7 +798,7 @@
                 </header>
 
                 <!-- Canvas Area -->
-                <div class="flex-1 overflow-auto p-8 relative">
+                <div class="flex-1 overflow-auto p-8 relative" @click="selectedBlockId = null">
 
                     <!-- Empty State - No Website Selected -->
                     <div v-if="!currentWebsite" class="h-full flex items-center justify-center">
