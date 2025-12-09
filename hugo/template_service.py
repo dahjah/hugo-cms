@@ -47,14 +47,14 @@ def deserialize_blocks_from_template(blocks_data, page, parent=None, website=Non
             page=page if parent is None else None,
             parent=parent,
             website=website,
-            placement_key=block_data['placement_key'],
-            sort_order=block_data['sort_order'],
+            placement_key=block_data.get('placement_key', 'main'),
+            sort_order=block_data.get('sort_order', 0),
             params=block_data.get('params', {})
         )
         
-        # Recursively create children
+        # Recursively create children (skip if children is a placeholder string)
         children_data = block_data.get('children', [])
-        if children_data:
+        if isinstance(children_data, list) and children_data:
             deserialize_blocks_from_template(children_data, page, parent=block, website=website)
 
 

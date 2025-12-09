@@ -1,0 +1,24 @@
+
+{{ $justify := .justify | default "start" }}
+{{ $align := .align | default "stretch" }}
+{{ $gap := .gap | default "4" }}
+
+{{ $justifyClass := "" }}
+{{ if eq $justify "start" }}{{ $justifyClass = "justify-start" }}{{ end }}
+{{ if eq $justify "center" }}{{ $justifyClass = "justify-center" }}{{ end }}
+{{ if eq $justify "end" }}{{ $justifyClass = "justify-end" }}{{ end }}
+{{ if eq $justify "between" }}{{ $justifyClass = "justify-between" }}{{ end }}
+{{ if eq $justify "around" }}{{ $justifyClass = "justify-around" }}{{ end }}
+{{ if eq $justify "evenly" }}{{ $justifyClass = "justify-evenly" }}{{ end }}
+
+{{ $alignClass := "" }}
+{{ if eq $align "start" }}{{ $alignClass = "items-start" }}{{ end }}
+{{ if eq $align "center" }}{{ $alignClass = "items-center" }}{{ end }}
+{{ if eq $align "end" }}{{ $alignClass = "items-end" }}{{ end }}
+{{ if eq $align "stretch" }}{{ $alignClass = "items-stretch" }}{{ end }}
+
+<div class="flex flex-wrap gap-{{ $gap }} mb-8 {{ $justifyClass }} {{ $alignClass }} {{ .css_classes }}">
+    {{ range .blocks }}
+        {{ partial "blocks/render-block.html" . }}
+    {{ end }}
+</div>

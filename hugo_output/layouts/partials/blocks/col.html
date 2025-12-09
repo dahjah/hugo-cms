@@ -1,0 +1,5 @@
+<div class="col">
+    {{ range .Params.blocks }}
+        {{ partial "blocks/render-block.html" . }}
+    {{ end }}
+</div>

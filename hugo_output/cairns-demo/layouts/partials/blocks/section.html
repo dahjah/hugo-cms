@@ -1,0 +1,10 @@
+
+{{ $bgColor := .background_color | default "transparent" }}
+{{ $padding := .padding | default "py-8" }}
+<section class="{{ $padding }} {{ .css_classes }}" style="background-color: {{ $bgColor }};">
+    <div class="container mx-auto px-4">
+        {{ range .blocks }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </div>
+</section>

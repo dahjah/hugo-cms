@@ -1,0 +1,22 @@
+:root {
+    /* Colors extracted from cairnscounselingcenter.com */
+    --color-primary: #ffffff;
+    --color-secondary: #c4a07a;
+    --color-accent: #6b6b6b;
+    --color-bg: #8b6f52;
+    --color-text-main: #2c2c2c;
+    
+    /* Typography */
+    --font-primary: "Cormorant Garamond", serif;
+    --font-secondary: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    
+    /* Font sizes */
+    --text-xs: 14.4px;
+    --text-sm: 16px;
+    --text-base: 17.6px;
+    --text-lg: 18.4px;
+    --text-xl: 19.2px;
+    --text-2xl: 22.4px;
+    --text-3xl: 24px;
+    --text-4xl: 28.8px;
+}

@@ -1,8 +1,12 @@
 from django.db import models
 from django.db.models import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 import uuid
 from .deployment_models import DeploymentProvider
+from taggit.managers import TaggableManager
+from taggit.models import TagBase, GenericTaggedItemBase, TaggedItemBase
 
 class BlockDefinition(models.Model):
     """
@@ -197,28 +201,69 @@ class TemplateCategory(models.Model):
         return self.name
 
 
+class CharFieldTaggedItem(TaggedItemBase):
+    """
+    Custom TaggedItem that uses CharField for object_id to support SiteTemplate's CharField PK.
+    """
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        related_name="%(app_label)s_%(class)s_tagged_items"
+    )
+    object_id = models.CharField(max_length=50, db_index=True)
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    class Meta:
+        verbose_name = "Tagged Item"
+        verbose_name_plural = "Tagged Items"
+        indexes = [
+            models.Index(fields=['content_type', 'object_id']),
+        ]
+
+
+class TemplateTag(models.Model):
+    """
+    Controlled vocabulary for template tags.
+    Used for autocomplete and LLM matching. Templates store tag names in JSONField.
+    """
+    name = models.SlugField(max_length=50, primary_key=True, help_text="Slug-style tag name (e.g., 'therapy', 'food-truck')")
+    label = models.CharField(max_length=100, help_text="Human-readable label")
+    description = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['label']
+    
+    def __str__(self):
+        return self.label
+
+
 class SiteTemplate(models.Model):
     """
     Predefined site templates that users can import to create new websites.
     Contains serialized pages, blocks, and CSS that can be applied to a new website.
+    Tags are used for LLM template selection based on industry/business type.
     """
-    id = models.CharField(max_length=50, primary_key=True, help_text="URL-friendly identifier (e.g., 'therapy', 'food-truck')")
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=50, unique=True, help_text="URL-friendly identifier (e.g., 'modern-therapist', 'food-truck-basic')")
     name = models.CharField(max_length=100, help_text="Display name for the template")
     description = models.TextField(blank=True)
     thumbnail_url = models.CharField(max_length=500, blank=True, help_text="Preview image URL")
-    category = models.ForeignKey(
-        TemplateCategory, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        related_name='templates'
-    )
+    
+    # Tags for LLM selection (simple JSON array - works with SQLite)
+    # Use TemplateTag model for autocomplete/controlled vocabulary
+    tags = JSONField(default=list, help_text="List of tag names for template categorization and LLM selection")
     
     # Serialized template content
     base_css = models.TextField(blank=True, help_text="CSS variables and base styles")
     pages_json = JSONField(
         default=list, 
         help_text="Serialized pages with blocks: [{slug, title, layout, blocks: [...]}]"
+    )
+    
+    # Placeholder schema for LLM content filling
+    placeholder_schema = JSONField(
+        default=dict,
+        help_text="Schema defining placeholders LLM should fill: {business_name: 'text', tagline: 'text', ...}"
     )
     
     # Metadata

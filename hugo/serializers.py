@@ -101,22 +101,20 @@ class TemplateCategorySerializer(serializers.ModelSerializer):
 
 class SiteTemplateListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for template gallery listing."""
-    category_name = serializers.CharField(source='category.name', read_only=True, default=None)
     
     class Meta:
         model = SiteTemplate
-        fields = ['id', 'name', 'description', 'thumbnail_url', 'category', 'category_name', 'is_featured', 'created_by']
+        fields = ['id', 'slug', 'name', 'description', 'thumbnail_url', 'tags', 'is_featured', 'created_by']
 
 
 class SiteTemplateDetailSerializer(serializers.ModelSerializer):
     """Full serializer for template detail and import."""
-    category_name = serializers.CharField(source='category.name', read_only=True, default=None)
     
     class Meta:
         model = SiteTemplate
-        fields = ['id', 'name', 'description', 'thumbnail_url', 'category', 'category_name', 
-                  'base_css', 'pages_json', 'created_by', 'is_featured', 'is_public', 
-                  'created_at', 'updated_at']
+        fields = ['id', 'slug', 'name', 'description', 'thumbnail_url', 'tags', 
+                  'base_css', 'pages_json', 'placeholder_schema', 'created_by', 
+                  'is_featured', 'is_public', 'created_at', 'updated_at']
 
 
 class CreateTemplateFromWebsiteSerializer(serializers.Serializer):

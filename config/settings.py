@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'storages',
+    'taggit',
     'hugo'
 ]
 
@@ -90,6 +91,9 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny', # Change for production!
     ]
 }
+
+# Django-taggit configuration
+TAGGIT_CASE_INSENSITIVE = True
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

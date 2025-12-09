@@ -132,6 +132,19 @@
                             class="w-full border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                             placeholder="my-awesome-site">
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Start from Template
+                            (Optional)</label>
+                        <select v-model="selectedTemplateId"
+                            class="w-full border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                            <option value="">Blank Site</option>
+                            <option v-for="template in siteTemplates" :key="template.id" :value="template.id">
+                                {{ template.name }}
+                            </option>
+                        </select>
+                        <p class="text-xs text-slate-500 mt-1">{{ selectedTemplateId ? 'Uses template' : 'Blank site' }}
+                        </p>
+                    </div>
                 </div>
                 <div class="mt-6 flex justify-end space-x-3">
                     <button @click="showCreateWebsiteModal = false"
@@ -933,7 +946,7 @@
 
                         <!-- Sidebar Footer Content (only for sidebar hamburger menus) -->
                         <div
-                            v-if="selectedBlock.type === 'menu' && selectedBlock.params.responsive === 'true' && selectedBlock.params.hamburgerDirection === 'sidebar'">
+                            v-if="selectedBlock.type === 'menu' && (selectedBlock.params.responsive === 'true' || selectedBlock.params.responsive === true) && selectedBlock.params.hamburgerDirection === 'sidebar'">
                             <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Sidebar Footer
                                 Content</label>
                             <div class="border border-slate-300 rounded-md p-2 bg-slate-50 min-h-[100px]">
@@ -960,7 +973,8 @@
                                 </select>
                             </div>
 
-                            <div v-if="selectedBlock.params.responsive === 'true'">
+                            <div
+                                v-if="selectedBlock.params.responsive === 'true' || selectedBlock.params.responsive === true">
                                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Hamburger
                                     Type</label>
                                 <select v-model="selectedBlock.params.hamburgerDirection"
@@ -971,7 +985,7 @@
                             </div>
 
                             <div
-                                v-if="selectedBlock.params.responsive === 'true' && selectedBlock.params.hamburgerDirection === 'sidebar'">
+                                v-if="(selectedBlock.params.responsive === 'true' || selectedBlock.params.responsive === true) && selectedBlock.params.hamburgerDirection === 'sidebar'">
                                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Sidebar
                                     Side</label>
                                 <select v-model="selectedBlock.params.sidebarSide"
@@ -1106,53 +1120,246 @@
 
                     <!-- Schema-Driven Editor -->
                     <div v-else-if="selectedBlockDefinition?.schema">
-                        <div v-for="(field, key) in (selectedBlockDefinition.schema.properties || selectedBlockDefinition.schema)"
-                            :key="key" class="mb-4">
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">{{ field.label ||
-                                key }}</label>
+                        <!-- Handle fields array format (new) -->
+                        <template v-if="selectedBlockDefinition.schema.fields">
+                            <div v-for="field in selectedBlockDefinition.schema.fields" :key="field.name" class="mb-4">
+                                <!-- Skip if shouldShowParam returns false -->
+                                <template v-if="shouldShowParam(selectedBlock.type, field.name)">
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">{{
+                                        field.label || field.name }}</label>
 
-                            <!-- String -->
-                            <input v-if="field.type === 'string' && !field.enum && field.format !== 'uri'" type="text"
-                                :value="selectedBlock.params[key]"
-                                @input="updateBlock(selectedBlock.id, key, $event.target.value)"
-                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                    <!-- Content/Markdown/HTML/Richtext (textarea) -->
+                                    <textarea
+                                        v-if="field.name === 'content' || field.name === 'html' || field.name === 'markdown' || field.name === 'md' || field.type === 'markdown' || field.type === 'richtext'"
+                                        :value="selectedBlock.params[field.name]"
+                                        @input="updateBlock(selectedBlock.id, field.name, $event.target.value)" rows="8"
+                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none font-mono"></textarea>
 
-                            <!-- Text -->
-                            <textarea v-else-if="field.type === 'text'" :value="selectedBlock.params[key]"
-                                @input="updateBlock(selectedBlock.id, key, $event.target.value)" rows="4"
-                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                                    <!-- Image with upload button -->
+                                    <div v-else-if="field.type === 'image'" class="space-y-2">
+                                        <div class="flex space-x-2">
+                                            <input type="text" :value="selectedBlock.params[field.name]"
+                                                @input="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                                class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                placeholder="Image URL" />
+                                            <label
+                                                class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
+                                                title="Upload Image">
+                                                <input type="file" class="hidden" accept="image/*" @change="async (e) => {
+                                                    if (e.target.files.length > 0) {
+                                                        try {
+                                                            const url = await uploadFile(e.target.files[0]);
+                                                            updateBlock(selectedBlock.id, field.name, url);
+                                                        } catch (err) {
+                                                            showToast('Upload failed: ' + err.message, 'error');
+                                                        }
+                                                        e.target.value = '';
+                                                    }
+                                                }">
+                                                <icon name="hard-drive" :size="16" class="text-slate-600"></icon>
+                                            </label>
+                                        </div>
+                                    </div>
 
-                            <!-- Number -->
-                            <input v-else-if="field.type === 'number'" type="number" :value="selectedBlock.params[key]"
-                                @input="updateBlock(selectedBlock.id, key, parseFloat($event.target.value))"
-                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                    <!-- URL field with page selector -->
+                                    <div v-else-if="field.type === 'url'" class="space-y-2">
+                                        <select v-model="selectedBlock.params[field.name + '_type']"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none mb-2">
+                                            <option value="page">Page</option>
+                                            <option value="external">External URL</option>
+                                        </select>
+                                        <select v-if="selectedBlock.params[field.name + '_type'] === 'page'"
+                                            :value="selectedBlock.params[field.name]"
+                                            @change="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                            <option value="">Select a page...</option>
+                                            <option v-for="page in pages" :key="page.id"
+                                                :value="page.slug.startsWith('/') ? page.slug : '/' + page.slug">
+                                                {{ page.title }} ({{ page.slug }})
+                                            </option>
+                                        </select>
+                                        <input v-else type="text" :value="selectedBlock.params[field.name]"
+                                            @input="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                            placeholder="https://example.com"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                    </div>
 
-                            <!-- Boolean -->
-                            <div v-else-if="field.type === 'boolean'" class="flex items-center">
-                                <input type="checkbox" :checked="selectedBlock.params[key]"
-                                    @change="updateBlock(selectedBlock.id, key, $event.target.checked)"
-                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                                <span class="ml-2 text-sm text-slate-600">{{ field.label || key }}</span>
+                                    <!-- Select/Enum (dropdown) -->
+                                    <select v-else-if="field.type === 'select' || field.enum"
+                                        :value="selectedBlock.params[field.name]"
+                                        @change="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                        <option v-for="opt in (field.options || field.enum)" :key="opt" :value="opt">{{
+                                            opt }}</option>
+                                    </select>
+
+                                    <!-- Boolean (checkbox) -->
+                                    <div v-else-if="field.type === 'boolean'" class="flex items-center">
+                                        <input type="checkbox" :checked="selectedBlock.params[field.name]"
+                                            @change="updateBlock(selectedBlock.id, field.name, $event.target.checked)"
+                                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                                        <span class="ml-2 text-sm text-slate-600">{{ field.label || field.name }}</span>
+                                    </div>
+
+                                    <!-- Number -->
+                                    <input v-else-if="field.type === 'number'" type="number"
+                                        :value="selectedBlock.params[field.name]"
+                                        @input="updateBlock(selectedBlock.id, field.name, parseFloat($event.target.value))"
+                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+
+                                    <!-- Textarea (multiline text) -->
+                                    <textarea v-else-if="field.type === 'textarea'"
+                                        :value="selectedBlock.params[field.name]"
+                                        @input="updateBlock(selectedBlock.id, field.name, $event.target.value)" rows="4"
+                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+
+                                    <!-- Array (for items, steps, links, etc.) -->
+                                    <div v-else-if="field.type === 'array'" class="space-y-2">
+                                        <div v-for="(item, index) in (selectedBlock.params[field.name] || [])"
+                                            :key="index" class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-xs font-medium text-slate-600">Item {{ index + 1
+                                                    }}</span>
+                                                <button @click="selectedBlock.params[field.name].splice(index, 1)"
+                                                    class="text-red-500 hover:text-red-700 transition-colors">
+                                                    <icon name="trash-2" :size="14"></icon>
+                                                </button>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <div v-for="(val, prop) in item" :key="prop">
+                                                    <template v-if="!prop.endsWith('_type')">
+                                                        <label class="block text-xs text-slate-500 mb-1">{{ prop
+                                                            }}</label>
+
+                                                        <!-- URL Type Handler -->
+                                                        <template
+                                                            v-if="field.item_schema && field.item_schema[prop] === 'url'">
+                                                            <select
+                                                                :value="(item[prop + '_type']) || (item[prop] && item[prop].startsWith('/') ? 'page' : 'external')"
+                                                                @change="(e) => { item[prop + '_type'] = e.target.value; selectedBlock.params = {...selectedBlock.params}; }"
+                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 mb-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                                                                <option value="page">Page</option>
+                                                                <option value="external">External URL</option>
+                                                            </select>
+
+                                                            <select
+                                                                v-if="((item[prop + '_type']) || (item[prop] && item[prop].startsWith('/') ? 'page' : 'external')) === 'page'"
+                                                                v-model="item[prop]"
+                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                                                                <option value="">Select a page...</option>
+                                                                <option v-for="page in pages" :key="page.id"
+                                                                    :value="page.slug.startsWith('/') ? page.slug : '/' + page.slug">
+                                                                    {{ page.title }} ({{ page.slug }})
+                                                                </option>
+                                                            </select>
+                                                            <input v-else type="text" v-model="item[prop]"
+                                                                placeholder="https://example.com"
+                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                                        </template>
+
+                                                        <!-- Textarea Handler -->
+                                                        <template
+                                                            v-else-if="(field.item_schema && field.item_schema[prop] === 'textarea') || (typeof val === 'string' && val.length > 50)">
+                                                            <textarea v-model="item[prop]" rows="3"
+                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+                                                        </template>
+
+                                                        <!-- Default Input Handler -->
+                                                        <input v-else type="text" v-model="item[prop]"
+                                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button @click="() => {
+                                                if (!selectedBlock.params[field.name]) {
+                                                    selectedBlock.params[field.name] = [];
+                                                }
+                                                // Create new item with fields from item_schema
+                                                const newItem = {};
+                                                if (field.item_schema) {
+                                                    Object.keys(field.item_schema).forEach(key => {
+                                                        newItem[key] = '';
+                                                    });
+                                                }
+                                                selectedBlock.params[field.name].push(newItem);
+                                            }"
+                                            class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
+                                            <icon name="plus" :size="12"></icon>
+                                            <span>Add Item</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Textarea (multiline text) -->
+                                    <textarea v-else-if="field.type === 'textarea'"
+                                        :value="selectedBlock.params[field.name]"
+                                        @input="updateBlock(selectedBlock.id, field.name, $event.target.value)" rows="4"
+                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+
+                                    <!-- Number -->
+                                    <input v-else-if="field.type === 'number'" type="number"
+                                        :value="selectedBlock.params[field.name]"
+                                        @input="updateBlock(selectedBlock.id, field.name, parseFloat($event.target.value))"
+                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+
+                                    <!-- String/Text (default single-line text) -->
+                                    <input v-else type="text" :value="selectedBlock.params[field.name]"
+                                        @input="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                </template>
                             </div>
+                        </template>
 
-                            <!-- Enum -->
-                            <select v-else-if="field.enum" :value="selectedBlock.params[key]"
-                                @change="updateBlock(selectedBlock.id, key, $event.target.value)"
-                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
-                                <option v-for="opt in field.enum" :key="opt" :value="opt">{{ opt }}</option>
-                            </select>
+                        <!-- Handle properties object format (legacy) -->
+                        <template v-else>
+                            <div v-for="(field, key) in (selectedBlockDefinition.schema.properties || selectedBlockDefinition.schema)"
+                                :key="key" class="mb-4">
+                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">{{ field.label
+                                    || key }}</label>
 
-                            <!-- Image -->
-                            <div v-else-if="field.type === 'image' || field.format === 'uri'" class="space-y-2">
-                                <div class="flex space-x-2">
-                                    <input type="text" :value="selectedBlock.params[key]"
-                                        @input="updateBlock(selectedBlock.id, key, $event.target.value)"
-                                        class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                        placeholder="https://..." />
-                                    <label
-                                        class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
-                                        title="Upload Image">
-                                        <input type="file" class="hidden" accept="image/*" @change="async (e) => {
+                                <!-- String -->
+                                <input v-if="field.type === 'string' && !field.enum && field.format !== 'uri'"
+                                    type="text" :value="selectedBlock.params[key]"
+                                    @input="updateBlock(selectedBlock.id, key, $event.target.value)"
+                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+
+                                <!-- Text -->
+                                <textarea v-else-if="field.type === 'text'" :value="selectedBlock.params[key]"
+                                    @input="updateBlock(selectedBlock.id, key, $event.target.value)" rows="4"
+                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+
+                                <!-- Number -->
+                                <input v-else-if="field.type === 'number'" type="number"
+                                    :value="selectedBlock.params[key]"
+                                    @input="updateBlock(selectedBlock.id, key, parseFloat($event.target.value))"
+                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+
+                                <!-- Boolean -->
+                                <div v-else-if="field.type === 'boolean'" class="flex items-center">
+                                    <input type="checkbox" :checked="selectedBlock.params[key]"
+                                        @change="updateBlock(selectedBlock.id, key, $event.target.checked)"
+                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                                    <span class="ml-2 text-sm text-slate-600">{{ field.label || key }}</span>
+                                </div>
+
+                                <!-- Enum -->
+                                <select v-else-if="field.enum" :value="selectedBlock.params[key]"
+                                    @change="updateBlock(selectedBlock.id, key, $event.target.value)"
+                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                    <option v-for="opt in field.enum" :key="opt" :value="opt">{{ opt }}</option>
+                                </select>
+
+                                <!-- Image -->
+                                <div v-else-if="field.type === 'image' || field.format === 'uri'" class="space-y-2">
+                                    <div class="flex space-x-2">
+                                        <input type="text" :value="selectedBlock.params[key]"
+                                            @input="updateBlock(selectedBlock.id, key, $event.target.value)"
+                                            class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            placeholder="https://..." />
+                                        <label
+                                            class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
+                                            title="Upload Image">
+                                            <input type="file" class="hidden" accept="image/*" @change="async (e) => {
                                                 if (e.target.files.length > 0) {
                                                     try {
                                                         const result = await uploadFile(e.target.files[0]);
@@ -1164,90 +1371,93 @@
                                                     e.target.value = ''; // Reset input
                                                 }
                                             }">
-                                        <icon name="hard-drive" :size="16" class="text-slate-600"></icon>
-                                    </label>
-                                </div>
-                                <div v-if="selectedBlock.params[key]"
-                                    class="relative h-32 bg-slate-100 rounded-md overflow-hidden border border-slate-200 group">
-                                    <img :src="selectedBlock.params[key]" class="w-full h-full object-cover">
-                                    <div
-                                        class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <span class="text-white text-xs font-medium">Preview</span>
+                                            <icon name="hard-drive" :size="16" class="text-slate-600"></icon>
+                                        </label>
+                                    </div>
+                                    <div v-if="selectedBlock.params[key]"
+                                        class="relative h-32 bg-slate-100 rounded-md overflow-hidden border border-slate-200 group">
+                                        <img :src="selectedBlock.params[key]" class="w-full h-full object-cover">
+                                        <div
+                                            class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <span class="text-white text-xs font-medium">Preview</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Rich Text -->
-                            <div v-else-if="field.type === 'rich_text'">
-                                <div :ref="el => { if (el) richTextEditors[selectedBlock.id + '_' + key] = el; }"
-                                    class="quill-editor"></div>
-                            </div>
+                                <!-- Rich Text -->
+                                <div v-else-if="field.type === 'rich_text'">
+                                    <div :ref="el => { if (el) richTextEditors[selectedBlock.id + '_' + key] = el; }"
+                                        class="quill-editor"></div>
+                                </div>
 
-                            <!-- Array -->
-                            <div v-else-if="field.type === 'array'">
-                                <div class="space-y-2">
-                                    <div v-for="(item, index) in (selectedBlock.params[key] || [])" :key="index"
-                                        class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <span class="text-xs font-medium text-slate-600">Item {{ index + 1 }}</span>
-                                            <button @click="selectedBlock.params[key].splice(index, 1)"
-                                                class="text-red-500 hover:text-red-700 transition-colors">
-                                                <icon name="trash-2" :size="14"></icon>
-                                            </button>
-                                        </div>
-                                        <div class="space-y-2">
-                                            <div v-for="(val, prop) in item" :key="prop">
-                                                <label class="block text-xs text-slate-500 mb-1">{{ prop }}</label>
+                                <!-- Array -->
+                                <div v-else-if="field.type === 'array'">
+                                    <div class="space-y-2">
+                                        <div v-for="(item, index) in (selectedBlock.params[key] || [])" :key="index"
+                                            class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-xs font-medium text-slate-600">Item {{ index + 1
+                                                    }}</span>
+                                                <button @click="selectedBlock.params[key].splice(index, 1)"
+                                                    class="text-red-500 hover:text-red-700 transition-colors">
+                                                    <icon name="trash-2" :size="14"></icon>
+                                                </button>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <div v-for="(val, prop) in item" :key="prop">
+                                                    <label class="block text-xs text-slate-500 mb-1">{{ prop }}</label>
 
-                                                <!-- Handle Nested Objects (Recursion-lite) -->
-                                                <div v-if="typeof val === 'object' && val !== null"
-                                                    class="pl-2 border-l-2 border-slate-200 space-y-2 mb-2">
-                                                    <div v-for="(subVal, subProp) in val" :key="subProp">
-                                                        <label
-                                                            class="block text-[10px] text-slate-400 mb-1 uppercase">{{
-                                                            subProp }}</label>
-                                                        <textarea
-                                                            v-if="typeof subVal === 'string' && subVal.length > 50"
-                                                            v-model="val[subProp]" rows="2"
-                                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
-                                                        <input v-else type="text" v-model="val[subProp]"
-                                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                                    <!-- Handle Nested Objects (Recursion-lite) -->
+                                                    <div v-if="typeof val === 'object' && val !== null"
+                                                        class="pl-2 border-l-2 border-slate-200 space-y-2 mb-2">
+                                                        <div v-for="(subVal, subProp) in val" :key="subProp">
+                                                            <label
+                                                                class="block text-[10px] text-slate-400 mb-1 uppercase">{{
+                                                                subProp }}</label>
+                                                            <textarea
+                                                                v-if="typeof subVal === 'string' && subVal.length > 50"
+                                                                v-model="val[subProp]" rows="2"
+                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+                                                            <input v-else type="text" v-model="val[subProp]"
+                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                <!-- Handle Strings/Numbers -->
-                                                <textarea v-else-if="typeof val === 'string' && val.length > 50"
-                                                    v-model="item[prop]" rows="3"
-                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
-                                                <input v-else type="text" v-model="item[prop]"
-                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                                    <!-- Handle Strings/Numbers -->
+                                                    <textarea v-else-if="typeof val === 'string' && val.length > 50"
+                                                        v-model="item[prop]" rows="3"
+                                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+                                                    <input v-else type="text" v-model="item[prop]"
+                                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                                </div>
                                             </div>
                                         </div>
+                                        <button
+                                            @click="selectedBlock.params[key] = [...(selectedBlock.params[key] || []), {}]"
+                                            class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
+                                            <icon name="plus" :size="12"></icon>
+                                            <span>Add Item</span>
+                                        </button>
                                     </div>
-                                    <button
-                                        @click="selectedBlock.params[key] = [...(selectedBlock.params[key] || []), {}]"
-                                        class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
-                                        <icon name="plus" :size="12"></icon>
-                                        <span>Add Item</span>
-                                    </button>
                                 </div>
                             </div>
-                        </div>
                     </div>
+        </template>
+    </div>
 
-                    <!-- Fallback -->
-                    <div v-else>
-                        <div v-for="(val, key) in selectedBlock.params" :key="key" class="mb-4">
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">{{ key }}</label>
-                            <textarea v-if="key === 'content' || key === 'html' || key === 'md'"
-                                v-model="selectedBlock.params[key]" rows="6"
-                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none font-mono"></textarea>
-                            <input v-else type="text" v-model="selectedBlock.params[key]"
-                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                        </div>
-                    </div>
+    <!-- Fallback -->
+    <div v-else>
+        <div v-for="(val, key) in selectedBlock.params" :key="key" class="mb-4">
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">{{ key }}</label>
+            <textarea v-if="key === 'content' || key === 'html' || key === 'md'" v-model="selectedBlock.params[key]"
+                rows="6"
+                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none font-mono"></textarea>
+            <input v-else type="text" v-model="selectedBlock.params[key]"
+                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+        </div>
+    </div>
 
-                </div>
+    </div>
 
 
 
@@ -1982,17 +2192,17 @@
                                 <div class="relative w-full h-full transition-all duration-500 transform-style-3d group-hover:rotate-y-180">
                                     <!-- Front -->
                                     <div class="absolute inset-0 backface-hidden bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center border border-slate-100">
-                                        <div v-if="card.front?.icon" class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4 text-indigo-600">
-                                            <icon :name="card.front.icon" :size="32"></icon>
+                                        <div v-if="card.front_icon" class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4 text-indigo-600">
+                                            <icon :name="card.front_icon" :size="32"></icon>
                                         </div>
-                                        <h3 class="text-xl font-bold text-slate-800">{{ card.front?.title || 'Card Title' }}</h3>
+                                        <h3 class="text-xl font-bold text-slate-800">{{ card.front_title || 'Card Title' }}</h3>
                                     </div>
                                     
                                     <!-- Back -->
                                     <div class="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center text-white">
-                                        <p class="text-sm mb-4">{{ card.back?.description || 'Description goes here...' }}</p>
-                                        <a v-if="card.back?.cta_text" :href="card.back?.cta_url || '#'" class="px-4 py-2 bg-white text-indigo-600 rounded-full text-sm font-bold hover:bg-indigo-50 transition-colors">
-                                            {{ card.back?.cta_text }}
+                                        <p class="text-sm mb-4">{{ card.back_description || 'Description goes here...' }}</p>
+                                        <a v-if="card.back_cta_text" :href="card.back_cta_url || '#'" class="px-4 py-2 bg-white text-indigo-600 rounded-full text-sm font-bold hover:bg-indigo-50 transition-colors">
+                                            {{ card.back_cta_text }}
                                         </a>
                                     </div>
                                 </div>
@@ -2145,7 +2355,15 @@
                         <h2 v-if="block.params.title" class="text-2xl font-bold text-center mb-8 text-slate-900">{{ block.params.title }}</h2>
                         <div class="space-y-4">
                             <div v-for="(item, idx) in (block.params.items || [])" :key="idx" class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-                                <button @click="item._isOpen = !item._isOpen" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                <button @click="() => {
+                                    if (block.params.allow_multiple === true || block.params.allow_multiple === 'true') {
+                                        item._isOpen = !item._isOpen;
+                                    } else {
+                                        const wasOpen = item._isOpen;
+                                        (block.params.items || []).forEach(i => i._isOpen = false);
+                                        item._isOpen = !wasOpen;
+                                    }
+                                }" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-slate-50 transition-colors">
                                     <span class="font-semibold text-slate-800">{{ item.title || 'Question' }}</span>
                                     <icon :name="item._isOpen ? 'chevron-up' : 'chevron-down'" :size="20" class="text-slate-400"></icon>
                                 </button>
@@ -2287,24 +2505,7 @@
                         </a>
                     </div>
 
-                    <!-- FAQ Block -->
-                    <div v-else-if="block.type === 'faq'" class="p-6 bg-white rounded-lg">
-                        <h3 v-if="block.params.title" class="text-2xl font-bold text-center mb-6 text-slate-900">{{ block.params.title }}</h3>
-                        <div class="space-y-3">
-                            <div v-for="(item, idx) in (block.params.questions || [])" :key="idx" class="border border-slate-200 rounded-lg overflow-hidden">
-                                <div class="p-4 bg-slate-50 font-semibold text-slate-900 flex items-center justify-between">
-                                    <span>{{ item.question }}</span>
-                                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </div>
-                                <div class="p-4 text-sm text-slate-600 bg-white">{{ item.answer }}</div>
-                            </div>
-                        </div>
-                        <div v-if="!block.params.questions || block.params.questions.length === 0" class="text-center text-slate-400 py-8">
-                            No questions added yet
-                        </div>
-                    </div>
+
 
                     <!-- Google Reviews Block -->
                     <div v-else-if="block.type === 'google_reviews'" class="p-6 bg-slate-50 rounded-lg">
@@ -3038,6 +3239,9 @@ layout = "${activePage.value.layout}"
                 const showWebsiteDropdown = ref(false);
                 const newWebsiteName = ref('');
                 const newWebsiteSlug = ref('');
+                const siteTemplates = ref([]);
+                const selectedTemplateId = ref('');
+                const isLoadingTemplates = ref(false);
 
                 // Settings State
                 const showSettingsModal = ref(false);
@@ -3151,8 +3355,24 @@ layout = "${activePage.value.layout}"
                     }
                 };
 
+                const fetchTemplates = async () => {
+                    try {
+                        isLoadingTemplates.value = true;
+                        const response = await fetch(`${API_BASE_URL}templates/`);
+                        if(response.ok) {
+                            siteTemplates.value = await response.json();
+                        }
+                    } catch(error) {
+                        console.error('Error fetching templates:', error);
+                    } finally {
+                        isLoadingTemplates.value = false;
+                    }
+                };
+
                 const initialLoad = async () => {
                     try {
+                        // Fetch templates in parallel with config
+                        fetchTemplates();
                         await fetchConfig(WEBSITE_ID || null);
                         await fetchPages();
 
@@ -3504,18 +3724,12 @@ layout = "${activePage.value.layout}"
                 const formatKey = (key) => key.replace(/([A-Z])/g, ' $1').trim();
 
                 const shouldShowParam = (type, key) => {
-                    if(key === 'items') return false;
                     if(type === 'menu' && ['orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection', 'sidebarSide', 'sidebarFooterBlocks', 'position', 'sticky'].includes(key)) return false;
-                    // Hide array parameters for MamboTruck blocks (they have custom editors)
-                    if(type === 'features_grid' && key === 'features') return false;
-                    if(type === 'process_steps' && key === 'steps') return false;
-                    if(type === 'stats_counter' && key === 'stats') return false;
-                    if(type === 'menu_grid' && key === 'items') return false;
-                    if(type === 'social_links' && key === 'links') return false;
-                    if(type === 'faq' && key === 'questions') return false;
-                    if(type === 'google_reviews' && key === 'reviews') return false;
+                    // Keep menu with custom editor
+                    if(type === 'menu' && key === 'items') return false;
                     // Hide cta_hero parameters that have custom editors
                     if(type === 'cta_hero' && ['background_image', 'headline', 'subheadline', 'cta_text', 'cta_url'].includes(key)) return false;
+                    // Allow all other fields to show in schema-driven editor
                     return true;
                 };
 
@@ -3694,30 +3908,55 @@ layout = "${activePage.value.layout}"
                         }
                         try {
                             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-                            const response = await fetch(`${API_BASE_URL}websites/`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': csrfToken
-                                },
-                                body: JSON.stringify({
-                                    name: newWebsiteName.value,
-                                    slug: newWebsiteSlug.value
-                                })
-                            });
+                            let response;
+
+                            if(selectedTemplateId.value) {
+                                // Create from template
+                                response = await fetch(`${API_BASE_URL}templates/${selectedTemplateId.value}/create_website/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken
+                                    },
+                                    body: JSON.stringify({
+                                        website_name: newWebsiteName.value,
+                                        website_slug: newWebsiteSlug.value
+                                    })
+                                });
+                            } else {
+                                // Create blank site
+                                response = await fetch(`${API_BASE_URL}websites/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken
+                                    },
+                                    body: JSON.stringify({
+                                        name: newWebsiteName.value,
+                                        slug: newWebsiteSlug.value
+                                    })
+                                });
+                            }
 
                             if(response.ok) {
-                                const newSite = await response.json();
+                                const data = await response.json();
+                                const newSite = selectedTemplateId.value ? data.website : data;
                                 showCreateWebsiteModal.value = false;
                                 newWebsiteName.value = '';
                                 newWebsiteSlug.value = '';
-                                showToast('Website created successfully', 'success');
+                                selectedTemplateId.value = '';
+                                showToast(selectedTemplateId.value ? 'Website created from template!' : 'Website created successfully', 'success');
                                 // Switch to new website
                                 await fetchConfig(newSite.id);
                                 await fetchPages();
+                                // Select first page if available
+                                if(pages.value.length > 0) {
+                                    activePageId.value = pages.value[0].id;
+                                    await fetchContent(pages.value[0].id);
+                                }
                             } else {
                                 const data = await response.json();
-                                showToast('Failed to create website', 'error', JSON.stringify(data));
+                                showToast('Failed to create website', 'error', data.error || JSON.stringify(data));
                             }
                         } catch(error) {
                             console.error('Create website error:', error);
@@ -3948,6 +4187,8 @@ layout = "${activePage.value.layout}"
                     showWebsiteDropdown,
                     newWebsiteName,
                     newWebsiteSlug,
+                    siteTemplates,
+                    selectedTemplateId,
                     // Carousel slide helpers
                     getCarouselSlide,
                     setCarouselSlide,

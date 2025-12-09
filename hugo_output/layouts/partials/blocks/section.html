@@ -1,0 +1,7 @@
+<div class="section-{{ .Params.style | default "default" }}">
+    <div class="container">
+        {{ range .Params.blocks }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </div>
+</div>

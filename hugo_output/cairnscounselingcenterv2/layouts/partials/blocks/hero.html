@@ -1,0 +1,11 @@
+<div class="hero-section {{ .css_classes }}">
+    {{ if .bgImage }}
+    <img src="{{ .bgImage }}" alt="{{ .title }}" class="hero-image" loading="eager">
+    {{ end }}
+    <div class="hero-overlay">
+        <h1 class="hero-title">{{ .title }}</h1>
+        {{ if .subtitle }}
+        <p class="hero-subtitle">{{ .subtitle }}</p>
+        {{ end }}
+    </div>
+</div>

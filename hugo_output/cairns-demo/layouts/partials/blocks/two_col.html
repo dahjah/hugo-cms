@@ -1,0 +1,15 @@
+
+{{ $leftWidth := .left_width | default "50" }}
+{{ $rightWidth := sub 100 (int $leftWidth) }}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 {{ .css_classes }}" style="grid-template-columns: {{ $leftWidth }}fr {{ $rightWidth }}fr;">
+    <div class="flex flex-col gap-4">
+        {{ range .left }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </div>
+    <div class="flex flex-col gap-4">
+        {{ range .right }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </div>
+</div>

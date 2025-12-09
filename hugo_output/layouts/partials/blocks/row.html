@@ -1,0 +1,5 @@
+<div class="flex flex-wrap gap-{{ .Params.gap | default "4" }} {{ .Params.class }}" style="display: flex;">
+    {{ range .Params.blocks }}
+        {{ partial "blocks/render-block.html" . }}
+    {{ end }}
+</div>

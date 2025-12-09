@@ -82,7 +82,8 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             generated_files = []
             
             # Get base URL for absolute image paths
-            base_url = request.build_absolute_uri('/')
+            # base_url = request.build_absolute_uri('/')
+            base_url = ""
             
             for page in pages:
                 # Generate markdown content for this page
@@ -118,7 +119,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
                 generated_files.append(str(file_path.relative_to(output_path)))
             
             # Generate hugo.toml
-            config_content = self._generate_site_config()
+            config_content = self._generate_site_config(website)
             config_path = output_path / 'hugo.toml'
             with open(config_path, 'w', encoding='utf-8') as f:
                 f.write(config_content)
@@ -162,6 +163,18 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             with open(custom_css_path, 'w') as f:
                 f.write(website.custom_css or "/* Custom CSS */")
             generated_files.append('static/css/custom.css')
+
+            # Copy website media to static/media/uploads/{slug}
+            media_src = Path(settings.MEDIA_ROOT) / 'uploads' / website.slug
+            if media_src.exists():
+                media_dst = static_dir / 'media' / 'uploads' / website.slug
+                media_dst.mkdir(parents=True, exist_ok=True)
+                import shutil
+                # Copy entire directory content
+                for item in media_src.glob('*'):
+                    if item.is_file():
+                        shutil.copy2(item, media_dst)
+                generated_files.append(f"static/media/uploads/{website.slug}/")
 
             # 2. _default/single.html (Generic layout)
             single_content = """{{ define "main" }}
@@ -280,13 +293,17 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 
             # 5. Generate basic templates for known block types
             block_templates = {
-                'hero': """<section class="relative bg-slate-900 text-white py-20 px-6 rounded-lg mb-8 overflow-hidden {{ .css_classes }}">
-    {{ if .bgImage }}<img src="{{ .bgImage }}" class="absolute inset-0 w-full h-full object-cover opacity-30">{{ end }}
-    <div class="relative z-10 container mx-auto text-center">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ .title }}</h1>
-        <p class="text-xl text-slate-300 max-w-2xl mx-auto">{{ .subtitle }}</p>
+                'hero': """<div class="hero-section {{ .css_classes }}">
+    {{ if .bgImage }}
+    <img src="{{ .bgImage }}" alt="{{ .title }}" class="hero-image" loading="eager">
+    {{ end }}
+    <div class="hero-overlay">
+        <h1 class="hero-title">{{ .title }}</h1>
+        {{ if .subtitle }}
+        <p class="hero-subtitle">{{ .subtitle }}</p>
+        {{ end }}
     </div>
-</section>""",
+</div>""",
                 'text': """<div class="prose max-w-none mb-8 {{ .css_classes }}">
     {{ .content | safeHTML }}
 </div>""",
@@ -609,6 +626,17 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         {{ end }}
     </div>
 </div>""",
+                'stats': """
+<div class="py-16 px-4 bg-indigo-600 text-white {{ .css_classes }}">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+        {{ range .items }}
+        <div class="stat-item" data-animate="{{ $.animate | default true }}">
+            <div class="text-5xl font-bold mb-2 stat-value">{{ .value }}{{ if .suffix }}{{ .suffix }}{{ end }}</div>
+            <div class="text-indigo-100 text-lg">{{ .label }}</div>
+        </div>
+        {{ end }}
+    </div>
+</div>""",
                 'menu_grid': """
 <div class="py-16 px-4 {{ .css_classes }}">
     {{ if .title }}
@@ -814,29 +842,22 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     
     <!-- Carousel Wrapper -->
     <div class="relative" style="display: grid; grid-template-areas: 'stack'; place-items: center; min-height: 300px; overflow: hidden;">
-        {{ range $index, $slide := .slides }}
+        {{ range $index, $block := .blocks }}
         <div class="carousel-slide" 
              data-slide-index="{{ $index }}"
              style="grid-area: stack; width: 85%; max-width: 900px; transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out; {{ if eq $index 0 }}transform: translateX(0); opacity: 1;{{ else }}transform: translateX(100%); opacity: 0; pointer-events: none;{{ end }}">
-            {{ range .children }}
-                {{ partial "blocks/render-block.html" . }}
-            {{ end }}
-            {{ if not .children }}
-            <div class="py-16 px-8 flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700 text-white text-xl rounded-lg">
-                Slide {{ add $index 1 }}
-            </div>
-            {{ end }}
+             {{ partial "blocks/render-block.html" $block }}
         </div>
         {{ end }}
         
-        {{ if not .slides }}
+        {{ if not .blocks }}
         <div class="py-16 px-8 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 rounded-lg">
             No slides added
         </div>
         {{ end }}
         
         <!-- Arrows -->
-        {{ if and $showArrows .slides (gt (len .slides) 1) }}
+        {{ if and $showArrows .blocks (gt (len .blocks) 1) }}
         <button data-carousel-prev
                 style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
                 class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
@@ -855,9 +876,9 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     </div>
     
     <!-- Dots -->
-    {{ if and $showDots .slides (gt (len .slides) 1) }}
+    {{ if and $showDots .blocks (gt (len .blocks) 1) }}
     <div class="flex justify-center gap-3 mt-6">
-        {{ range $index, $slide := .slides }}
+        {{ range $index, $block := .blocks }}
         <button data-carousel-dot="{{ $index }}"
                 class="transition-all duration-200 border-0 cursor-pointer p-0"
                 style="{{ if eq $index 0 }}width: 32px; border-radius: 6px; background: var(--color-primary, #6366f1);{{ else }}width: 12px; border-radius: 50%; background: #e2e8f0;{{ end }} height: 12px;">
@@ -944,54 +965,34 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     resetTimer();
 })();
 </script>""",
+                'testimonials': """<div class="testimonials {{ .css_classes }}">
+    {{ range .blocks }}
+        {{ partial "blocks/render-block.html" . }}
+    {{ end }}
+</div>""",
                 'testimonial': """
-<div class="py-8 {{ .css_classes }}">
-    <div class="max-w-2xl mx-auto">
-        <blockquote class="bg-slate-50 border-l-4 border-indigo-500 p-8 rounded-lg shadow-sm">
-            <div class="text-indigo-400 mb-4">
-                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
-                </svg>
-            </div>
-            <p class="text-xl text-slate-700 italic mb-6 leading-relaxed">"{{ .quote }}"</p>
-            <footer class="flex items-center">
-                {{ if .avatar }}
-                <img src="{{ .avatar }}" alt="{{ .author }}" class="w-12 h-12 rounded-full mr-4 object-cover">
-                {{ end }}
-                <div>
-                    <cite class="font-semibold text-slate-900 not-italic">{{ .author }}</cite>
-                    {{ if .role }}
-                    <p class="text-sm text-slate-500">{{ .role }}</p>
-                    {{ end }}
-                </div>
-            </footer>
-        </blockquote>
-    </div>
+<div class="testimonial {{ .css_classes }}">
+    <div class="testimonial-quote">{{ .quote }}</div>
+    {{ if .author }}
+    <div class="testimonial-author">{{ .author }}</div>
+    {{ end }}
 </div>""",
                 'section': """
-{{ $bgColor := .background_color | default "transparent" }}
-{{ $padding := .padding | default "py-8" }}
-<section class="{{ $padding }} {{ .css_classes }}" style="background-color: {{ $bgColor }};">
-    <div class="container mx-auto px-4">
+{{ $style := .style | default "welcome" }}
+<div class="section-{{ $style }} {{ .css_classes }}">
+    <div class="container">
         {{ range .blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
     </div>
-</section>""",
+</div>""",
                 'two_col': """
-{{ $leftWidth := .left_width | default "50" }}
-{{ $rightWidth := sub 100 (int $leftWidth) }}
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 {{ .css_classes }}" style="grid-template-columns: {{ $leftWidth }}fr {{ $rightWidth }}fr;">
-    <div class="flex flex-col gap-4">
-        {{ range .left }}
-            {{ partial "blocks/render-block.html" . }}
-        {{ end }}
-    </div>
-    <div class="flex flex-col gap-4">
-        {{ range .right }}
-            {{ partial "blocks/render-block.html" . }}
-        {{ end }}
-    </div>
+{{ $ratio := .ratio | default "50-50" }}
+{{ $reverse := .reverse | default false }}
+<div class="two-col col-{{ $ratio }}{{ if $reverse }} reverse{{ end }} {{ .css_classes }}">
+    {{ range .blocks }}
+        {{ partial "blocks/render-block.html" . }}
+    {{ end }}
 </div>""",
                 'row': """
 {{ $justify := .justify | default "start" }}
@@ -1018,8 +1019,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     {{ end }}
 </div>""",
                 'col': """
-{{ $width := .width | default "auto" }}
-<div class="flex flex-col gap-4 {{ .css_classes }}" style="width: {{ $width }}; flex: {{ if eq $width "auto" }}1{{ else }}none{{ end }};">
+<div class="{{ .css_classes }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
@@ -1532,51 +1532,19 @@ draft = false
                         items_toml += "]\n"
                         output += f'{indent}  items = {items_toml}'
                 
-                # Handle carousel-specific parameters (slides with nested children)
-                if block.definition_id == 'carousel':
-                    slides = params.get('slides', [])
-                    if slides:
-                        # For carousel, we need to serialize slides as an array
-                        # Each slide can have children blocks
-                        slides_toml = "["
-                        for i, slide in enumerate(slides):
-                            if i > 0:
-                                slides_toml += ", "
-                            slide_id = str(slide.get("id", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                            # For now, just serialize the slide ID - children are handled separately
-                            children = slide.get("children", [])
-                            if children:
-                                # Serialize children inline
-                                children_toml = "["
-                                for j, child in enumerate(children):
-                                    if j > 0:
-                                        children_toml += ", "
-                                    child_type = str(child.get("type", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                                    child_params = child.get("params", {})
-                                    child_toml = f'{{type = "{child_type}"'
-                                    for k, v in child_params.items():
-                                        if not isinstance(v, (dict, list)):
-                                            v_str = str(v).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                                            child_toml += f', {k} = "{v_str}"'
-                                    child_toml += "}"
-                                    children_toml += child_toml
-                                children_toml += "]"
-                                slides_toml += f'{{id = "{slide_id}", children = {children_toml}}}'
-                            else:
-                                slides_toml += f'{{id = "{slide_id}", children = []}}'
-                        slides_toml += "]\n"
-                        output += f'{indent}  slides = {slides_toml}'
+                # Legacy carousel handling removed to support generic child nesting
+                # if block.definition_id == 'carousel': ...
                 
                 
-            # --- Recursive Child Rendering ---
-            # Check for children (nested blocks)
-            children = block.children.all().order_by('sort_order')
-            if children.exists():
-                # Render children into a 'blocks' array of the current block
-                # In TOML, [[parent.blocks]] appends to the 'blocks' array of the most recently defined 'parent'
-                output += render_blocks(children, f"{zone_name}.blocks", depth + 1)
-                
-                output += "\n"
+                # --- Recursive Child Rendering ---
+                # Check for children (nested blocks)
+                children = BlockInstance.objects.filter(parent=block).order_by('sort_order')
+                if children.exists():
+                    # Render children into a 'blocks' array of the current block
+                    # In TOML, [[parent.blocks]] appends to the 'blocks' array of the most recently defined 'parent'
+                    output += render_blocks(children, f"{zone_name}.blocks", depth + 1)
+                    
+                    output += "\n"
             
             return output
         
@@ -1619,13 +1587,15 @@ draft = false
         # Close frontmatter
         return frontmatter + content + "+++\n"
     
-    def _generate_site_config(self):
+    def _generate_site_config(self, website):
         """
         Generate hugo.toml configuration file.
         """
-        config = """baseURL = "https://example.com/"
+        title = website.name.replace('"', '\\"')
+        
+        config = f"""baseURL = "https://example.com/"
 languageCode = "en-us"
-title = "My Hugo Site"
+title = "{title}"
 
 [params]
   description = "A site built with Hugo CMS"
@@ -1775,6 +1745,7 @@ class CmsInitViewSet(viewsets.ViewSet):
         incoming_ids = []
         def collect_ids(blocks):
             for block in blocks:
+                print(f"DEBUG: Processing Block ID {block['id']} (Definition: {block['type']})")
                 incoming_ids.append(block['id'])
                 if block.get('children'):
                     # The Vue frontend sends an array of column objects, each having a 'blocks' array

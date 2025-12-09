@@ -260,24 +260,30 @@ def convert_content_blocks_to_cms_blocks(content_blocks, data_files, website, me
                     'show_dots': True,
                     'show_arrows': True
                 }
+                
                 # Create child testimonial blocks
                 testimonials = data_files.get('testimonials', [])
                 testimonial_children = []
-                for i, t in enumerate(testimonials):
-                    testimonial_children.append({
-                        'definition': BlockDefinition.objects.get(id='testimonial'),
-                        'params': {
-                            'quote': t.get('quote', ''),
-                            'author': t.get('author', '')
-                        },
-                        'placement_key': 'slide',
-                        'sort_order': i
-                    })
-                # Add to children_data to be processed recursively
-                # But wait, children_data is currently empty for testimonials shortcode
-                # We need to pass these special children differently or handle them here.
-                # Let's handle them here by appending to a special list or modifying the recursion.
-                # Actually, the recursive creator handles 'children' key in the cms_block dict.
+                try:
+                    testimonial_def = BlockDefinition.objects.get(id='testimonial')
+                    for i, t in enumerate(testimonials):
+                        testimonial_children.append({
+                            'definition': testimonial_def,
+                            'params': {
+                                'quote': t.get('quote', ''),
+                                'author': t.get('author', '')
+                            },
+                            'children': [],
+                            'placement_key': 'slide', # Link to carousel parent
+                            'sort_order': i
+                        })
+                except BlockDefinition.DoesNotExist:
+                    print("DEBUG: BlockDefinition 'testimonial' NOT FOUND")
+                    pass
+                
+                # We need to expose these children to the recursive creator.
+                # Since the standard flow uses `children_data` (parsed from nested tags),
+                # and here we are synthesizing children from data, we'll assign to `cms_children` below.
                 pass 
 
             elif name == 'section':
@@ -336,8 +342,11 @@ def convert_content_blocks_to_cms_blocks(content_blocks, data_files, website, me
             try:
                 definition = BlockDefinition.objects.get(id=definition_id)
                 
-                # Recursively convert children
-                cms_children = convert_content_blocks_to_cms_blocks(children_data, data_files, website, media_url_base)
+                if definition_id == 'testimonials':
+                     cms_children = children_data
+                else:
+                    # Recursively convert children
+                    cms_children = convert_content_blocks_to_cms_blocks(children_data, data_files, website, media_url_base)
                 
                 # Handle special children for testimonials
                 if name == 'testimonials':
@@ -358,6 +367,10 @@ def convert_content_blocks_to_cms_blocks(content_blocks, data_files, website, me
                             })
                     except BlockDefinition.DoesNotExist:
                         pass
+
+                # If we synthesized children (e.g. for testimonials), allow appending them
+                if name == 'testimonials' and 'testimonial_children' in locals():
+                     cms_children.extend(testimonial_children)
 
                 cms_blocks.append({
                     'definition': definition,

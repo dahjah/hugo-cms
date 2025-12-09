@@ -1,0 +1,16 @@
+{{/* Flip Cards Grid - Cards with front/back content */}}
+{{ $columns := .columns | default 3 }}
+<div class="flip-cards-grid cols-{{ $columns }}">
+    {{ range .cards }}
+    <div class="flip-card">
+        <div class="flip-card-inner">
+            <div class="flip-card-front">
+                <div class="card-title">{{ .title }}</div>
+            </div>
+            <div class="flip-card-back">
+                <div class="card-description">{{ .description }}</div>
+            </div>
+        </div>
+    </div>
+    {{ end }}
+</div>
