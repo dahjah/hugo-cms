@@ -1274,7 +1274,7 @@
             }
         };
 
-        const {createApp, ref, computed, onMounted, watch, nextTick} = Vue;
+        const {createApp, ref, computed, onMounted, watch, nextTick, provide, inject} = Vue;
 
         // --- ICON COMPONENT ---
         const ICONS = {
@@ -2011,12 +2011,12 @@
                             <div class="flex items-center justify-between p-3 border-b border-slate-200 bg-white rounded-t-lg">
                                 <span class="text-xs font-semibold text-slate-500 uppercase">Carousel</span>
                                 <div v-if="block.params.slides?.length > 1" class="flex items-center space-x-2">
-                                    <button @click="block._currentSlide = ((block._currentSlide || 0) - 1 + block.params.slides.length) % block.params.slides.length"
+                                    <button @click="prevCarouselSlide(block)"
                                             class="p-1 hover:bg-slate-100 rounded transition-colors">
                                         <icon name="chevron-left" :size="16" class="text-slate-600"></icon>
                                     </button>
-                                    <span class="text-sm text-slate-600">{{ (block._currentSlide || 0) + 1 }} / {{ block.params.slides.length }}</span>
-                                    <button @click="block._currentSlide = ((block._currentSlide || 0) + 1) % block.params.slides.length"
+                                    <span class="text-sm text-slate-600">{{ getCarouselSlide(block.id) + 1 }} / {{ block.params.slides.length }}</span>
+                                    <button @click="nextCarouselSlide(block)"
                                             class="p-1 hover:bg-slate-100 rounded transition-colors">
                                         <icon name="chevron-right" :size="16" class="text-slate-600"></icon>
                                     </button>
@@ -2026,7 +2026,7 @@
                             <!-- Current slide content -->
                             <div class="min-h-[200px] p-4">
                                 <template v-if="block.params.slides?.length > 0">
-                                    <template v-for="child in (block.params.slides[block._currentSlide || 0]?.children || [])" :key="child.id">
+                                    <template v-for="child in (block.params.slides[getCarouselSlide(block.id)]?.children || [])" :key="child.id">
                                         <block-renderer 
                                             :block="child" 
                                             :is-selected="false"
@@ -2034,9 +2034,9 @@
                                             @select="$emit('select-block', $event)"
                                         ></block-renderer>
                                     </template>
-                                    <div v-if="!block.params.slides[block._currentSlide || 0]?.children?.length" 
+                                    <div v-if="!block.params.slides[getCarouselSlide(block.id)]?.children?.length" 
                                          class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg bg-white">
-                                        Slide {{ (block._currentSlide || 0) + 1 }} is empty - drag blocks to this slide in the sidebar
+                                        Slide {{ getCarouselSlide(block.id) + 1 }} is empty - drag blocks to this slide in the sidebar
                                     </div>
                                 </template>
                                 <div v-else class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg bg-white">
@@ -2060,10 +2060,10 @@
                                     <div class="carousel-slide"
                                          style="grid-area: stack; width: 85%; max-width: 900px; transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;"
                                          :style="{
-                                             transform: (block._currentSlide || 0) === idx ? 'translateX(0)' : ((block._currentSlide || 0) > idx ? 'translateX(-100%)' : 'translateX(100%)'),
-                                             opacity: (block._currentSlide || 0) === idx ? 1 : 0,
-                                             pointerEvents: (block._currentSlide || 0) === idx ? 'auto' : 'none',
-                                             zIndex: (block._currentSlide || 0) === idx ? 2 : 1
+                                             transform: getCarouselSlide(block.id) === idx ? 'translateX(0)' : (getCarouselSlide(block.id) > idx ? 'translateX(-100%)' : 'translateX(100%)'),
+                                             opacity: getCarouselSlide(block.id) === idx ? 1 : 0,
+                                             pointerEvents: getCarouselSlide(block.id) === idx ? 'auto' : 'none',
+                                             zIndex: getCarouselSlide(block.id) === idx ? 2 : 1
                                          }">
                                         <template v-for="child in (slide.children || [])" :key="child.id">
                                             <block-renderer 
@@ -2088,13 +2088,13 @@
                                 
                                 <!-- Arrows (positioned within grid area) -->
                                 <template v-if="block.params.show_arrows && block.params.slides?.length > 1">
-                                    <button @click="block._currentSlide = ((block._currentSlide || 0) - 1 + block.params.slides.length) % block.params.slides.length"
+                                    <button @click="prevCarouselSlide(block)"
                                             data-carousel-prev
                                             style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
                                             class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
                                         <icon name="chevron-left" :size="24" class="text-slate-600"></icon>
                                     </button>
-                                    <button @click="block._currentSlide = ((block._currentSlide || 0) + 1) % block.params.slides.length"
+                                    <button @click="nextCarouselSlide(block)"
                                             data-carousel-next
                                             style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
                                             class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
@@ -2107,14 +2107,14 @@
                             <div v-if="block.params.show_dots && block.params.slides?.length > 1" 
                                  class="flex justify-center gap-3 mt-6">
                                 <button v-for="(slide, idx) in block.params.slides" :key="slide.id || idx"
-                                        @click="block._currentSlide = idx"
+                                        @click="setCarouselSlide(block.id, idx)"
                                         data-carousel-dot
                                         class="transition-all duration-200 border-0 cursor-pointer p-0"
                                         :style="{
-                                            width: (block._currentSlide || 0) === idx ? '32px' : '12px',
+                                            width: getCarouselSlide(block.id) === idx ? '32px' : '12px',
                                             height: '12px',
-                                            borderRadius: (block._currentSlide || 0) === idx ? '6px' : '50%',
-                                            background: (block._currentSlide || 0) === idx ? 'var(--color-primary, #6366f1)' : '#e2e8f0'
+                                            borderRadius: getCarouselSlide(block.id) === idx ? '6px' : '50%',
+                                            background: getCarouselSlide(block.id) === idx ? 'var(--color-primary, #6366f1)' : '#e2e8f0'
                                         }">
                                 </button>
                             </div>
@@ -2351,6 +2351,11 @@
                 </div>
             `,
             setup(props, {emit}) {
+                // Inject carousel helpers
+                const getCarouselSlide = inject('getCarouselSlide');
+                const setCarouselSlide = inject('setCarouselSlide');
+                const prevCarouselSlide = inject('prevCarouselSlide');
+                const nextCarouselSlide = inject('nextCarouselSlide');
                 // Fix: Explicitly inject required functions
                 const {findBlockAndParent, updateBlock, componentLibrary, getColWidths, updateSingleWidth} = Vue.inject('cmsState');
 
@@ -2599,6 +2604,10 @@
                 };
 
                 return {
+                    getCarouselSlide,
+                    setCarouselSlide,
+                    prevCarouselSlide,
+                    nextCarouselSlide,
                     wrapperClass: computed(() => {
                         if(!props.isEditable) return '';
                         return `relative group cursor-pointer border-2 transition-all rounded-md overflow-hidden ${props.isSelected
@@ -3036,6 +3045,7 @@ layout = "${activePage.value.layout}"
                 const isPublishing = ref(false);
                 const isSavingSettings = ref(false);
                 const hasUnsavedChanges = ref(false);
+                const carouselSlideIndexes = ref({}); // Track carousel current slides separately to avoid triggering unsaved changes
                 const isFetchingContent = ref(false);
                 const customCss = ref('');
                 const websiteSlug = ref('');
@@ -3614,6 +3624,33 @@ layout = "${activePage.value.layout}"
                     }
                 };
 
+                // --- Carousel Slide Index Helpers (tracked outside contentZones to avoid triggering unsaved changes) ---
+                const getCarouselSlide = (blockId) => {
+                    return carouselSlideIndexes.value[blockId] || 0;
+                };
+
+                const setCarouselSlide = (blockId, index) => {
+                    carouselSlideIndexes.value[blockId] = index;
+                };
+
+                const prevCarouselSlide = (block) => {
+                    const current = getCarouselSlide(block.id);
+                    const total = block.params.slides?.length || 1;
+                    setCarouselSlide(block.id, (current - 1 + total) % total);
+                };
+
+                const nextCarouselSlide = (block) => {
+                    const current = getCarouselSlide(block.id);
+                    const total = block.params.slides?.length || 1;
+                    setCarouselSlide(block.id, (current + 1) % total);
+                };
+
+                // Provide helpers to child components
+                provide('getCarouselSlide', getCarouselSlide);
+                provide('setCarouselSlide', setCarouselSlide);
+                provide('prevCarouselSlide', prevCarouselSlide);
+                provide('nextCarouselSlide', nextCarouselSlide);
+
                 return {
                     isLoaded,
                     pages,
@@ -3910,7 +3947,12 @@ layout = "${activePage.value.layout}"
                     publishCurrentPage,
                     showWebsiteDropdown,
                     newWebsiteName,
-                    newWebsiteSlug
+                    newWebsiteSlug,
+                    // Carousel slide helpers
+                    getCarouselSlide,
+                    setCarouselSlide,
+                    prevCarouselSlide,
+                    nextCarouselSlide
                 };
 
                 // Close dropdown when clicking outside
