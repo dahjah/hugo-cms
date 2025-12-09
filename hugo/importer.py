@@ -93,9 +93,7 @@ def import_hugo_theme_structure(theme_name="mock-theme"):
         {'id': 'alert', 'label': 'Alert Box', 'icon': 'alert-triangle', 'has_visual_preview': False, 'default_params': {'type': 'warning', 'message': 'This is an important alert message.'}},
         {'id': 'quote', 'label': 'Blockquote', 'icon': 'type', 'has_visual_preview': False, 'default_params': {'text': 'Design is intelligence made visible.', 'author': 'Alina Wheeler'}},
         # Imported theme blocks
-        {'id': 'theme_hero', 'label': f'{theme_name.capitalize()} Hero', 'icon': 'layout', 'has_visual_preview': False, 
-            'default_params': {'title': MOCK_THEME_ARCHETYPE.get('hero_title', 'New Hero'), 'subtitle': MOCK_THEME_ARCHETYPE.get('hero_subtitle', 'Sub Title'), 'background_url': 'https://placehold.co/1200x500/1e293b/ffffff?text=Theme+Background'}},
-        {'id': 'theme_features', 'label': f'{theme_name.capitalize()} Features', 'icon': 'columns', 'has_visual_preview': False,
+        {'id': 'features_grid', 'label': 'Features Grid', 'icon': 'grid', 'has_visual_preview': False,
             'default_params': {'title': 'Key Features', 'items': [{'icon': 'box', 'text': 'Item 1'}, {'icon': 'box', 'text': 'Item 2'}]}}
     ])
         
@@ -124,15 +122,19 @@ def import_hugo_theme_structure(theme_name="mock-theme"):
             date=MOCK_THEME_ARCHETYPE['date']
         )
 
-        # 4a. Theme Hero Block (Top Level)
-        if 'theme_hero' in definitions_map:
+        # 4a. Hero Block (Top Level)
+        if 'hero' in definitions_map:
             hero_block = BlockInstance.objects.create(
-                definition=definitions_map['theme_hero'],
+                definition=definitions_map['hero'],
                 page=example_page,
                 parent=None,
                 placement_key='main',
                 sort_order=0,
-                params=definitions_map['theme_hero'].default_params
+                params={
+                    'title': MOCK_THEME_ARCHETYPE.get('hero_title', 'New Hero'),
+                    'subtitle': MOCK_THEME_ARCHETYPE.get('hero_subtitle', 'Sub Title'),
+                    'bgImage': 'https://placehold.co/1200x500/1e293b/ffffff?text=Theme+Background'
+                }
             )
         
         # 4b. Flexible Columns Block (Parent Container)
