@@ -884,7 +884,7 @@
                             ||
                             selectedBlock.type }}</span>
                     </div>
-                    <button @click="selectedBlockId = null"
+                    <button @click="closeInspector()"
                         class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-md transition-colors"
                         title="Close Inspector">
                         <icon name="x" :size="16"></icon>
@@ -3808,12 +3808,31 @@ layout = "${activePage.value.layout}"
                     }
                 };
 
+                const closeInspector = () => {
+                    const currentId = selectedBlockId.value;
+                    if(!currentId) return;
+
+                    const result = findBlockAndParent(currentId);
+                    if(result && result.parent) {
+                        selectedBlockId.value = result.parent.id;
+                    } else {
+                        selectedBlockId.value = null;
+                    }
+                };
+
                 const deleteBlock = (blockId) => {
                     const result = findBlockAndParent(blockId);
+                    const parentId = result && result.parent ? result.parent.id : null;
+
                     if(result && result.list) {
                         result.list.splice(result.index, 1);
                     }
-                    selectedBlockId.value = null;
+
+                    if(parentId) {
+                        selectedBlockId.value = parentId;
+                    } else {
+                        selectedBlockId.value = null;
+                    }
                 };
 
                 // --- UTILITIES ---
@@ -4305,6 +4324,7 @@ layout = "${activePage.value.layout}"
                     updateBlock,
                     updateBlockParams: updateBlock,
                     deleteBlock,
+                    closeInspector,
                     formatKey,
                     shouldShowParam,
                     addGenericItem,
