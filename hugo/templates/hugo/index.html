@@ -2977,6 +2977,20 @@
                                 const result = searchList(block.children, block, zone);
                                 if(result) return result;
                             }
+                            // Check Carousel Slides
+                            if(block.params && block.params.slides) {
+                                for(let s = 0; s < block.params.slides.length; s++) {
+                                    if(block.params.slides[s].children) {
+                                        const result = searchList(block.params.slides[s].children, block, zone);
+                                        if(result) return result;
+                                    }
+                                }
+                            }
+                            // Check Menu Footer Blocks
+                            if(block.params && block.params.sidebarFooterBlocks) {
+                                const result = searchList(block.params.sidebarFooterBlocks, block, zone);
+                                if(result) return result;
+                            }
                         }
                         return null;
                     };
