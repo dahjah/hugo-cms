@@ -18,6 +18,6 @@ router.register(r'templates', SiteTemplateViewSet, basename='site-template')
 
 urlpatterns = [
     path('', editor_view, name='editor'),  # Serve the Vue app at root
-    path('<str:website_id>/', editor_view, name='editor-with-website'),  # With website ID
+    path('site/<str:website_id>/', editor_view, name='editor-with-website'),  # With website ID
     path('api/', include(router.urls)),    # API endpoints
 ]

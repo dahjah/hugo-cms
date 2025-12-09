@@ -3958,7 +3958,7 @@ layout = "${activePage.value.layout}"
                         if(currentWebsite.value && currentWebsite.value.id === websiteId) return;
 
                         // Update URL
-                        const newUrl = websiteId ? `/${websiteId}/` : '/';
+                        const newUrl = websiteId ? `/site/${websiteId}/` : '/';
                         window.history.pushState({path: newUrl}, '', newUrl);
 
                         isLoaded.value = false;

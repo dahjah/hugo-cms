@@ -1,4 +1,5 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.core.exceptions import ValidationError
 from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -25,6 +26,14 @@ from .importer import import_hugo_theme_structure
 
 def editor_view(request, website_id=None):
     """Serves the Vue.js frontend application."""
+    if website_id:
+        try:
+            # Check if website exists
+            Website.objects.get(id=website_id)
+        except (Website.DoesNotExist, ValueError, ValidationError):
+            # Invalid ID or website doesn't exist - redirect to root
+            return redirect('editor')
+            
     return render(request, 'hugo/index.html', {'website_id': website_id})
 class WebsiteViewSet(viewsets.ModelViewSet):
     queryset = Website.objects.all()
