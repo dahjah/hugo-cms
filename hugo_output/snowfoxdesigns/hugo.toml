@@ -1,6 +1,6 @@
 baseURL = "https://example.com/"
 languageCode = "en-us"
-title = "My Hugo Site"
+title = "Snowfox Designs"
 
 [params]
   description = "A site built with Hugo CMS"

@@ -1,0 +1,15 @@
+
+<div class="py-12 bg-white {{ .css_classes }}">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            {{ range .items }}
+            <div class="p-6">
+                <div class="text-4xl font-extrabold text-indigo-600 mb-2">
+                    {{ .value }}<span class="text-2xl ml-1 text-indigo-400">{{ .suffix }}</span>
+                </div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider">{{ .label }}</div>
+            </div>
+            {{ end }}
+        </div>
+    </div>
+</div>
