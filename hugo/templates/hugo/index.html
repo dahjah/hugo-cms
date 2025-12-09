@@ -1330,12 +1330,15 @@
         // --- DROP ZONE COMPONENT ---
         DropZone = {
             name: 'DropZone',
-            props: ['title', 'zone', 'blocks', 'isActive', 'selectedId', 'isNested', 'parentBlockId'],
+            props: ['title', 'zone', 'blocks', 'isActive', 'selectedId', 'isNested', 'parentBlockId', 'isHorizontal', 'horizontalClasses'],
             components: {}, // Will be populated after BlockRenderer is defined
             template: `
                 <div 
                     class="relative transition-colors"
-                    :class="{ 'p-4': !isNested, 'p-1': isNested }"
+                    :class="[
+                        isNested ? 'p-1' : 'p-4',
+                        isHorizontal ? 'flex flex-wrap items-center' : ''
+                    ]"
                     @dragover.prevent="handleDragOver"
                     @dragleave="handleDragLeave"
                     @drop="handleDropInternal"
@@ -1347,22 +1350,30 @@
                     </div>
 
                     <!-- Dashed Container -->
-                    <div class="h-full min-h-[120px] rounded-lg transition-all duration-200 space-y-4"
+                    <div class="h-full min-h-[120px] rounded-lg transition-all duration-200"
                          ref="container"
-                         :class="containerClass">
+                         :class="[containerClass, isHorizontal ? 'flex flex-wrap gap-2 w-full ' + (horizontalClasses || 'items-center') : 'space-y-4']">
                         
                         <!-- Empty Message / Drop Target (Only visible if blocks is empty) -->
                         <div v-if="blocks.length === 0 && isActive && isNested" 
                             class="h-full min-h-[80px] flex flex-col items-center justify-center text-slate-400 p-4 border-2 border-dashed border-transparent transition-colors"
-                            :class="{ 'border-indigo-400 bg-indigo-50/50': isOver && blocks.length === 0 }">
-                            <span class="text-sm italic">Select</span>
+                            :class="[
+                                isOver && blocks.length === 0 ? 'border-indigo-400 bg-indigo-50/50' : '',
+                                isHorizontal ? 'w-full' : ''
+                            ]">
+                            <span class="text-sm italic">{{ isHorizontal ? 'Drop blocks here' : 'Select' }}</span>
                         </div>
                         
                         <!-- Loop through blocks -->
                         <template v-for="(block, index) in blocks" :key="block.id">
-                            <!-- Placeholder when inserting BEFORE this block -->
-                            <div v-if="isActive && isOver && dragOverIndex === index" 
+                            <!-- VERTICAL: Placeholder when inserting BEFORE this block -->
+                            <div v-if="!isHorizontal && isActive && isOver && dragOverIndex === index" 
                                  class="h-16 bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-lg pointer-events-none opacity-60 transition-all">
+                            </div>
+                            
+                            <!-- HORIZONTAL: Placeholder when inserting BEFORE this block -->
+                            <div v-if="isHorizontal && isActive && isOver && dragOverIndex === index" 
+                                 class="w-16 h-16 bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-lg pointer-events-none opacity-60 transition-all flex-shrink-0">
                             </div>
 
                             <block-renderer 
@@ -1370,6 +1381,7 @@
                                 :is-selected="selectedId === block.id"
                                 :is-editable="isActive"
                                 :col-index="isNested ? getColIndex(zone) : null"
+                                :class="isHorizontal ? 'flex-shrink-0' : ''"
                                 @select="$emit('select-block', $event)"
                                 @select-block="$emit('select-block', $event)"
                                 @drag-start="emitDragStart($event, block.id)"
@@ -1378,9 +1390,14 @@
                             ></block-renderer>
                         </template>
 
-                        <!-- Placeholder when inserting at END -->
-                        <div v-if="isActive && isOver && blocks.length > 0 && dragOverIndex === blocks.length" 
+                        <!-- VERTICAL: Placeholder when inserting at END -->
+                        <div v-if="!isHorizontal && isActive && isOver && blocks.length > 0 && dragOverIndex === blocks.length" 
                              class="h-16 bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-lg pointer-events-none opacity-60 transition-all">
+                        </div>
+                        
+                        <!-- HORIZONTAL: Placeholder when inserting at END -->
+                        <div v-if="isHorizontal && isActive && isOver && blocks.length > 0 && dragOverIndex === blocks.length" 
+                             class="w-16 h-16 bg-indigo-50 border-2 border-dashed border-indigo-400 rounded-lg pointer-events-none opacity-60 transition-all flex-shrink-0">
                         </div>
 
                         <!-- Main Drop Zone empty state (Non-nested only) -->
@@ -1424,16 +1441,31 @@
                     // Filter only the block elements (those with data-block-id)
                     const children = Array.from(container.children).filter(el => el.hasAttribute('data-block-id'));
 
-                    const mouseY = e.clientY;
                     let foundIndex = children.length; // Default to end
 
-                    for(let i = 0; i < children.length; i++) {
-                        const rect = children[i].getBoundingClientRect();
-                        const midY = rect.top + (rect.height / 2);
+                    if(this.isHorizontal) {
+                        // HORIZONTAL MODE: Use X coordinates for left/right detection
+                        const mouseX = e.clientX;
+                        for(let i = 0; i < children.length; i++) {
+                            const rect = children[i].getBoundingClientRect();
+                            const midX = rect.left + (rect.width / 2);
 
-                        if(mouseY < midY) {
-                            foundIndex = i;
-                            break;
+                            if(mouseX < midX) {
+                                foundIndex = i;
+                                break;
+                            }
+                        }
+                    } else {
+                        // VERTICAL MODE: Use Y coordinates for above/below detection
+                        const mouseY = e.clientY;
+                        for(let i = 0; i < children.length; i++) {
+                            const rect = children[i].getBoundingClientRect();
+                            const midY = rect.top + (rect.height / 2);
+
+                            if(mouseY < midY) {
+                                foundIndex = i;
+                                break;
+                            }
                         }
                     }
                     this.dragOverIndex = foundIndex;
@@ -1647,33 +1679,58 @@
                         </div>
                     </div>
 
-                    <div v-else-if="block.type === 'row'" class="flex flex-wrap w-full relative group/row">
-                        <template v-for="(child, index) in block.children" :key="child.id">
-                            <div :style="{ width: (child.params.width || 100) + '%' }" class="relative">
+                    <div v-else-if="block.type === 'row'" 
+                         :class="[
+                             'flex flex-wrap w-full relative group/row',
+                             block.params.justify === 'center' ? 'justify-center' :
+                             block.params.justify === 'end' ? 'justify-end' :
+                             block.params.justify === 'between' ? 'justify-between' :
+                             block.params.justify === 'around' ? 'justify-around' :
+                             block.params.justify === 'evenly' ? 'justify-evenly' : 'justify-start',
+                             block.params.align === 'start' ? 'items-start' :
+                             block.params.align === 'center' ? 'items-center' :
+                             block.params.align === 'end' ? 'items-end' : 'items-stretch'
+                         ]">
+                        <!-- Drop zone wrapper for the entire row (horizontal mode) -->
+                        <drop-zone 
+                            v-if="isEditable"
+                            zone="children" 
+                            :blocks="block.children || []" 
+                            :is-active="isEditable"
+                            :parent-block-id="block.id"
+                            :is-nested="true"
+                            :is-horizontal="true"
+                            :horizontal-classes="[
+                                block.params.justify === 'center' ? 'justify-center' :
+                                block.params.justify === 'end' ? 'justify-end' :
+                                block.params.justify === 'between' ? 'justify-between' :
+                                block.params.justify === 'around' ? 'justify-around' :
+                                block.params.justify === 'evenly' ? 'justify-evenly' : 'justify-start',
+                                block.params.align === 'start' ? 'items-start' :
+                                block.params.align === 'center' ? 'items-center' :
+                                block.params.align === 'end' ? 'items-end' : 'items-stretch'
+                            ].join(' ')"
+                            @drop-item="handleNestedDrop"
+                            @select-block="handleSelectBlock"
+                            @drag-start-block="handleNestedDragStart"
+                            class="w-full min-h-[50px]"
+                        ></drop-zone>
+                        
+                        <!-- Non-editable view -->
+                        <template v-else>
+                            <template v-for="(child, index) in block.children" :key="child.id">
                                 <block-renderer 
                                     :block="child" 
                                     :is-selected="false"
-                                    :is-editable="isEditable"
+                                    :is-editable="false"
                                     @select="$emit('select-block', $event)"
-                                    @drag-start-block="handleNestedDragStart"
-                                    @nested-drop="handleNestedDrop"
                                 ></block-renderer>
-                            </div>
-                            
-                            <!-- Resize Handle -->
-                            <div v-if="isEditable && index < block.children.length - 1"
-                                 class="absolute top-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity z-20 hover:bg-indigo-400/20"
-                                 :style="{ left: getHandlePosition(block, index) + '%', transform: 'translateX(-50%)' }"
-                                 @mousedown="startRowResize($event, block, index)"
-                                 @touchstart="startRowResize($event, block, index)">
-                                <div class="w-1 h-8 bg-indigo-400 rounded-full shadow-sm"></div>
-                            </div>
+                            </template>
                         </template>
-                        
-                         <!-- Empty Row State -->
-                        <div v-if="(!block.children || block.children.length === 0) && isEditable" class="w-full p-4 border-2 border-dashed border-slate-200 rounded text-center text-slate-400">
+                         
+                        <!-- Empty Row State -->
+                        <div v-if="(!block.children || block.children.length === 0) && !isEditable" class="w-full p-4 border-2 border-dashed border-slate-200 rounded text-center text-slate-400">
                             Empty Row
-                            <drop-zone :blocks="block.children || []" :parent-block-id="block.id" zone="children" :is-active="true" class="mt-2"></drop-zone>
                         </div>
                     </div>
 

@@ -973,7 +973,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 {{ $padding := .padding | default "py-8" }}
 <section class="{{ $padding }} {{ .css_classes }}" style="background-color: {{ $bgColor }};">
     <div class="container mx-auto px-4">
-        {{ range .children }}
+        {{ range .blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
     </div>
@@ -994,15 +994,33 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     </div>
 </div>""",
                 'row': """
-<div class="flex flex-wrap gap-4 mb-8 {{ .css_classes }}">
-    {{ range .children }}
+{{ $justify := .justify | default "start" }}
+{{ $align := .align | default "stretch" }}
+{{ $gap := .gap | default "4" }}
+
+{{ $justifyClass := "" }}
+{{ if eq $justify "start" }}{{ $justifyClass = "justify-start" }}{{ end }}
+{{ if eq $justify "center" }}{{ $justifyClass = "justify-center" }}{{ end }}
+{{ if eq $justify "end" }}{{ $justifyClass = "justify-end" }}{{ end }}
+{{ if eq $justify "between" }}{{ $justifyClass = "justify-between" }}{{ end }}
+{{ if eq $justify "around" }}{{ $justifyClass = "justify-around" }}{{ end }}
+{{ if eq $justify "evenly" }}{{ $justifyClass = "justify-evenly" }}{{ end }}
+
+{{ $alignClass := "" }}
+{{ if eq $align "start" }}{{ $alignClass = "items-start" }}{{ end }}
+{{ if eq $align "center" }}{{ $alignClass = "items-center" }}{{ end }}
+{{ if eq $align "end" }}{{ $alignClass = "items-end" }}{{ end }}
+{{ if eq $align "stretch" }}{{ $alignClass = "items-stretch" }}{{ end }}
+
+<div class="flex flex-wrap gap-{{ $gap }} mb-8 {{ $justifyClass }} {{ $alignClass }} {{ .css_classes }}">
+    {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
 </div>""",
                 'col': """
 {{ $width := .width | default "auto" }}
 <div class="flex flex-col gap-4 {{ .css_classes }}" style="width: {{ $width }}; flex: {{ if eq $width "auto" }}1{{ else }}none{{ end }};">
-    {{ range .children }}
+    {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
 </div>""",
@@ -1309,15 +1327,17 @@ draft = false
                     # Prepend base_url to local media paths
                     # Convert booleans to lowercase strings for JS compatibility
                     if isinstance(value, bool):
-                        value_str = "true" if value else "false"
+                        # Output as unquoted TOML boolean (true/false)
+                        value_toml = "true" if value else "false"
+                        output += f'{indent}  {key} = {value_toml}\n'
                     else:
                         value_str = str(value)
-                    if value_str.startswith(settings.MEDIA_URL):
-                        value_str = f"{base_url.rstrip('/')}{value_str}"
-                        
-                    # Escape special characters for TOML
-                    value_str = value_str.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                    output += f'{indent}  {key} = "{value_str}"\n'
+                        if value_str.startswith(settings.MEDIA_URL):
+                            value_str = f"{base_url.rstrip('/')}{value_str}"
+                            
+                        # Escape special characters for TOML
+                        value_str = value_str.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                        output += f'{indent}  {key} = "{value_str}"\n'
                 
                 # Handle menu-specific parameters
                 if block.definition_id == 'menu':
@@ -1805,30 +1825,47 @@ class CmsInitViewSet(viewsets.ViewSet):
             
             # --- Handle Children (Nesting) ---
             if block_data.get('children'):
+                children_data = block_data['children']
                 
-                # Delete old children of this parent not present in the incoming payload
-                incoming_child_ids = []
-                for col in block_data['children']:
-                     if col.get('blocks'):
-                         for child in col['blocks']:
-                             if 'id' in child: incoming_child_ids.append(child['id'])
+                # Check if children are in column format (flex_columns style: [{blocks: [...]}])
+                # or direct format (row/column style: [{id, type, params}...])
+                is_column_format = len(children_data) > 0 and isinstance(children_data[0], dict) and 'blocks' in children_data[0]
                 
-                block_instance.children.exclude(id__in=incoming_child_ids).delete()
-
-                for col_index, col_data in enumerate(block_data['children']):
-                    # This handles the column structure sent by the Vue frontend
+                if is_column_format:
+                    # Column format: children = [{blocks: [...]}, {blocks: [...]}]
+                    # Delete old children of this parent not present in the incoming payload
+                    incoming_child_ids = []
+                    for col in children_data:
+                         if col.get('blocks'):
+                             for child in col['blocks']:
+                                 if 'id' in child: incoming_child_ids.append(child['id'])
                     
-                    if col_data.get('blocks'):
-                        col_placement_key = f"col_{col_index}"
-                        
-                        # Recursively save blocks inside the column
-                        self._save_blocks_recursive(
-                            col_data['blocks'], 
-                            placement_key=col_placement_key, 
-                            page=None, # Nested blocks do not link to the page directly
-                            parent=block_instance, # Link to the 'flex_columns' parent instance
-                            website=website
-                        )
+                    block_instance.children.exclude(id__in=incoming_child_ids).delete()
+
+                    for col_index, col_data in enumerate(children_data):
+                        if col_data.get('blocks'):
+                            col_placement_key = f"col_{col_index}"
+                            self._save_blocks_recursive(
+                                col_data['blocks'], 
+                                placement_key=col_placement_key, 
+                                page=None,
+                                parent=block_instance,
+                                website=website
+                            )
+                else:
+                    # Direct format: children = [{id, type, params}, ...]
+                    # Delete old children not in the incoming payload
+                    incoming_child_ids = [child.get('id') for child in children_data if child.get('id')]
+                    block_instance.children.exclude(id__in=incoming_child_ids).delete()
+                    
+                    # Recursively save the children directly
+                    self._save_blocks_recursive(
+                        children_data, 
+                        placement_key='children', 
+                        page=None,
+                        parent=block_instance,
+                        website=website
+                    )
 
 class PageViewSet(viewsets.ModelViewSet):
     queryset = Page.objects.all().order_by('-updated_at')
@@ -1937,25 +1974,42 @@ class PageViewSet(viewsets.ModelViewSet):
             )
             
             if block_data.get('children'):
+                children_data = block_data['children']
                 
-                incoming_child_ids = []
-                for col in block_data['children']:
-                     if col.get('blocks'):
-                         for child in col['blocks']:
-                             if 'id' in child: incoming_child_ids.append(child['id'])
+                # Check if children are in column format (flex_columns style: [{blocks: [...]}])
+                # or direct format (row/column style: [{id, type, params}...])
+                is_column_format = len(children_data) > 0 and isinstance(children_data[0], dict) and 'blocks' in children_data[0]
                 
-                block_instance.children.exclude(id__in=incoming_child_ids).delete()
+                if is_column_format:
+                    # Column format: children = [{blocks: [...]}, {blocks: [...]}]
+                    incoming_child_ids = []
+                    for col in children_data:
+                         if col.get('blocks'):
+                             for child in col['blocks']:
+                                 if 'id' in child: incoming_child_ids.append(child['id'])
+                    
+                    block_instance.children.exclude(id__in=incoming_child_ids).delete()
 
-                for col_index, col_data in enumerate(block_data['children']):
-                    if col_data.get('blocks'):
-                        col_placement_key = f"col_{col_index}"
-                        
-                        self._save_blocks_recursive(
-                            col_data['blocks'], 
-                            placement_key=col_placement_key, 
-                            page=None, 
-                            parent=block_instance
-                        )
+                    for col_index, col_data in enumerate(children_data):
+                        if col_data.get('blocks'):
+                            col_placement_key = f"col_{col_index}"
+                            self._save_blocks_recursive(
+                                col_data['blocks'], 
+                                placement_key=col_placement_key, 
+                                page=None, 
+                                parent=block_instance
+                            )
+                else:
+                    # Direct format: children = [{id, type, params}, ...]
+                    incoming_child_ids = [child.get('id') for child in children_data if child.get('id')]
+                    block_instance.children.exclude(id__in=incoming_child_ids).delete()
+                    
+                    self._save_blocks_recursive(
+                        children_data, 
+                        placement_key='children', 
+                        page=None,
+                        parent=block_instance
+                    )
 
     @action(detail=False, methods=['post'])
     def import_theme(self, request):
