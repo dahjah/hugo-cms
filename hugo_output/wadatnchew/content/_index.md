@@ -3,6 +3,16 @@ title = "Home"
 date = ""
 draft = false
 type = "home"
+[[header_blocks]]
+  type = "menu"
+  style = "pills"
+  responsive = true
+  hamburgerDirection = "sidebar"
+  alignment = "center"
+  position = "normal"
+  sidebarSide = "left"
+  items = [{label = "Home", url = "/", type = "page"}]
+  sidebarFooterBlocks = [{type = "quote", text = "YOUR MOM", author = "Kevin"}]
 [[main_blocks]]
   type = "hero"
   title = "Welcome!"
@@ -12,16 +22,83 @@ type = "home"
   cta_url = "https://testing.com"
 [[main_blocks]]
   type = "text"
-  content = "TEXT BOX BABY"
+  content = "BEFORE FLEXIBLE COLUMNS"
+[[main_blocks]]
+  type = "row"
+  flex_mode = true
+  gap = "2"
+  [[main_blocks.blocks]]
+    type = "column"
+    width_percent = "25.1"
+    [[main_blocks.blocks.blocks]]
+      type = "markdown"
+      md = "## Heading\n\nYour markdown content here."
+    [[main_blocks.blocks.blocks]]
+      type = "image"
+      src = "/media/uploads/wadatnchew/220e2d78-1e2d-4eed-b41d-664f7f49aeae.png"
+      alt = ""
+      caption = ""
+  [[main_blocks.blocks]]
+    type = "column"
+    width_percent = "28.9"
+    [[main_blocks.blocks.blocks]]
+      type = "markdown"
+      md = "## Heading\n\nYour markdown content here."
+    [[main_blocks.blocks.blocks]]
+      type = "image"
+      src = "/media/uploads/wadatnchew/9af4ca4e-cceb-433f-9c1b-e3015708e16a.png"
+      alt = ""
+      caption = ""
+  [[main_blocks.blocks]]
+    type = "column"
+    width_percent = "46.0"
+    [[main_blocks.blocks.blocks]]
+      type = "markdown"
+      md = "## Heading\n\nYour markdown content here."
+    [[main_blocks.blocks.blocks]]
+      type = "image"
+      src = "/media/uploads/wadatnchew/649724de-c476-4a44-8717-d4262e9dc5a9.png"
+      alt = ""
+      caption = ""
+[[main_blocks]]
+  type = "text"
+  content = "AFTER FLEXIBLE COLUMNS"
+[[main_blocks]]
+  type = "row"
+  gap = "4"
+  justify = "start"
+  align = "start"
+  [[main_blocks.blocks]]
+    type = "column"
+    width = "auto"
+    [[main_blocks.blocks.blocks]]
+      type = "markdown"
+      md = "## Heading\n\nYour markdown content here."
+
+  [[main_blocks.blocks]]
+    type = "column"
+    width = "auto"
+    [[main_blocks.blocks.blocks]]
+      type = "markdown"
+      md = "## Heading\n\nYour markdown content here."
+
+  [[main_blocks.blocks]]
+    type = "column"
+    width = "auto"
+    [[main_blocks.blocks.blocks]]
+      type = "markdown"
+      md = "## Heading\n\nYour markdown content here."
+
+
+[[main_blocks]]
+  type = "text"
+  content = "AFTER MANUALLY SET UP ROWS AND COLUMNS"
 [[main_blocks]]
   type = "image"
   src = "/media/uploads/wadatnchew/825a6aaa-f282-4f9b-b5ad-f15b78347a59.gif"
   alt = ""
   caption = ""
   width = "47.2%"
-[[main_blocks]]
-  type = "flex_columns"
-  col_widths = "38.8, 38.8, 22.3"
 [[main_blocks]]
   type = "markdown"
   md = "## Heading\n\nYour markdown content here."
@@ -33,16 +110,6 @@ type = "home"
 [[main_blocks]]
   type = "alert"
   message = "Important message here."
-[[main_blocks]]
-  type = "menu"
-  style = "pills"
-  responsive = true
-  hamburgerDirection = "sidebar"
-  alignment = "right"
-  position = "normal"
-  sidebarSide = "left"
-  items = [{label = "Home", url = "/", type = "page"}]
-  sidebarFooterBlocks = [{type = "quote", text = "YOUR MOM", author = "Kevin"}]
 [[main_blocks]]
   type = "html"
   content = ""

@@ -1016,6 +1016,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 {{ $justify := .justify | default "start" }}
 {{ $align := .align | default "stretch" }}
 {{ $gap := .gap | default "4" }}
+{{ $flexMode := or (eq .flex_mode true) (eq .flex_mode "true") }}
 
 {{ $justifyClass := "" }}
 {{ if eq $justify "start" }}{{ $justifyClass = "justify-start" }}{{ end }}
@@ -1031,7 +1032,10 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 {{ if eq $align "end" }}{{ $alignClass = "items-end" }}{{ end }}
 {{ if eq $align "stretch" }}{{ $alignClass = "items-stretch" }}{{ end }}
 
-<div class="flex flex-wrap gap-{{ $gap }} mb-8 {{ $justifyClass }} {{ $alignClass }} {{ .css_classes }}">
+{{ $wrapClass := "flex-wrap" }}
+{{ if $flexMode }}{{ $wrapClass = "flex-nowrap" }}{{ end }}
+
+<div class="flex {{ $wrapClass }} gap-{{ $gap }} mb-8 {{ $justifyClass }} {{ $alignClass }} {{ .css_classes }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
@@ -1043,7 +1047,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     {{ end }}
 </div>""",
                 'column': """
-<div class="flex flex-col gap-4 {{ .css_classes }}">
+<div class="flex flex-col gap-4 {{ .css_classes }}" {{ with .width_percent }}style="width: {{ . }}%; flex-shrink: 0;"{{ end }}>
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
@@ -1361,6 +1365,44 @@ draft = false
             indent = "  " * depth
             
             for block in blocks_list:
+                # --- Transform flex_columns to row + column with proper params ---
+                if block.definition_id == 'flex_columns':
+                    # Get column widths
+                    col_widths_str = block.params.get('col_widths', '50.0, 50.0')
+                    col_widths = [w.strip() for w in col_widths_str.split(',')]
+                    
+                    # Get children grouped by placement_key
+                    fc_children = BlockInstance.objects.filter(parent=block).order_by('sort_order')
+                    children_by_col = {}
+                    for child in fc_children:
+                        col_key = child.placement_key or 'col_0'
+                        if col_key not in children_by_col:
+                            children_by_col[col_key] = []
+                        children_by_col[col_key].append(child)
+                    
+                    # Output as row with flex_mode=true (no justify-between, let widths fill naturally)
+                    output += f"{indent}[[{zone_name}]]\n"
+                    output += f'{indent}  type = "row"\n'
+                    output += f'{indent}  flex_mode = true\n'
+                    output += f'{indent}  gap = "2"\n'
+                    if block.params.get('css_classes'):
+                        css = str(block.params['css_classes']).replace('\\', '\\\\').replace('"', '\\"')
+                        output += f'{indent}  css_classes = "{css}"\n'
+                    
+                    # Output each column with width_percent
+                    for col_index, width in enumerate(col_widths):
+                        col_key = f'col_{col_index}'
+                        output += f"{indent}  [[{zone_name}.blocks]]\n"
+                        output += f'{indent}    type = "column"\n'
+                        output += f'{indent}    width_percent = "{width}"\n'
+                        
+                        # Recursively render column's children
+                        col_children = children_by_col.get(col_key, [])
+                        if col_children:
+                            output += render_blocks(col_children, f"{zone_name}.blocks.blocks", depth + 2)
+                    
+                    continue  # Skip default handling
+
                 output += f"{indent}[[{zone_name}]]\n"
                 output += f'{indent}  type = "{block.definition_id}"\n'
                 

@@ -1,5 +1,5 @@
 
-<div class="flex flex-col gap-4 {{ .css_classes }}">
+<div class="flex flex-col gap-4 {{ .css_classes }}" {{ with .width_percent }}style="width: {{ . }}%; flex-shrink: 0;"{{ end }}>
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}

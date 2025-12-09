@@ -3,17 +3,33 @@ title = "New Page"
 date = "2025-12-09"
 draft = false
 layout = "single"
+[[header_blocks]]
+  type = "menu"
+  style = "pills"
+  responsive = true
+  hamburgerDirection = "sidebar"
+  alignment = "center"
+  position = "normal"
+  sidebarSide = "left"
+  items = [{label = "Home", url = "/", type = "page"}]
+  sidebarFooterBlocks = [{type = "quote", text = "YOUR MOM", author = "Kevin"}]
 [[main_blocks]]
-  type = "flex_columns"
-  col_widths = "48.1, 51.9"
+  type = "row"
+  flex_mode = true
+  gap = "2"
   [[main_blocks.blocks]]
-    type = "hero"
-    title = "Welcome"
-    subtitle = "Your tagline here"
-    bgImage = "/media/uploads/wadatnchew/291cdfe6-10cf-49fa-93fc-b64fb5292e4f.gif"
-    cta_text = ""
-    cta_url = ""
-
+    type = "column"
+    width_percent = "48.1"
+    [[main_blocks.blocks.blocks]]
+      type = "hero"
+      title = "Welcome"
+      subtitle = "Your tagline here"
+      bgImage = "/media/uploads/wadatnchew/291cdfe6-10cf-49fa-93fc-b64fb5292e4f.gif"
+      cta_text = ""
+      cta_url = ""
+  [[main_blocks.blocks]]
+    type = "column"
+    width_percent = "51.9"
 [[main_blocks]]
   type = "image"
   src = "/media/uploads/wadatnchew/f565917a-2507-4e47-a620-a5004bafe85a.gif"

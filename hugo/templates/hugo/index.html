@@ -1960,7 +1960,7 @@
                         </div>
                     </div>
 
-                    <div v-else-if="getDefinition(block.type).is_container && block.type !== 'carousel'" class="p-4 border border-slate-100 rounded-lg">
+                    <div v-else-if="getDefinition(block.type).is_container && block.type !== 'carousel' && block.type !== 'flex_columns'" class="p-4 border border-slate-100 rounded-lg">
                          <div class="text-xs font-bold text-slate-400 uppercase mb-2">{{ getDefinition(block.type).label || block.type }}</div>
                          <drop-zone 
                             zone="children" 
