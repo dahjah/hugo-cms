@@ -45,8 +45,21 @@ type = "single"
   type = "markdown"
   md = "## Hello World\nThis is **markdown** content"
 [[main_blocks]]
-  type = "flex_columns"
-  col_widths = "50.0, 50.0"
+  type = "row"
+  flex_mode = true
+  gap = "2"
+  [[main_blocks.blocks]]
+    type = "column"
+    width_percent = "50.0"
+    [[main_blocks.blocks.blocks]]
+      type = "youtube"
+      videoId = "dQw4w9WgXcQ"
+      title = "My Video"
+      width = "100%"
+      aspect_ratio = "16/9"
+  [[main_blocks.blocks]]
+    type = "column"
+    width_percent = "50.0"
 [[main_blocks]]
   type = "alert"
   message = "This is an important alert message."
@@ -90,7 +103,6 @@ type = "single"
 [[main_blocks]]
   type = "features_grid"
   title = "Why Choose Us"
-  features = [{icon = "check", title = "Reliable Service", description = "Dependable scheduling and clear communication ensure your catering is one less thing to worry about."}, {icon = "check", title = "Interactive Food Truck Experience", description = "The food truck itself is a fun, engaging centerpiece for your event, adding personality and flair."}, {icon = "check", title = "Transparent Pricing", description = "Clear, upfront pricing eliminates unexpected costs and ensures you can plan confidently within your budget."}]
 [[main_blocks]]
   type = "process_steps"
   title = "Here's how it works:"
@@ -106,10 +118,6 @@ type = "single"
   type = "social_links"
   links = [{platform = "facebook", url = "https://facebook.com/mambotruck"}, {platform = "instagram", url = "https://instagram.com/mambotruck"}, {platform = "twitter", url = "https://twitter.com/mambotruck"}]
 [[main_blocks]]
-  type = "faq"
-  title = "Frequently Asked Questions"
-  questions = [{question = "How far in advance should I book?", answer = "We recommend booking at least 2-3 weeks in advance, especially for weekends and peak seasons."}, {question = "What is included in the catering package?", answer = "Our packages include the food truck, staff, serving equipment, and cleanup. Food and beverages are customized based on your selections."}, {question = "Do you accommodate dietary restrictions?", answer = "Absolutely! We can accommodate vegetarian, vegan, gluten-free, and other dietary needs. Just let us know when booking."}]
-[[main_blocks]]
   type = "google_reviews"
   title = "What Our Customers Say"
   subtitle = "We take pride in serving delicious food and creating memorable experiences."
@@ -120,14 +128,21 @@ type = "single"
 [[main_blocks]]
   type = "flip_cards"
   columns = "3"
-  cards = [{front = {title = "", icon = ""}, back = {description = "", cta_text = "", cta_url = ""}}, {front = {title = "", icon = ""}, back = {description = "", cta_text = "", cta_url = ""}}, {front = {title = "", icon = ""}, back = {description = "", cta_text = "", cta_url = ""}}]
+  cards = [{front_title = "", front_icon = "", back_description = "", back_cta_text = "", back_cta_url = ""}, {front_title = "", front_icon = "", back_description = "", back_cta_text = "", back_cta_url = ""}, {front_title = "", front_icon = "", back_description = "", back_cta_text = "", back_cta_url = ""}]
 [[main_blocks]]
   type = "carousel"
   auto_advance = true
   interval_seconds = "8"
   show_dots = true
   show_arrows = true
-  slides = [{id = "mixq5ydd99hmke16w1v", children = [{type = "hero", title = "Welcome Home", subtitle = "Start your journey here", bgImage = "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80"}]}, {id = "mixq63ov642dvjq6ib7", children = [{type = "text", content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."}]}]
+  [[main_blocks.blocks]]
+    type = "hero"
+    title = "Welcome Home"
+    subtitle = "Start your journey here"
+    bgImage = "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80"
+  [[main_blocks.blocks]]
+    type = "text"
+    content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 [[main_blocks]]
   type = "accordion"
   allow_multiple = false

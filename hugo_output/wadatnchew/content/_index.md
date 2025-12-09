@@ -9,9 +9,8 @@ type = "single"
   responsive = true
   hamburgerDirection = "sidebar"
   alignment = "center"
-  position = "normal"
+  position = "overlay"
   items = [{label = "Home", url = "/", type = "page"}]
-  sidebarFooterBlocks = [{type = "image", src = "", alt = "", caption = ""}, {type = "text", content = "<p>Your content here...</p>"}]
 [[main_blocks]]
   type = "hero"
   title = "Welcome!"
@@ -139,11 +138,6 @@ type = "single"
   interval_seconds = "5"
   show_dots = true
   show_arrows = true
-  [[main_blocks.blocks]]
-    type = "image"
-    src = "/media/uploads/wadatnchew/ed7ed57a-3aab-458b-9f08-2e7804677a1d.gif"
-    alt = ""
-    caption = ""
   [[main_blocks.blocks]]
     type = "markdown"
     md = "## Heading\n\nYour markdown content here."

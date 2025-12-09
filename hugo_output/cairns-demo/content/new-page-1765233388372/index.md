@@ -33,5 +33,11 @@ layout = "single"
   interval_seconds = "8"
   show_dots = true
   show_arrows = true
-  slides = [{id = "mixqe57v75uxlprj7n", children = [{type = "testimonial", quote = "", author = ""}]}, {id = "mixqfj6pixxw3difbo", children = [{type = "text", content = "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>"}]}]
+  [[main_blocks.blocks]]
+    type = "testimonial"
+    quote = ""
+    author = ""
+  [[main_blocks.blocks]]
+    type = "text"
+    content = "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>"
 +++

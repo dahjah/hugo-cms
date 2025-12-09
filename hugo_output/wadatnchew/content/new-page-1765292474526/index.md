@@ -9,9 +9,8 @@ layout = "single"
   responsive = true
   hamburgerDirection = "sidebar"
   alignment = "center"
-  position = "normal"
+  position = "overlay"
   items = [{label = "Home", url = "/", type = "page"}]
-  sidebarFooterBlocks = [{type = "image", src = "", alt = "", caption = ""}, {type = "text", content = "<p>Your content here...</p>"}]
 [[main_blocks]]
   type = "row"
   flex_mode = true

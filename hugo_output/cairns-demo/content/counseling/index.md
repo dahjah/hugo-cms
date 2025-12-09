@@ -41,7 +41,7 @@ layout = "single"
 [[main_blocks]]
   type = "flip_cards"
   columns = "3"
-  cards = [{front = {title = "Trauma & PTSD", icon = ""}, back = {description = "Healing from sexual abuse, accidents, complex trauma, and distressing past events using evidence-based approaches.", cta_text = "", cta_url = ""}}, {front = {title = "Depression", icon = ""}, back = {description = "Finding hope and healing from persistent sadness, loss of interest, and the heavy weight of depression.", cta_text = "", cta_url = ""}}, {front = {title = "Anxiety and Panic", icon = ""}, back = {description = "Learning to manage overwhelming worry, panic attacks, and fear to reclaim a sense of calm and control.", cta_text = "", cta_url = ""}}, {front = {title = "Grief & Loss", icon = ""}, back = {description = "Processing the death of loved ones, loss of health, or ending of relationships in a supportive space.", cta_text = "", cta_url = ""}}, {front = {title = "Life Transitions", icon = ""}, back = {description = "Adjusting to divorce, career changes, empty nesting, and other major life shifts with resilience and clarity.", cta_text = "", cta_url = ""}}, {front = {title = "Relationship Problems", icon = ""}, back = {description = "Healing communication struggles, conflict, betrayal trauma, and rebuilding trust and intimacy.", cta_text = "", cta_url = ""}}]
+  cards = [{front_title = "", front_icon = "", back_description = "", back_cta_text = "", back_cta_url = ""}, {front_title = "", front_icon = "", back_description = "", back_cta_text = "", back_cta_url = ""}, {front_title = "", front_icon = "", back_description = "", back_cta_text = "", back_cta_url = ""}, {front_title = "", front_icon = "", back_description = "", back_cta_text = "", back_cta_url = ""}, {front_title = "", front_icon = "", back_description = "", back_cta_text = "", back_cta_url = ""}, {front_title = "", front_icon = "", back_description = "", back_cta_text = "", back_cta_url = ""}]
 [[main_blocks]]
   type = "html"
   content = "</div>\n</div>\n\n<div class=\"section-welcome\">\n<div class=\"container\">\n\n<h2 class=\"heading-normal text-center\">Treatment Modalities</h2>"
@@ -55,7 +55,17 @@ layout = "single"
   interval_seconds = "8"
   show_dots = true
   show_arrows = false
-  slides = [{id = "mixriw6v422v3exngj5", children = [{type = "hero", title = "Welcome Home", subtitle = "Start your journey here", bgImage = "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80"}]}, {id = "mixrjnkj9oau9x9hpe8", children = [{type = "youtube", videoId = "dQw4w9WgXcQ", title = "My Video", width = "100%", aspect_ratio = "16/9"}]}]
+  [[main_blocks.blocks]]
+    type = "hero"
+    title = "Welcome Home"
+    subtitle = "Start your journey here"
+    bgImage = "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80"
+  [[main_blocks.blocks]]
+    type = "youtube"
+    videoId = "dQw4w9WgXcQ"
+    title = "My Video"
+    width = "100%"
+    aspect_ratio = "16/9"
 [[main_blocks]]
   type = "testimonial"
   quote = ""
