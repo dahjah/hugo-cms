@@ -1995,8 +1995,14 @@ class PageViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Page.objects.all().order_by('-updated_at')
         website_id = self.request.query_params.get('website_id')
+        
         if website_id:
             queryset = queryset.filter(website_id=website_id)
+        elif self.action == 'list':
+            # Only restrict list view if no website_id is provided
+            # Detail views (retrieve, content, etc) work by ID so we don't strictly need website_id
+            return Page.objects.none()
+            
         return queryset
     
     

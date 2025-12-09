@@ -520,7 +520,7 @@
                     <div v-if="sidebarTab === 'pages'" class="p-4">
                         <div class="flex items-center justify-between mb-3">
                             <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">All Pages</h3>
-                            <button @click="createNewPage"
+                            <button @click="createNewPage" v-if="currentWebsite"
                                 class="text-slate-400 hover:text-indigo-600 transition-colors">
                                 <icon name="plus" :size="16"></icon>
                             </button>
@@ -543,7 +543,7 @@
                             </div>
                         </div>
 
-                        <button @click="createNewPage"
+                        <button @click="createNewPage" v-if="currentWebsite"
                             class="mt-4 w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
                             <icon name="plus" :size="12"></icon>
                             <span>Create New Page</span>
@@ -3969,7 +3969,7 @@ layout = "${activePage.value.layout}"
                         // Auto-select the first page after switching
                         if(pages.value.length > 0) {
                             activePageId.value = pages.value[0].id;
-                            await fetchPageContent(pages.value[0].id);
+                            await fetchContent(pages.value[0].id);
                         }
                     },
                     createWebsite: async () => {
