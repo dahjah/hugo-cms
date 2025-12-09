@@ -7,10 +7,11 @@ layout = "single"
   type = "menu"
   style = "default"
   responsive = true
-  hamburgerDirection = "dropdown"
+  hamburgerDirection = "sidebar"
   alignment = "center"
   position = "normal"
   items = [{label = "Home", url = "/", type = "page"}]
+  sidebarFooterBlocks = [{type = "image", src = "", alt = "", caption = ""}, {type = "text", content = "<p>Your content here...</p>"}]
 [[main_blocks]]
   type = "row"
   flex_mode = true

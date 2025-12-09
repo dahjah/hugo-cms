@@ -7,15 +7,16 @@ type = "single"
   type = "menu"
   style = "default"
   responsive = true
-  hamburgerDirection = "dropdown"
+  hamburgerDirection = "sidebar"
   alignment = "center"
   position = "normal"
   items = [{label = "Home", url = "/", type = "page"}]
+  sidebarFooterBlocks = [{type = "image", src = "", alt = "", caption = ""}, {type = "text", content = "<p>Your content here...</p>"}]
 [[main_blocks]]
   type = "hero"
   title = "Welcome!"
   subtitle = "This is a tag line"
-  bgImage = "/media/uploads/wadatnchew/aa04093e-47d1-4298-a02e-428007c63866.gif"
+  bgImage = "/media/uploads/wadatnchew-toml-test/3f994927-ac7d-4dde-a0eb-906e6665a23f.gif"
   cta_text = "CTA DUDE"
   cta_url = "https://testing.com"
 [[main_blocks]]
@@ -33,7 +34,7 @@ type = "single"
       md = "## Heading\n\nYour markdown content here."
     [[main_blocks.blocks.blocks]]
       type = "image"
-      src = "/media/uploads/wadatnchew/220e2d78-1e2d-4eed-b41d-664f7f49aeae.png"
+      src = "/media/uploads/wadatnchew-toml-test/ec2a2641-8d8f-44c3-8d48-4dc2f54d14a2.png"
       alt = ""
       caption = ""
   [[main_blocks.blocks]]
@@ -51,13 +52,16 @@ type = "single"
     type = "column"
     width_percent = "46.0"
     [[main_blocks.blocks.blocks]]
-      type = "markdown"
-      md = "## Heading\n\nYour markdown content here."
+      type = "text"
+      content = "<p>Your content here...</p>"
     [[main_blocks.blocks.blocks]]
       type = "image"
       src = "/media/uploads/wadatnchew/649724de-c476-4a44-8717-d4262e9dc5a9.png"
       alt = ""
       caption = ""
+[[main_blocks]]
+  type = "markdown"
+  md = "## Heading\n\nYour markdown content here."
 [[main_blocks]]
   type = "text"
   content = "AFTER FLEXIBLE COLUMNS"
@@ -136,10 +140,25 @@ type = "single"
   show_dots = true
   show_arrows = true
   [[main_blocks.blocks]]
+    type = "image"
+    src = "/media/uploads/wadatnchew/ed7ed57a-3aab-458b-9f08-2e7804677a1d.gif"
+    alt = ""
+    caption = ""
+  [[main_blocks.blocks]]
+    type = "markdown"
+    md = "## Heading\n\nYour markdown content here."
+  [[main_blocks.blocks]]
+    type = "stats_counter"
+    stats = [{value = "35", suffix = "k+", label = "Cuban meals Served"}, {value = "2", suffix = "k+", label = "Happy Clients"}, {value = "5", suffix = "+", label = "Years Of Experience"}]
+  [[main_blocks.blocks]]
     type = "google_reviews"
     show_rating = true
     columns = "3"
-    reviews = [{name = "WOOP WOOP", rating = "4", text = "", date = "", image = ""}]
+  [[main_blocks.blocks]]
+    type = "menu_grid"
+    title = "Our Menu Favorites"
+    items = [{name = "Cari-Bowl", image = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80", description = "Caribbean flavors in a bowl"}, {name = "Cuban Sandwich", image = "https://images.unsplash.com/photo-1509722747041-616f39b57569?w=400&q=80", description = "Traditional pressed sandwich"}, {name = "Supreme Nachos", image = "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=400&q=80", description = "Loaded with toppings"}, {name = "Mambo BBQ Sandwich", image = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80", description = "Smoky BBQ goodness"}]
+
 [[main_blocks]]
   type = "section"
   style = "default"

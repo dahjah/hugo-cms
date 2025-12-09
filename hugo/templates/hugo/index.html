@@ -994,7 +994,7 @@
                                 <drop-zone title="Footer Blocks" :zone="'menu_footer_' + selectedBlock.id"
                                     :blocks="selectedBlock.params.sidebarFooterBlocks || []" :is-active="true"
                                     :selected-id="null" :parent-block-id="selectedBlock.id" @drop-item="handleDrop"
-                                    @select-block="() => {}" @drag-start-block="handleDragStartExisting"
+                                    @select-block="selectedBlockId = $event" @drag-start-block="handleDragStartExisting"
                                     class="min-h-[80px]">
                                 </drop-zone>
                             </div>
@@ -1106,8 +1106,8 @@
                                             :zone="'carousel_slide_' + selectedBlock.id + '_' + index"
                                             :blocks="slide.children || []" :is-active="true" :selected-id="null"
                                             :parent-block-id="selectedBlock.id" @drop-item="handleDrop"
-                                            @select-block="() => {}" @drag-start-block="handleDragStartExisting"
-                                            class="min-h-[60px]">
+                                            @select-block="selectedBlockId = $event"
+                                            @drag-start-block="handleDragStartExisting" class="min-h-[60px]">
                                         </drop-zone>
                                     </div>
                                 </div>
