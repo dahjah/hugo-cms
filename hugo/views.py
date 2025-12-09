@@ -973,11 +973,18 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     {{ end }}
 </div>""",
                 'testimonial': """
-<div class="testimonial {{ .css_classes }}">
-    <div class="testimonial-quote">{{ .quote }}</div>
-    {{ if .author }}
-    <div class="testimonial-author">{{ .author }}</div>
-    {{ end }}
+<div class="bg-gradient-to-r from-indigo-50 to-slate-50 py-12 px-8 rounded-lg shadow-sm mb-8 {{ .css_classes }}">
+    <div class="max-w-2xl mx-auto text-center">
+        <p class="text-2xl font-serif italic text-slate-700 mb-6">"{{ .quote }}"</p>
+        <div class="flex items-center justify-center gap-4">
+            {{ if .image }}
+            <img src="{{ .image }}" alt="{{ .author }}" class="w-12 h-12 rounded-full object-cover shadow">
+            {{ end }}
+            {{ if .author }}
+            <span class="font-semibold text-slate-800">{{ .author }}</span>
+            {{ end }}
+        </div>
+    </div>
 </div>""",
                 'section': """
 {{ $style := .style | default "welcome" }}
@@ -1580,8 +1587,53 @@ draft = false
                         items_toml += "]\n"
                         output += f'{indent}  items = {items_toml}'
                 
-                # Legacy carousel handling removed to support generic child nesting
-                # if block.definition_id == 'carousel': ...
+                # Handle carousel-specific parameters (slides are stored as JSON, not BlockInstance children)
+                if block.definition_id == 'carousel':
+                    slides = params.get('slides', [])
+                    if slides:
+                        # Flatten slides into a blocks array for the template
+                        # Each slide's children become direct blocks in the carousel
+                        all_slide_blocks = []
+                        for slide in slides:
+                            for child in slide.get('children', []):
+                                all_slide_blocks.append(child)
+                        
+                        if all_slide_blocks:
+                            # Output each child block as [[zone.blocks]]
+                            for child_block in all_slide_blocks:
+                                child_type = child_block.get('type', 'unknown')
+                                child_params = child_block.get('params', {})
+                                output += f'{indent}  [[{zone_name}.blocks]]\n'
+                                output += f'{indent}    type = "{child_type}"\n'
+                                
+                                # Serialize child params
+                                for k, v in child_params.items():
+                                    if isinstance(v, bool):
+                                        v_toml = "true" if v else "false"
+                                        output += f'{indent}    {k} = {v_toml}\n'
+                                    elif isinstance(v, (int, float)):
+                                        output += f'{indent}    {k} = {v}\n'
+                                    elif isinstance(v, list):
+                                        # Handle arrays (like reviews in google_reviews)
+                                        if v and isinstance(v[0], dict):
+                                            arr_toml = "["
+                                            for i, item in enumerate(v):
+                                                if i > 0:
+                                                    arr_toml += ", "
+                                                item_str = "{"
+                                                item_parts = []
+                                                for ik, iv in item.items():
+                                                    iv_str = str(iv).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                                                    item_parts.append(f'{ik} = "{iv_str}"')
+                                                item_str += ", ".join(item_parts)
+                                                item_str += "}"
+                                                arr_toml += item_str
+                                            arr_toml += "]"
+                                            output += f'{indent}    {k} = {arr_toml}\n'
+                                    elif not isinstance(v, dict):
+                                        v_str = str(v).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+                                        output += f'{indent}    {k} = "{v_str}"\n'
+                
                 
                 
                 # --- Recursive Child Rendering ---

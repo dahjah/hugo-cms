@@ -72,11 +72,24 @@ type = "home"
   interval_seconds = "5"
   show_dots = true
   show_arrows = true
+  [[main_blocks.blocks]]
+    type = "google_reviews"
+    show_rating = true
+    columns = 3
+  [[main_blocks.blocks]]
+    type = "menu_grid"
+    title = "Our Menu Favorites"
+    items = [{name = "Cari-Bowl", image = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80", description = "Caribbean flavors in a bowl"}, {name = "Cuban Sandwich", image = "https://images.unsplash.com/photo-1509722747041-616f39b57569?w=400&q=80", description = "Traditional pressed sandwich"}, {name = "Supreme Nachos", image = "https://images.unsplash.com/photo-1513456852971-30c0b8199d4d?w=400&q=80", description = "Loaded with toppings"}, {name = "Mambo BBQ Sandwich", image = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80", description = "Smoky BBQ goodness"}]
 [[main_blocks]]
-  type = "testimonial"
-  quote = "YOU'RE PRETTY cool"
-  author = "DUDE"
-  image = "/media/uploads/wadatnchew/38c247c2-a13a-4a53-b555-6c98c784c601.png"
+  type = "section"
+  style = "default"
+  padding = "normal"
+  [[main_blocks.blocks]]
+    type = "testimonial"
+    quote = "YOU'RE PRETTY cool"
+    author = "DUDE"
+    image = "/media/uploads/wadatnchew/38c247c2-a13a-4a53-b555-6c98c784c601.png"
+
 [[main_blocks]]
   type = "flip_cards"
   columns = "3"
