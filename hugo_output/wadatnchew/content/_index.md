@@ -34,17 +34,15 @@ type = "home"
   type = "alert"
   message = "Important message here."
 [[main_blocks]]
-  type = "quote"
-  text = "YOUR MOM"
-  author = "Kevin"
-[[main_blocks]]
   type = "menu"
-  style = "default"
+  style = "pills"
   responsive = true
-  hamburgerDirection = "dropdown"
-  alignment = "center"
+  hamburgerDirection = "sidebar"
+  alignment = "right"
   position = "normal"
+  sidebarSide = "left"
   items = [{label = "Home", url = "/", type = "page"}]
+  sidebarFooterBlocks = [{type = "quote", text = "YOUR MOM", author = "Kevin"}]
 [[main_blocks]]
   type = "html"
   content = ""
