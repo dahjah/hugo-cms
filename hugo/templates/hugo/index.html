@@ -797,396 +797,417 @@
                     </div>
                 </header>
 
-                <!-- Canvas Area -->
-                <div class="flex-1 overflow-auto p-8 relative" @click="selectedBlockId = null">
+                <!-- Wrapper for Canvas + Inspector -->
+                <div class="flex-1 flex overflow-hidden relative">
 
-                    <!-- Empty State - No Website Selected -->
-                    <div v-if="!currentWebsite" class="h-full flex items-center justify-center">
-                        <div class="text-center max-w-md">
-                            <div
-                                class="w-20 h-20 mx-auto mb-6 bg-indigo-100 rounded-full flex items-center justify-center">
-                                <icon name="layout" :size="40" class="text-indigo-600"></icon>
+                    <!-- Canvas Area -->
+                    <div class="flex-1 overflow-auto p-8 relative" @click="selectedBlockId = null">
+
+                        <!-- Empty State - No Website Selected -->
+                        <div v-if="!currentWebsite" class="h-full flex items-center justify-center">
+                            <div class="text-center max-w-md">
+                                <div
+                                    class="w-20 h-20 mx-auto mb-6 bg-indigo-100 rounded-full flex items-center justify-center">
+                                    <icon name="layout" :size="40" class="text-indigo-600"></icon>
+                                </div>
+                                <h2 class="text-2xl font-bold text-slate-800 mb-3">Welcome to Hugo CMS!</h2>
+                                <p class="text-slate-600 mb-6">Please select a website from the dropdown above to get
+                                    started, or create a new website.</p>
+                                <button @click="showCreateWebsiteModal = true"
+                                    class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-2 mx-auto">
+                                    <icon name="plus" :size="18"></icon>
+                                    <span>Create New Website</span>
+                                </button>
                             </div>
-                            <h2 class="text-2xl font-bold text-slate-800 mb-3">Welcome to Hugo CMS!</h2>
-                            <p class="text-slate-600 mb-6">Please select a website from the dropdown above to get
-                                started, or create a new website.</p>
-                            <button @click="showCreateWebsiteModal = true"
-                                class="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-sm flex items-center space-x-2 mx-auto">
-                                <icon name="plus" :size="18"></icon>
-                                <span>Create New Website</span>
+                        </div>
+
+                        <!-- Code View -->
+                        <div v-else-if="viewMode === 'code'"
+                            class="max-w-4xl mx-auto bg-slate-800 rounded-lg shadow-xl overflow-hidden text-slate-300 font-mono text-sm">
+                            <div class="bg-slate-900 px-4 py-2 border-b border-slate-700 flex justify-between">
+                                <span>config.toml</span>
+                                <span class="text-xs text-slate-500">Read-only generated view</span>
+                            </div>
+                            <div class="p-6 whitespace-pre overflow-x-auto">{{ generateConfig }}</div>
+                        </div>
+
+                        <!-- Editor/Preview View -->
+                        <div v-else
+                            class="max-w-5xl mx-auto min-h-[800px] bg-white shadow-xl rounded-lg border border-slate-200 flex flex-col transition-all duration-300"
+                            :class="viewMode === 'preview' ? 'scale-[1.02]' : ''">
+
+                            <!-- Header Zone (Global) - Render if layout allows -->
+                            <drop-zone v-if="getZoneConfig('header')" :title="'Site Header (Global)'" zone="header"
+                                :blocks="activeContent.header" :is-active="viewMode === 'editor'"
+                                :selected-id="selectedBlockId" @drop-item="handleDrop"
+                                @select-block="setSelectedBlockId" @drag-start-block="handleDragStartExisting"
+                                :class="getZoneConfig('header')?.cssClasses || ''"
+                                :style="{ order: getZoneConfig('header')?.order || 0 }"></drop-zone>
+
+                            <!-- Main Content Canvas -->
+                            <div class="flex flex-1" style="display: flex;">
+                                <!-- Sidebar Zone (Page Specific) - Render if layout has sidebar -->
+                                <div v-if="getZoneConfig('sidebar')"
+                                    :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
+                                    :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
+                                    <drop-zone title="Sidebar" zone="sidebar" :blocks="activeContent.sidebar"
+                                        :is-active="viewMode === 'editor'" :selected-id="selectedBlockId"
+                                        class="h-full min-h-[400px]" @drop-item="handleDrop"
+                                        @select-block="setSelectedBlockId"
+                                        @drag-start-block="handleDragStartExisting"></drop-zone>
+                                </div>
+
+                                <!-- Page Content Zone (Main) -->
+                                <div class="flex-1 min-h-[400px]" :style="{ order: getZoneConfig('main')?.order || 2 }">
+                                    <drop-zone title="Page Content" zone="main" :blocks="activeContent.main"
+                                        :is-active="viewMode === 'editor'" :selected-id="selectedBlockId" class="h-full"
+                                        @drop-item="handleDrop" @select-block="setSelectedBlockId"
+                                        @drag-start-block="handleDragStartExisting"></drop-zone>
+                                </div>
+                            </div>
+
+                            <!-- Footer Zone (Global) - Render if layout allows -->
+                            <drop-zone v-if="getZoneConfig('footer')" :title="'Site Footer (Global)'" zone="footer"
+                                :blocks="activeContent.footer" :is-active="viewMode === 'editor'"
+                                :selected-id="selectedBlockId" @drop-item="handleDrop"
+                                @select-block="setSelectedBlockId" @drag-start-block="handleDragStartExisting"
+                                :class="getZoneConfig('footer')?.cssClasses || ''"
+                                :style="{ order: getZoneConfig('footer')?.order || 0 }"></drop-zone>
+                        </div>
+                    </div>
+                    <!-- </main> removed to wrap inspector -->
+
+                    <!-- RIGHT PROPERTY SIDEBAR -->
+                    <aside v-if="viewMode === 'editor' && selectedBlock"
+                        class="w-80 bg-white border-l border-slate-200 shadow-xl z-30 flex flex-col transition-all">
+                        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-800">Edit Component</h3>
+                                <span class="text-xs text-slate-500 uppercase tracking-wide">{{
+                                    selectedBlockDefinition?.label
+                                    ||
+                                    selectedBlock.type }}</span>
+                            </div>
+                            <button @click="closeInspector()"
+                                class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-md transition-colors"
+                                title="Close Inspector">
+                                <icon name="x" :size="16"></icon>
                             </button>
                         </div>
-                    </div>
 
-                    <!-- Code View -->
-                    <div v-else-if="viewMode === 'code'"
-                        class="max-w-4xl mx-auto bg-slate-800 rounded-lg shadow-xl overflow-hidden text-slate-300 font-mono text-sm">
-                        <div class="bg-slate-900 px-4 py-2 border-b border-slate-700 flex justify-between">
-                            <span>config.toml</span>
-                            <span class="text-xs text-slate-500">Read-only generated view</span>
-                        </div>
-                        <div class="p-6 whitespace-pre overflow-x-auto">{{ generateConfig }}</div>
-                    </div>
-
-                    <!-- Editor/Preview View -->
-                    <div v-else
-                        class="max-w-5xl mx-auto min-h-[800px] bg-white shadow-xl rounded-lg border border-slate-200 flex flex-col transition-all duration-300"
-                        :class="viewMode === 'preview' ? 'scale-[1.02]' : ''">
-
-                        <!-- Header Zone (Global) - Render if layout allows -->
-                        <drop-zone v-if="getZoneConfig('header')" :title="'Site Header (Global)'" zone="header"
-                            :blocks="activeContent.header" :is-active="viewMode === 'editor'"
-                            :selected-id="selectedBlockId" @drop-item="handleDrop" @select-block="setSelectedBlockId"
-                            @drag-start-block="handleDragStartExisting"
-                            :class="getZoneConfig('header')?.cssClasses || ''"
-                            :style="{ order: getZoneConfig('header')?.order || 0 }"></drop-zone>
-
-                        <!-- Main Content Canvas -->
-                        <div class="flex flex-1" style="display: flex;">
-                            <!-- Sidebar Zone (Page Specific) - Render if layout has sidebar -->
-                            <div v-if="getZoneConfig('sidebar')"
-                                :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
-                                :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
-                                <drop-zone title="Sidebar" zone="sidebar" :blocks="activeContent.sidebar"
-                                    :is-active="viewMode === 'editor'" :selected-id="selectedBlockId"
-                                    class="h-full min-h-[400px]" @drop-item="handleDrop"
-                                    @select-block="setSelectedBlockId"
-                                    @drag-start-block="handleDragStartExisting"></drop-zone>
-                            </div>
-
-                            <!-- Page Content Zone (Main) -->
-                            <div class="flex-1 min-h-[400px]" :style="{ order: getZoneConfig('main')?.order || 2 }">
-                                <drop-zone title="Page Content" zone="main" :blocks="activeContent.main"
-                                    :is-active="viewMode === 'editor'" :selected-id="selectedBlockId" class="h-full"
-                                    @drop-item="handleDrop" @select-block="setSelectedBlockId"
-                                    @drag-start-block="handleDragStartExisting"></drop-zone>
-                            </div>
-                        </div>
-
-                        <!-- Footer Zone (Global) - Render if layout allows -->
-                        <drop-zone v-if="getZoneConfig('footer')" :title="'Site Footer (Global)'" zone="footer"
-                            :blocks="activeContent.footer" :is-active="viewMode === 'editor'"
-                            :selected-id="selectedBlockId" @drop-item="handleDrop" @select-block="setSelectedBlockId"
-                            @drag-start-block="handleDragStartExisting"
-                            :class="getZoneConfig('footer')?.cssClasses || ''"
-                            :style="{ order: getZoneConfig('footer')?.order || 0 }"></drop-zone>
-                    </div>
-                </div>
-            </main>
-
-            <!-- RIGHT PROPERTY SIDEBAR -->
-            <aside v-if="viewMode === 'editor' && selectedBlock"
-                class="w-80 bg-white border-l border-slate-200 shadow-xl z-30 flex flex-col transition-all">
-                <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-                    <div>
-                        <h3 class="font-bold text-slate-800">Edit Component</h3>
-                        <span class="text-xs text-slate-500 uppercase tracking-wide">{{ selectedBlockDefinition?.label
-                            ||
-                            selectedBlock.type }}</span>
-                    </div>
-                    <button @click="closeInspector()"
-                        class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-md transition-colors"
-                        title="Close Inspector">
-                        <icon name="x" :size="16"></icon>
-                    </button>
-                </div>
-
-                <div class="p-6 space-y-6 flex-1 overflow-y-auto">
-                    <!-- Global Block Settings -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">CSS Classes</label>
-                        <input type="text" v-model="selectedBlock.params.css_classes"
-                            class="w-full border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                            placeholder="e.g. my-custom-class text-center">
-                        <p class="text-xs text-slate-400 mt-1">Space-separated list of CSS classes</p>
-                    </div>
-
-                    <!-- Column Resizer Parameters for flex_columns -->
-                    <div v-if="selectedBlock.type === 'flex_columns'">
-                        <div class="space-y-4">
-                            <h4 class="text-sm font-semibold text-slate-700">Settings</h4>
-
-                            <!-- Column Count Control (Slider replacement for UX) -->
+                        <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+                            <!-- Global Block Settings -->
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Count</label>
-                                <div class="flex items-center space-x-3">
-                                    <input type="number" min="1" max="6"
-                                        :value="getColWidths(selectedBlock.children).length"
-                                        @input="e => updateColCount(selectedBlock.id, parseInt(e.target.value))"
-                                        class="w-16 text-sm border border-slate-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-center" />
-                                    <div class="flex-1 h-2 bg-indigo-100 rounded-full">
-                                        <div class="h-full bg-indigo-500 rounded-full"
-                                            :style="{ width: ((getColWidths(selectedBlock.children).length / 6) * 100) + '%' }">
+                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">CSS
+                                    Classes</label>
+                                <input type="text" v-model="selectedBlock.params.css_classes"
+                                    class="w-full border border-slate-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="e.g. my-custom-class text-center">
+                                <p class="text-xs text-slate-400 mt-1">Space-separated list of CSS classes</p>
+                            </div>
+
+                            <!-- Column Resizer Parameters for flex_columns -->
+                            <div v-if="selectedBlock.type === 'flex_columns'">
+                                <div class="space-y-4">
+                                    <h4 class="text-sm font-semibold text-slate-700">Settings</h4>
+
+                                    <!-- Column Count Control (Slider replacement for UX) -->
+                                    <div>
+                                        <label
+                                            class="block text-xs font-semibold text-slate-500 uppercase mb-2">Count</label>
+                                        <div class="flex items-center space-x-3">
+                                            <input type="number" min="1" max="6"
+                                                :value="getColWidths(selectedBlock.children).length"
+                                                @input="e => updateColCount(selectedBlock.id, parseInt(e.target.value))"
+                                                class="w-16 text-sm border border-slate-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-center" />
+                                            <div class="flex-1 h-2 bg-indigo-100 rounded-full">
+                                                <div class="h-full bg-indigo-500 rounded-full"
+                                                    :style="{ width: ((getColWidths(selectedBlock.children).length / 6) * 100) + '%' }">
+                                                </div>
+                                            </div>
+                                            <span class="text-xs text-slate-500">6</span>
                                         </div>
                                     </div>
-                                    <span class="text-xs text-slate-500">6</span>
-                                </div>
-                            </div>
 
-                            <!-- Individual Width Controls -->
-                            <div class="space-y-2">
-                                <h4 class="text-sm font-semibold text-slate-700 mt-4">Widths</h4>
-                                <div v-for="(width, index) in getColWidths(selectedBlock.children)" :key="index"
-                                    class="flex items-center space-x-3">
-                                    <label class="w-12 text-xs font-mono text-slate-600">Col {{ index + 1 }}</label>
-                                    <div class="flex-1 relative">
-                                        <input type="range" min="5" max="100" :value="width"
-                                            @input="e => updateSingleWidth(selectedBlock.id, index, parseFloat(e.target.value))"
-                                            class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer range-sm" />
-                                        <span
-                                            class="absolute right-0 top-1/2 transform -translate-y-1/2 text-xs font-mono text-slate-500">{{
-                                            width.toFixed(1) }}%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Special Editor for Menu Block Items -->
-                    <div v-else-if="selectedBlock.type === 'menu'" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Menu Items</label>
-                            <div class="space-y-2">
-                                <div v-for="(item, index) in selectedBlock.params.items" :key="index"
-                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-xs font-medium text-slate-600">Item {{ index + 1 }}</span>
-                                        <button @click="selectedBlock.params.items.splice(index, 1)"
-                                            class="text-red-500 hover:text-red-700 transition-colors">
-                                            <icon name="x" :size="14"></icon>
-                                        </button>
-                                    </div>
+                                    <!-- Individual Width Controls -->
                                     <div class="space-y-2">
-                                        <input type="text" v-model="item.label" placeholder="Label (e.g., Home)"
-                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
-                                        <select v-model="item.type"
-                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                            <option value="page">Page</option>
-                                            <option value="external">External URL</option>
-                                        </select>
-                                        <select v-if="item.type === 'page'" v-model="item.url"
-                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                            <option value="">Select a page...</option>
-                                            <option v-for="page in pages" :key="page.id"
-                                                :value="page.slug.startsWith('/') ? page.slug : '/' + page.slug">
-                                                {{ page.title }} ({{ page.slug }})
-                                            </option>
-                                        </select>
-                                        <input v-else type="text" v-model="item.url" placeholder="https://example.com"
-                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                                        <h4 class="text-sm font-semibold text-slate-700 mt-4">Widths</h4>
+                                        <div v-for="(width, index) in getColWidths(selectedBlock.children)" :key="index"
+                                            class="flex items-center space-x-3">
+                                            <label class="w-12 text-xs font-mono text-slate-600">Col {{ index + 1
+                                                }}</label>
+                                            <div class="flex-1 relative">
+                                                <input type="range" min="5" max="100" :value="width"
+                                                    @input="e => updateSingleWidth(selectedBlock.id, index, parseFloat(e.target.value))"
+                                                    class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer range-sm" />
+                                                <span
+                                                    class="absolute right-0 top-1/2 transform -translate-y-1/2 text-xs font-mono text-slate-500">{{
+                                                    width.toFixed(1) }}%</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <button
-                                    @click="selectedBlock.params.items.push({ label: 'New Item', url: '/', type: 'page' })"
-                                    class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
-                                    <icon name="plus" :size="12"></icon>
-                                    <span>Add Menu Item</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Sidebar Footer Content (only for sidebar hamburger menus) -->
-                        <div
-                            v-if="selectedBlock.type === 'menu' && (selectedBlock.params.responsive === 'true' || selectedBlock.params.responsive === true) && selectedBlock.params.hamburgerDirection === 'sidebar'">
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Sidebar Footer
-                                Content</label>
-                            <div class="border border-slate-300 rounded-md p-2 bg-slate-50 min-h-[100px]">
-                                <drop-zone title="Footer Blocks" :zone="'menu_footer_' + selectedBlock.id"
-                                    :blocks="selectedBlock.params.sidebarFooterBlocks || []" :is-active="true"
-                                    :selected-id="null" :parent-block-id="selectedBlock.id" @drop-item="handleDrop"
-                                    @select-block="selectedBlockId = $event" @drag-start-block="handleDragStartExisting"
-                                    class="min-h-[80px]">
-                                </drop-zone>
-                            </div>
-                            <p class="text-xs text-slate-500 mt-1">Drag blocks here to appear at bottom of sidebar menu.
-                            </p>
-                        </div>
-
-                        <!-- Menu Style Options -->
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Menu
-                                    Type</label>
-                                <select v-model="selectedBlock.params.responsive"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                    <option value="false">Always Visible</option>
-                                    <option value="true">Hamburger Menu (Expandable)</option>
-                                </select>
                             </div>
 
-                            <div
-                                v-if="selectedBlock.params.responsive === 'true' || selectedBlock.params.responsive === true">
-                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Hamburger
-                                    Type</label>
-                                <select v-model="selectedBlock.params.hamburgerDirection"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                    <option value="dropdown">Dropdown (from top)</option>
-                                    <option value="sidebar">Sidebar (from side)</option>
-                                </select>
-                            </div>
-
-                            <div
-                                v-if="(selectedBlock.params.responsive === 'true' || selectedBlock.params.responsive === true) && selectedBlock.params.hamburgerDirection === 'sidebar'">
-                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Sidebar
-                                    Side</label>
-                                <select v-model="selectedBlock.params.sidebarSide"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                    <option value="left">Left</option>
-                                    <option value="right">Right</option>
-                                </select>
-                            </div>
-
-                            <div v-if="selectedBlock.params.responsive === 'false' || !selectedBlock.params.responsive">
-                                <label
-                                    class="block text-xs font-semibold text-slate-500 uppercase mb-2">Orientation</label>
-                                <select v-model="selectedBlock.params.orientation"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                    <option value="horizontal">Horizontal</option>
-                                    <option value="vertical">Vertical</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label
-                                    class="block text-xs font-semibold text-slate-500 uppercase mb-2">Alignment</label>
-                                <select v-model="selectedBlock.params.alignment"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                    <option value="left">Left</option>
-                                    <option value="center">Center</option>
-                                    <option value="right">Right</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Style</label>
-                                <select v-model="selectedBlock.params.style"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                    <option value="default">Default</option>
-                                    <option value="pills">Pills</option>
-                                    <option value="underline">Underline</option>
-                                </select>
-                            </div>
-
-                            <div class="pt-3">
-                                <label
-                                    class="block text-xs font-semibold text-slate-500 uppercase mb-2">Position</label>
-                                <select v-model="selectedBlock.params.position"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-                                    <option value="normal">Normal (in document flow)</option>
-                                    <option value="overlay">Overlay (on top of content)</option>
-                                    <option value="fixed">Fixed (stays at top)</option>
-                                </select>
-                                <p class="text-xs text-slate-500 mt-1">Overlay mode works well for menus above hero
-                                    images.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Special Editor for Carousel Block Slides -->
-                    <div v-else-if="selectedBlock.type === 'carousel'" class="space-y-4">
-                        <!-- Slides List -->
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Slides</label>
-                            <div class="space-y-3">
-                                <div v-for="(slide, index) in (selectedBlock.params.slides || [])"
-                                    :key="slide.id || index"
-                                    class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-                                    <!-- Slide Header -->
-                                    <div
-                                        class="flex items-center justify-between p-3 bg-slate-50 border-b border-slate-200">
-                                        <span class="text-sm font-medium text-slate-700">Slide {{ index + 1 }}</span>
-                                        <button @click="selectedBlock.params.slides.splice(index, 1)"
-                                            class="text-red-500 hover:text-red-700 transition-colors">
-                                            <icon name="trash-2" :size="14"></icon>
+                            <!-- Special Editor for Menu Block Items -->
+                            <div v-else-if="selectedBlock.type === 'menu'" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Menu
+                                        Items</label>
+                                    <div class="space-y-2">
+                                        <div v-for="(item, index) in selectedBlock.params.items" :key="index"
+                                            class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-xs font-medium text-slate-600">Item {{ index + 1
+                                                    }}</span>
+                                                <button @click="selectedBlock.params.items.splice(index, 1)"
+                                                    class="text-red-500 hover:text-red-700 transition-colors">
+                                                    <icon name="x" :size="14"></icon>
+                                                </button>
+                                            </div>
+                                            <div class="space-y-2">
+                                                <input type="text" v-model="item.label" placeholder="Label (e.g., Home)"
+                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                                                <select v-model="item.type"
+                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                                    <option value="page">Page</option>
+                                                    <option value="external">External URL</option>
+                                                </select>
+                                                <select v-if="item.type === 'page'" v-model="item.url"
+                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                                    <option value="">Select a page...</option>
+                                                    <option v-for="page in pages" :key="page.id"
+                                                        :value="page.slug.startsWith('/') ? page.slug : '/' + page.slug">
+                                                        {{ page.title }} ({{ page.slug }})
+                                                    </option>
+                                                </select>
+                                                <input v-else type="text" v-model="item.url"
+                                                    placeholder="https://example.com"
+                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+                                            </div>
+                                        </div>
+                                        <button
+                                            @click="selectedBlock.params.items.push({ label: 'New Item', url: '/', type: 'page' })"
+                                            class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
+                                            <icon name="plus" :size="12"></icon>
+                                            <span>Add Menu Item</span>
                                         </button>
                                     </div>
-                                    <!-- Slide Content Drop Zone -->
-                                    <div class="p-2">
-                                        <drop-zone :title="'Slide ' + (index + 1) + ' Blocks'"
-                                            :zone="'carousel_slide_' + selectedBlock.id + '_' + index"
-                                            :blocks="slide.children || []" :is-active="true" :selected-id="null"
-                                            :parent-block-id="selectedBlock.id" @drop-item="handleDrop"
-                                            @select-block="selectedBlockId = $event"
-                                            @drag-start-block="handleDragStartExisting" class="min-h-[60px]">
+                                </div>
+
+                                <!-- Sidebar Footer Content (only for sidebar hamburger menus) -->
+                                <div
+                                    v-if="selectedBlock.type === 'menu' && (selectedBlock.params.responsive === 'true' || selectedBlock.params.responsive === true) && selectedBlock.params.hamburgerDirection === 'sidebar'">
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Sidebar
+                                        Footer
+                                        Content</label>
+                                    <div class="border border-slate-300 rounded-md p-2 bg-slate-50 min-h-[100px]">
+                                        <drop-zone title="Footer Blocks" :zone="'menu_footer_' + selectedBlock.id"
+                                            :blocks="selectedBlock.params.sidebarFooterBlocks || []" :is-active="true"
+                                            :selected-id="null" :parent-block-id="selectedBlock.id"
+                                            @drop-item="handleDrop" @select-block="selectedBlockId = $event"
+                                            @drag-start-block="handleDragStartExisting" class="min-h-[80px]">
                                         </drop-zone>
                                     </div>
+                                    <p class="text-xs text-slate-500 mt-1">Drag blocks here to appear at bottom of
+                                        sidebar menu.
+                                    </p>
                                 </div>
-                                <button
-                                    @click="selectedBlock.params.slides = [...(selectedBlock.params.slides || []), { id: Date.now().toString(36) + Math.random().toString(36).substr(2), children: [] }]"
-                                    class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
-                                    <icon name="plus" :size="12"></icon>
-                                    <span>Add Slide</span>
-                                </button>
+
+                                <!-- Menu Style Options -->
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Menu
+                                            Type</label>
+                                        <select v-model="selectedBlock.params.responsive"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                            <option value="false">Always Visible</option>
+                                            <option value="true">Hamburger Menu (Expandable)</option>
+                                        </select>
+                                    </div>
+
+                                    <div
+                                        v-if="selectedBlock.params.responsive === 'true' || selectedBlock.params.responsive === true">
+                                        <label
+                                            class="block text-xs font-semibold text-slate-500 uppercase mb-2">Hamburger
+                                            Type</label>
+                                        <select v-model="selectedBlock.params.hamburgerDirection"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                            <option value="dropdown">Dropdown (from top)</option>
+                                            <option value="sidebar">Sidebar (from side)</option>
+                                        </select>
+                                    </div>
+
+                                    <div
+                                        v-if="(selectedBlock.params.responsive === 'true' || selectedBlock.params.responsive === true) && selectedBlock.params.hamburgerDirection === 'sidebar'">
+                                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Sidebar
+                                            Side</label>
+                                        <select v-model="selectedBlock.params.sidebarSide"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                            <option value="left">Left</option>
+                                            <option value="right">Right</option>
+                                        </select>
+                                    </div>
+
+                                    <div
+                                        v-if="selectedBlock.params.responsive === 'false' || !selectedBlock.params.responsive">
+                                        <label
+                                            class="block text-xs font-semibold text-slate-500 uppercase mb-2">Orientation</label>
+                                        <select v-model="selectedBlock.params.orientation"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                            <option value="horizontal">Horizontal</option>
+                                            <option value="vertical">Vertical</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            class="block text-xs font-semibold text-slate-500 uppercase mb-2">Alignment</label>
+                                        <select v-model="selectedBlock.params.alignment"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                            <option value="left">Left</option>
+                                            <option value="center">Center</option>
+                                            <option value="right">Right</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            class="block text-xs font-semibold text-slate-500 uppercase mb-2">Style</label>
+                                        <select v-model="selectedBlock.params.style"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                            <option value="default">Default</option>
+                                            <option value="pills">Pills</option>
+                                            <option value="underline">Underline</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="pt-3">
+                                        <label
+                                            class="block text-xs font-semibold text-slate-500 uppercase mb-2">Position</label>
+                                        <select v-model="selectedBlock.params.position"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                            <option value="normal">Normal (in document flow)</option>
+                                            <option value="overlay">Overlay (on top of content)</option>
+                                            <option value="fixed">Fixed (stays at top)</option>
+                                        </select>
+                                        <p class="text-xs text-slate-500 mt-1">Overlay mode works well for menus above
+                                            hero
+                                            images.</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Carousel Configuration Options -->
-                        <div class="border-t border-slate-200 pt-4 space-y-4">
-                            <div>
-                                <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="checkbox" v-model="selectedBlock.params.auto_advance"
-                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                                    <span class="text-sm text-slate-700">Auto Advance</span>
-                                </label>
-                                <p class="text-xs text-slate-400 mt-1">Automatically advance to next slide</p>
+                            <!-- Special Editor for Carousel Block Slides -->
+                            <div v-else-if="selectedBlock.type === 'carousel'" class="space-y-4">
+                                <!-- Slides List -->
+                                <div>
+                                    <label
+                                        class="block text-xs font-semibold text-slate-500 uppercase mb-2">Slides</label>
+                                    <div class="space-y-3">
+                                        <div v-for="(slide, index) in (selectedBlock.params.slides || [])"
+                                            :key="slide.id || index"
+                                            class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                                            <!-- Slide Header -->
+                                            <div
+                                                class="flex items-center justify-between p-3 bg-slate-50 border-b border-slate-200">
+                                                <span class="text-sm font-medium text-slate-700">Slide {{ index + 1
+                                                    }}</span>
+                                                <button @click="selectedBlock.params.slides.splice(index, 1)"
+                                                    class="text-red-500 hover:text-red-700 transition-colors">
+                                                    <icon name="trash-2" :size="14"></icon>
+                                                </button>
+                                            </div>
+                                            <!-- Slide Content Drop Zone -->
+                                            <div class="p-2">
+                                                <drop-zone :title="'Slide ' + (index + 1) + ' Blocks'"
+                                                    :zone="'carousel_slide_' + selectedBlock.id + '_' + index"
+                                                    :blocks="slide.children || []" :is-active="true" :selected-id="null"
+                                                    :parent-block-id="selectedBlock.id" @drop-item="handleDrop"
+                                                    @select-block="selectedBlockId = $event"
+                                                    @drag-start-block="handleDragStartExisting" class="min-h-[60px]">
+                                                </drop-zone>
+                                            </div>
+                                        </div>
+                                        <button
+                                            @click="selectedBlock.params.slides = [...(selectedBlock.params.slides || []), { id: Date.now().toString(36) + Math.random().toString(36).substr(2), children: [] }]"
+                                            class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
+                                            <icon name="plus" :size="12"></icon>
+                                            <span>Add Slide</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Carousel Configuration Options -->
+                                <div class="border-t border-slate-200 pt-4 space-y-4">
+                                    <div>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" v-model="selectedBlock.params.auto_advance"
+                                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                                            <span class="text-sm text-slate-700">Auto Advance</span>
+                                        </label>
+                                        <p class="text-xs text-slate-400 mt-1">Automatically advance to next slide</p>
+                                    </div>
+
+                                    <div v-if="selectedBlock.params.auto_advance">
+                                        <label
+                                            class="block text-xs font-semibold text-slate-500 uppercase mb-2">Interval
+                                            (seconds)</label>
+                                        <input type="number" v-model.number="selectedBlock.params.interval_seconds"
+                                            min="1" max="30" step="1"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                    </div>
+
+                                    <div>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" v-model="selectedBlock.params.show_dots"
+                                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                                            <span class="text-sm text-slate-700">Show Dots</span>
+                                        </label>
+                                        <p class="text-xs text-slate-400 mt-1">Show navigation dots below carousel</p>
+                                    </div>
+
+                                    <div>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" v-model="selectedBlock.params.show_arrows"
+                                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                                            <span class="text-sm text-slate-700">Show Arrows</span>
+                                        </label>
+                                        <p class="text-xs text-slate-400 mt-1">Show prev/next navigation arrows</p>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div v-if="selectedBlock.params.auto_advance">
-                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Interval
-                                    (seconds)</label>
-                                <input type="number" v-model.number="selectedBlock.params.interval_seconds" min="1"
-                                    max="30" step="1"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                            </div>
+                            <!-- Schema-Driven Editor -->
+                            <div v-else-if="selectedBlockDefinition?.schema">
+                                <!-- Handle fields array format (new) -->
+                                <template v-if="selectedBlockDefinition.schema.fields">
+                                    <div v-for="field in selectedBlockDefinition.schema.fields" :key="field.name"
+                                        class="mb-4">
+                                        <!-- Skip if shouldShowParam returns false -->
+                                        <template v-if="shouldShowParam(selectedBlock.type, field.name)">
+                                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">{{
+                                                field.label || field.name }}</label>
 
-                            <div>
-                                <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="checkbox" v-model="selectedBlock.params.show_dots"
-                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                                    <span class="text-sm text-slate-700">Show Dots</span>
-                                </label>
-                                <p class="text-xs text-slate-400 mt-1">Show navigation dots below carousel</p>
-                            </div>
-
-                            <div>
-                                <label class="flex items-center space-x-2 cursor-pointer">
-                                    <input type="checkbox" v-model="selectedBlock.params.show_arrows"
-                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                                    <span class="text-sm text-slate-700">Show Arrows</span>
-                                </label>
-                                <p class="text-xs text-slate-400 mt-1">Show prev/next navigation arrows</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Schema-Driven Editor -->
-                    <div v-else-if="selectedBlockDefinition?.schema">
-                        <!-- Handle fields array format (new) -->
-                        <template v-if="selectedBlockDefinition.schema.fields">
-                            <div v-for="field in selectedBlockDefinition.schema.fields" :key="field.name" class="mb-4">
-                                <!-- Skip if shouldShowParam returns false -->
-                                <template v-if="shouldShowParam(selectedBlock.type, field.name)">
-                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">{{
-                                        field.label || field.name }}</label>
-
-                                    <!-- Content/Markdown/HTML/Richtext (textarea) -->
-                                    <textarea
-                                        v-if="field.name === 'content' || field.name === 'html' || field.name === 'markdown' || field.name === 'md' || field.type === 'markdown' || field.type === 'richtext'"
-                                        :value="selectedBlock.params[field.name]"
-                                        @input="updateBlock(selectedBlock.id, field.name, $event.target.value)" rows="8"
-                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none font-mono"></textarea>
-
-                                    <!-- Image with upload button -->
-                                    <div v-else-if="field.type === 'image'" class="space-y-2">
-                                        <div class="flex space-x-2">
-                                            <input type="text" :value="selectedBlock.params[field.name]"
+                                            <!-- Content/Markdown/HTML/Richtext (textarea) -->
+                                            <textarea
+                                                v-if="field.name === 'content' || field.name === 'html' || field.name === 'markdown' || field.name === 'md' || field.type === 'markdown' || field.type === 'richtext'"
+                                                :value="selectedBlock.params[field.name]"
                                                 @input="updateBlock(selectedBlock.id, field.name, $event.target.value)"
-                                                class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                placeholder="Image URL" />
-                                            <label
-                                                class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
-                                                title="Upload Image">
-                                                <input type="file" class="hidden" accept="image/*" @change="async (e) => {
+                                                rows="8"
+                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none font-mono"></textarea>
+
+                                            <!-- Image with upload button -->
+                                            <div v-else-if="field.type === 'image'" class="space-y-2">
+                                                <div class="flex space-x-2">
+                                                    <input type="text" :value="selectedBlock.params[field.name]"
+                                                        @input="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                                        class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                        placeholder="Image URL" />
+                                                    <label
+                                                        class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
+                                                        title="Upload Image">
+                                                        <input type="file" class="hidden" accept="image/*" @change="async (e) => {
                                                     if (e.target.files.length > 0) {
                                                         try {
                                                             const result = await uploadFile(e.target.files[0]);
@@ -1197,122 +1218,129 @@
                                                         e.target.value = '';
                                                     }
                                                 }">
-                                                <icon name="hard-drive" :size="16" class="text-slate-600"></icon>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <!-- URL field with page selector -->
-                                    <div v-else-if="field.type === 'url'" class="space-y-2">
-                                        <select v-model="selectedBlock.params[field.name + '_type']"
-                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none mb-2">
-                                            <option value="page">Page</option>
-                                            <option value="external">External URL</option>
-                                        </select>
-                                        <select v-if="selectedBlock.params[field.name + '_type'] === 'page'"
-                                            :value="selectedBlock.params[field.name]"
-                                            @change="updateBlock(selectedBlock.id, field.name, $event.target.value)"
-                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
-                                            <option value="">Select a page...</option>
-                                            <option v-for="page in pages" :key="page.id"
-                                                :value="page.slug.startsWith('/') ? page.slug : '/' + page.slug">
-                                                {{ page.title }} ({{ page.slug }})
-                                            </option>
-                                        </select>
-                                        <input v-else type="text" :value="selectedBlock.params[field.name]"
-                                            @input="updateBlock(selectedBlock.id, field.name, $event.target.value)"
-                                            placeholder="https://example.com"
-                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                    </div>
-
-                                    <!-- Select/Enum (dropdown) -->
-                                    <select v-else-if="field.type === 'select' || field.enum"
-                                        :value="selectedBlock.params[field.name]"
-                                        @change="updateBlock(selectedBlock.id, field.name, $event.target.value)"
-                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
-                                        <option v-for="opt in (field.options || field.enum)" :key="opt" :value="opt">{{
-                                            opt }}</option>
-                                    </select>
-
-                                    <!-- Boolean (checkbox) -->
-                                    <div v-else-if="field.type === 'boolean'" class="flex items-center">
-                                        <input type="checkbox" :checked="selectedBlock.params[field.name]"
-                                            @change="updateBlock(selectedBlock.id, field.name, $event.target.checked)"
-                                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                                        <span class="ml-2 text-sm text-slate-600">{{ field.label || field.name }}</span>
-                                    </div>
-
-                                    <!-- Number -->
-                                    <input v-else-if="field.type === 'number'" type="number"
-                                        :value="selectedBlock.params[field.name]"
-                                        @input="updateBlock(selectedBlock.id, field.name, parseFloat($event.target.value))"
-                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
-
-                                    <!-- Textarea (multiline text) -->
-                                    <textarea v-else-if="field.type === 'textarea'"
-                                        :value="selectedBlock.params[field.name]"
-                                        @input="updateBlock(selectedBlock.id, field.name, $event.target.value)" rows="4"
-                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
-
-                                    <!-- Array (for items, steps, links, etc.) -->
-                                    <div v-else-if="field.type === 'array'" class="space-y-2">
-                                        <div v-for="(item, index) in (selectedBlock.params[field.name] || [])"
-                                            :key="index" class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                            <div class="flex items-center justify-between mb-2">
-                                                <span class="text-xs font-medium text-slate-600">Item {{ index + 1
-                                                    }}</span>
-                                                <button @click="selectedBlock.params[field.name].splice(index, 1)"
-                                                    class="text-red-500 hover:text-red-700 transition-colors">
-                                                    <icon name="trash-2" :size="14"></icon>
-                                                </button>
-                                            </div>
-                                            <div class="space-y-2">
-                                                <div v-for="(val, prop) in item" :key="prop">
-                                                    <template v-if="!prop.endsWith('_type')">
-                                                        <label class="block text-xs text-slate-500 mb-1">{{ prop
-                                                            }}</label>
-
-                                                        <!-- URL Type Handler -->
-                                                        <template
-                                                            v-if="field.item_schema && field.item_schema[prop] === 'url'">
-                                                            <select
-                                                                :value="(item[prop + '_type']) || (item[prop] && item[prop].startsWith('/') ? 'page' : 'external')"
-                                                                @change="(e) => { item[prop + '_type'] = e.target.value; selectedBlock.params = {...selectedBlock.params}; }"
-                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 mb-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                                                                <option value="page">Page</option>
-                                                                <option value="external">External URL</option>
-                                                            </select>
-
-                                                            <select
-                                                                v-if="((item[prop + '_type']) || (item[prop] && item[prop].startsWith('/') ? 'page' : 'external')) === 'page'"
-                                                                v-model="item[prop]"
-                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                                                                <option value="">Select a page...</option>
-                                                                <option v-for="page in pages" :key="page.id"
-                                                                    :value="page.slug.startsWith('/') ? page.slug : '/' + page.slug">
-                                                                    {{ page.title }} ({{ page.slug }})
-                                                                </option>
-                                                            </select>
-                                                            <input v-else type="text" v-model="item[prop]"
-                                                                placeholder="https://example.com"
-                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                                        </template>
-
-                                                        <!-- Textarea Handler -->
-                                                        <template
-                                                            v-else-if="(field.item_schema && field.item_schema[prop] === 'textarea') || (typeof val === 'string' && val.length > 50)">
-                                                            <textarea v-model="item[prop]" rows="3"
-                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
-                                                        </template>
-
-                                                        <!-- Default Input Handler -->
-                                                        <input v-else type="text" v-model="item[prop]"
-                                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                                    </template>
+                                                        <icon name="hard-drive" :size="16" class="text-slate-600">
+                                                        </icon>
+                                                    </label>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <button @click="() => {
+
+                                            <!-- URL field with page selector -->
+                                            <div v-else-if="field.type === 'url'" class="space-y-2">
+                                                <select v-model="selectedBlock.params[field.name + '_type']"
+                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none mb-2">
+                                                    <option value="page">Page</option>
+                                                    <option value="external">External URL</option>
+                                                </select>
+                                                <select v-if="selectedBlock.params[field.name + '_type'] === 'page'"
+                                                    :value="selectedBlock.params[field.name]"
+                                                    @change="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                                    <option value="">Select a page...</option>
+                                                    <option v-for="page in pages" :key="page.id"
+                                                        :value="page.slug.startsWith('/') ? page.slug : '/' + page.slug">
+                                                        {{ page.title }} ({{ page.slug }})
+                                                    </option>
+                                                </select>
+                                                <input v-else type="text" :value="selectedBlock.params[field.name]"
+                                                    @input="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                                    placeholder="https://example.com"
+                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                            </div>
+
+                                            <!-- Select/Enum (dropdown) -->
+                                            <select v-else-if="field.type === 'select' || field.enum"
+                                                :value="selectedBlock.params[field.name]"
+                                                @change="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                                <option v-for="opt in (field.options || field.enum)" :key="opt"
+                                                    :value="opt">{{
+                                                    opt }}</option>
+                                            </select>
+
+                                            <!-- Boolean (checkbox) -->
+                                            <div v-else-if="field.type === 'boolean'" class="flex items-center">
+                                                <input type="checkbox" :checked="selectedBlock.params[field.name]"
+                                                    @change="updateBlock(selectedBlock.id, field.name, $event.target.checked)"
+                                                    class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                                                <span class="ml-2 text-sm text-slate-600">{{ field.label || field.name
+                                                    }}</span>
+                                            </div>
+
+                                            <!-- Number -->
+                                            <input v-else-if="field.type === 'number'" type="number"
+                                                :value="selectedBlock.params[field.name]"
+                                                @input="updateBlock(selectedBlock.id, field.name, parseFloat($event.target.value))"
+                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+
+                                            <!-- Textarea (multiline text) -->
+                                            <textarea v-else-if="field.type === 'textarea'"
+                                                :value="selectedBlock.params[field.name]"
+                                                @input="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                                rows="4"
+                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+
+                                            <!-- Array (for items, steps, links, etc.) -->
+                                            <div v-else-if="field.type === 'array'" class="space-y-2">
+                                                <div v-for="(item, index) in (selectedBlock.params[field.name] || [])"
+                                                    :key="index"
+                                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <span class="text-xs font-medium text-slate-600">Item {{ index +
+                                                            1
+                                                            }}</span>
+                                                        <button
+                                                            @click="selectedBlock.params[field.name].splice(index, 1)"
+                                                            class="text-red-500 hover:text-red-700 transition-colors">
+                                                            <icon name="trash-2" :size="14"></icon>
+                                                        </button>
+                                                    </div>
+                                                    <div class="space-y-2">
+                                                        <div v-for="(val, prop) in item" :key="prop">
+                                                            <template v-if="!prop.endsWith('_type')">
+                                                                <label class="block text-xs text-slate-500 mb-1">{{ prop
+                                                                    }}</label>
+
+                                                                <!-- URL Type Handler -->
+                                                                <template
+                                                                    v-if="field.item_schema && field.item_schema[prop] === 'url'">
+                                                                    <select
+                                                                        :value="(item[prop + '_type']) || (item[prop] && item[prop].startsWith('/') ? 'page' : 'external')"
+                                                                        @change="(e) => { item[prop + '_type'] = e.target.value; selectedBlock.params = {...selectedBlock.params}; }"
+                                                                        class="w-full text-sm border border-slate-300 rounded-md p-2 mb-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                                                                        <option value="page">Page</option>
+                                                                        <option value="external">External URL</option>
+                                                                    </select>
+
+                                                                    <select
+                                                                        v-if="((item[prop + '_type']) || (item[prop] && item[prop].startsWith('/') ? 'page' : 'external')) === 'page'"
+                                                                        v-model="item[prop]"
+                                                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                                                                        <option value="">Select a page...</option>
+                                                                        <option v-for="page in pages" :key="page.id"
+                                                                            :value="page.slug.startsWith('/') ? page.slug : '/' + page.slug">
+                                                                            {{ page.title }} ({{ page.slug }})
+                                                                        </option>
+                                                                    </select>
+                                                                    <input v-else type="text" v-model="item[prop]"
+                                                                        placeholder="https://example.com"
+                                                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                                                </template>
+
+                                                                <!-- Textarea Handler -->
+                                                                <template
+                                                                    v-else-if="(field.item_schema && field.item_schema[prop] === 'textarea') || (typeof val === 'string' && val.length > 50)">
+                                                                    <textarea v-model="item[prop]" rows="3"
+                                                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+                                                                </template>
+
+                                                                <!-- Default Input Handler -->
+                                                                <input v-else type="text" v-model="item[prop]"
+                                                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button @click="() => {
                                                 if (!selectedBlock.params[field.name]) {
                                                     selectedBlock.params[field.name] = [];
                                                 }
@@ -1324,83 +1352,85 @@
                                                     });
                                                 }
                                                 selectedBlock.params[field.name].push(newItem);
-                                            }"
-                                            class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
-                                            <icon name="plus" :size="12"></icon>
-                                            <span>Add Item</span>
-                                        </button>
+                                            }" class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
+                                                    <icon name="plus" :size="12"></icon>
+                                                    <span>Add Item</span>
+                                                </button>
+                                            </div>
+
+                                            <!-- Textarea (multiline text) -->
+                                            <textarea v-else-if="field.type === 'textarea'"
+                                                :value="selectedBlock.params[field.name]"
+                                                @input="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                                rows="4"
+                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+
+                                            <!-- Number -->
+                                            <input v-else-if="field.type === 'number'" type="number"
+                                                :value="selectedBlock.params[field.name]"
+                                                @input="updateBlock(selectedBlock.id, field.name, parseFloat($event.target.value))"
+                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+
+                                            <!-- String/Text (default single-line text) -->
+                                            <input v-else type="text" :value="selectedBlock.params[field.name]"
+                                                @input="updateBlock(selectedBlock.id, field.name, $event.target.value)"
+                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                        </template>
                                     </div>
-
-                                    <!-- Textarea (multiline text) -->
-                                    <textarea v-else-if="field.type === 'textarea'"
-                                        :value="selectedBlock.params[field.name]"
-                                        @input="updateBlock(selectedBlock.id, field.name, $event.target.value)" rows="4"
-                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
-
-                                    <!-- Number -->
-                                    <input v-else-if="field.type === 'number'" type="number"
-                                        :value="selectedBlock.params[field.name]"
-                                        @input="updateBlock(selectedBlock.id, field.name, parseFloat($event.target.value))"
-                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
-
-                                    <!-- String/Text (default single-line text) -->
-                                    <input v-else type="text" :value="selectedBlock.params[field.name]"
-                                        @input="updateBlock(selectedBlock.id, field.name, $event.target.value)"
-                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
                                 </template>
-                            </div>
-                        </template>
 
-                        <!-- Handle properties object format (legacy) -->
-                        <template v-else>
-                            <div v-for="(field, key) in (selectedBlockDefinition.schema.properties || selectedBlockDefinition.schema)"
-                                :key="key" class="mb-4">
-                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">{{ field.label
-                                    || key }}</label>
+                                <!-- Handle properties object format (legacy) -->
+                                <template v-else>
+                                    <div v-for="(field, key) in (selectedBlockDefinition.schema.properties || selectedBlockDefinition.schema)"
+                                        :key="key" class="mb-4">
+                                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">{{
+                                            field.label
+                                            || key }}</label>
 
-                                <!-- String -->
-                                <input v-if="field.type === 'string' && !field.enum && field.format !== 'uri'"
-                                    type="text" :value="selectedBlock.params[key]"
-                                    @input="updateBlock(selectedBlock.id, key, $event.target.value)"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
-
-                                <!-- Text -->
-                                <textarea v-else-if="field.type === 'text'" :value="selectedBlock.params[key]"
-                                    @input="updateBlock(selectedBlock.id, key, $event.target.value)" rows="4"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
-
-                                <!-- Number -->
-                                <input v-else-if="field.type === 'number'" type="number"
-                                    :value="selectedBlock.params[key]"
-                                    @input="updateBlock(selectedBlock.id, key, parseFloat($event.target.value))"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
-
-                                <!-- Boolean -->
-                                <div v-else-if="field.type === 'boolean'" class="flex items-center">
-                                    <input type="checkbox" :checked="selectedBlock.params[key]"
-                                        @change="updateBlock(selectedBlock.id, key, $event.target.checked)"
-                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                                    <span class="ml-2 text-sm text-slate-600">{{ field.label || key }}</span>
-                                </div>
-
-                                <!-- Enum -->
-                                <select v-else-if="field.enum" :value="selectedBlock.params[key]"
-                                    @change="updateBlock(selectedBlock.id, key, $event.target.value)"
-                                    class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
-                                    <option v-for="opt in field.enum" :key="opt" :value="opt">{{ opt }}</option>
-                                </select>
-
-                                <!-- Image -->
-                                <div v-else-if="field.type === 'image' || field.format === 'uri'" class="space-y-2">
-                                    <div class="flex space-x-2">
-                                        <input type="text" :value="selectedBlock.params[key]"
+                                        <!-- String -->
+                                        <input v-if="field.type === 'string' && !field.enum && field.format !== 'uri'"
+                                            type="text" :value="selectedBlock.params[key]"
                                             @input="updateBlock(selectedBlock.id, key, $event.target.value)"
-                                            class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                            placeholder="https://..." />
-                                        <label
-                                            class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
-                                            title="Upload Image">
-                                            <input type="file" class="hidden" accept="image/*" @change="async (e) => {
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+
+                                        <!-- Text -->
+                                        <textarea v-else-if="field.type === 'text'" :value="selectedBlock.params[key]"
+                                            @input="updateBlock(selectedBlock.id, key, $event.target.value)" rows="4"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+
+                                        <!-- Number -->
+                                        <input v-else-if="field.type === 'number'" type="number"
+                                            :value="selectedBlock.params[key]"
+                                            @input="updateBlock(selectedBlock.id, key, parseFloat($event.target.value))"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+
+                                        <!-- Boolean -->
+                                        <div v-else-if="field.type === 'boolean'" class="flex items-center">
+                                            <input type="checkbox" :checked="selectedBlock.params[key]"
+                                                @change="updateBlock(selectedBlock.id, key, $event.target.checked)"
+                                                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
+                                            <span class="ml-2 text-sm text-slate-600">{{ field.label || key }}</span>
+                                        </div>
+
+                                        <!-- Enum -->
+                                        <select v-else-if="field.enum" :value="selectedBlock.params[key]"
+                                            @change="updateBlock(selectedBlock.id, key, $event.target.value)"
+                                            class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                            <option v-for="opt in field.enum" :key="opt" :value="opt">{{ opt }}</option>
+                                        </select>
+
+                                        <!-- Image -->
+                                        <div v-else-if="field.type === 'image' || field.format === 'uri'"
+                                            class="space-y-2">
+                                            <div class="flex space-x-2">
+                                                <input type="text" :value="selectedBlock.params[key]"
+                                                    @input="updateBlock(selectedBlock.id, key, $event.target.value)"
+                                                    class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                    placeholder="https://..." />
+                                                <label
+                                                    class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
+                                                    title="Upload Image">
+                                                    <input type="file" class="hidden" accept="image/*" @change="async (e) => {
                                                 if (e.target.files.length > 0) {
                                                     try {
                                                         const result = await uploadFile(e.target.files[0]);
@@ -1412,77 +1442,82 @@
                                                     e.target.value = ''; // Reset input
                                                 }
                                             }">
-                                            <icon name="hard-drive" :size="16" class="text-slate-600"></icon>
-                                        </label>
-                                    </div>
-                                    <div v-if="selectedBlock.params[key]"
-                                        class="relative h-32 bg-slate-100 rounded-md overflow-hidden border border-slate-200 group">
-                                        <img :src="selectedBlock.params[key]" class="w-full h-full object-cover">
-                                        <div
-                                            class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <span class="text-white text-xs font-medium">Preview</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Rich Text -->
-                                <div v-else-if="field.type === 'rich_text'">
-                                    <div :ref="el => { if (el) richTextEditors[selectedBlock.id + '_' + key] = el; }"
-                                        class="quill-editor"></div>
-                                </div>
-
-                                <!-- Array -->
-                                <div v-else-if="field.type === 'array'">
-                                    <div class="space-y-2">
-                                        <div v-for="(item, index) in (selectedBlock.params[key] || [])" :key="index"
-                                            class="p-3 bg-slate-50 rounded-md border border-slate-200">
-                                            <div class="flex items-center justify-between mb-2">
-                                                <span class="text-xs font-medium text-slate-600">Item {{ index + 1
-                                                    }}</span>
-                                                <button @click="selectedBlock.params[key].splice(index, 1)"
-                                                    class="text-red-500 hover:text-red-700 transition-colors">
-                                                    <icon name="trash-2" :size="14"></icon>
-                                                </button>
+                                                    <icon name="hard-drive" :size="16" class="text-slate-600"></icon>
+                                                </label>
                                             </div>
-                                            <div class="space-y-2">
-                                                <div v-for="(val, prop) in item" :key="prop">
-                                                    <label class="block text-xs text-slate-500 mb-1">{{ prop }}</label>
-
-                                                    <!-- Handle Nested Objects (Recursion-lite) -->
-                                                    <div v-if="typeof val === 'object' && val !== null"
-                                                        class="pl-2 border-l-2 border-slate-200 space-y-2 mb-2">
-                                                        <div v-for="(subVal, subProp) in val" :key="subProp">
-                                                            <label
-                                                                class="block text-[10px] text-slate-400 mb-1 uppercase">{{
-                                                                subProp }}</label>
-                                                            <textarea
-                                                                v-if="typeof subVal === 'string' && subVal.length > 50"
-                                                                v-model="val[subProp]" rows="2"
-                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
-                                                            <input v-else type="text" v-model="val[subProp]"
-                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Handle Strings/Numbers -->
-                                                    <textarea v-else-if="typeof val === 'string' && val.length > 50"
-                                                        v-model="item[prop]" rows="3"
-                                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
-                                                    <input v-else type="text" v-model="item[prop]"
-                                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                            <div v-if="selectedBlock.params[key]"
+                                                class="relative h-32 bg-slate-100 rounded-md overflow-hidden border border-slate-200 group">
+                                                <img :src="selectedBlock.params[key]"
+                                                    class="w-full h-full object-cover">
+                                                <div
+                                                    class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <span class="text-white text-xs font-medium">Preview</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <button
-                                            @click="selectedBlock.params[key] = [...(selectedBlock.params[key] || []), {}]"
-                                            class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
-                                            <icon name="plus" :size="12"></icon>
-                                            <span>Add Item</span>
-                                        </button>
+
+                                        <!-- Rich Text -->
+                                        <div v-else-if="field.type === 'rich_text'">
+                                            <div :ref="el => { if (el) richTextEditors[selectedBlock.id + '_' + key] = el; }"
+                                                class="quill-editor"></div>
+                                        </div>
+
+                                        <!-- Array -->
+                                        <div v-else-if="field.type === 'array'">
+                                            <div class="space-y-2">
+                                                <div v-for="(item, index) in (selectedBlock.params[key] || [])"
+                                                    :key="index"
+                                                    class="p-3 bg-slate-50 rounded-md border border-slate-200">
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <span class="text-xs font-medium text-slate-600">Item {{ index +
+                                                            1
+                                                            }}</span>
+                                                        <button @click="selectedBlock.params[key].splice(index, 1)"
+                                                            class="text-red-500 hover:text-red-700 transition-colors">
+                                                            <icon name="trash-2" :size="14"></icon>
+                                                        </button>
+                                                    </div>
+                                                    <div class="space-y-2">
+                                                        <div v-for="(val, prop) in item" :key="prop">
+                                                            <label class="block text-xs text-slate-500 mb-1">{{ prop
+                                                                }}</label>
+
+                                                            <!-- Handle Nested Objects (Recursion-lite) -->
+                                                            <div v-if="typeof val === 'object' && val !== null"
+                                                                class="pl-2 border-l-2 border-slate-200 space-y-2 mb-2">
+                                                                <div v-for="(subVal, subProp) in val" :key="subProp">
+                                                                    <label
+                                                                        class="block text-[10px] text-slate-400 mb-1 uppercase">{{
+                                                                        subProp }}</label>
+                                                                    <textarea
+                                                                        v-if="typeof subVal === 'string' && subVal.length > 50"
+                                                                        v-model="val[subProp]" rows="2"
+                                                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+                                                                    <input v-else type="text" v-model="val[subProp]"
+                                                                        class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Handle Strings/Numbers -->
+                                                            <textarea
+                                                                v-else-if="typeof val === 'string' && val.length > 50"
+                                                                v-model="item[prop]" rows="3"
+                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+                                                            <input v-else type="text" v-model="item[prop]"
+                                                                class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    @click="selectedBlock.params[key] = [...(selectedBlock.params[key] || []), {}]"
+                                                    class="w-full py-2 border border-dashed border-slate-300 rounded-md text-xs text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center space-x-1">
+                                                    <icon name="plus" :size="12"></icon>
+                                                    <span>Add Item</span>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
                             </div>
-                    </div>
         </template>
     </div>
 
@@ -1514,6 +1549,8 @@
 
     </div>
     </aside>
+    </div> <!-- Close Wrapper -->
+    </main> <!-- Close Main -->
     </template>
     </div>
 
