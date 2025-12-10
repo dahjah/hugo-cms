@@ -507,7 +507,7 @@
                         </div>
                     </div>
                     <!-- Settings Button -->
-                    <button @click="openSettingsModal"
+                    <button @click="openSettingsModal" v-if="currentWebsite"
                         class="text-slate-400 hover:text-indigo-600 transition-colors p-1 hover:bg-slate-100 rounded">
                         <icon name="settings" :size="18"></icon>
                     </button>
