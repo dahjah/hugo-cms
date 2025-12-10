@@ -280,6 +280,9 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             {{ if .subtitle }}
             <p class="text-lg md:text-xl text-white/90 max-w-2xl mx-auto drop-shadow">{{ .subtitle }}</p>
             {{ end }}
+            {{ if .tagline }}
+            <p class="hero-tagline mt-4 drop-shadow-md" style="color: white;">{{ .tagline }}</p>
+            {{ end }}
             {{ if .cta_text }}
             <a href="{{ .cta_url | default "#" }}" class="inline-block mt-6 px-8 py-3 rounded-full text-white font-semibold shadow-lg transition-all hover:scale-105" style="background: var(--color-primary, #f59e0b);">{{ .cta_text }}</a>
             {{ end }}

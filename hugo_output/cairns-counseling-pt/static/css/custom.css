@@ -1,0 +1,70 @@
+:root {
+  /* Color Palette - Calming earth tones */
+  --color-primary: #5B7B6F;      /* Sage green */
+  --color-primary-dark: #4A6A5E;
+  --color-secondary: #8B7355;    /* Warm brown */
+  --color-accent: #C4A77D;       /* Soft gold */
+  --color-background: #FAF9F6;   /* Off-white */
+  --color-surface: #FFFFFF;
+  --color-text: #2C3E36;
+  --color-text-muted: #6B7B73;
+  
+  /* Typography */
+  --font-heading: 'Cormorant Garamond', serif;
+  --font-body: 'Open Sans', sans-serif;
+  
+  /* Spacing */
+  --section-padding: 5rem 2rem;
+  --container-max-width: 1200px;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: var(--color-background);
+  line-height: 1.7;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+}
+
+.hero-section {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: white;
+  text-align: center;
+  padding: 6rem 2rem;
+}
+
+.hero-section h1 {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.hero-section .subtitle {
+  font-size: 1.5rem;
+  opacity: 0.9;
+}
+
+.section {
+  padding: var(--section-padding);
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+}
+
+.cta-button {
+  display: inline-block;
+  background-color: var(--color-accent);
+  color: var(--color-text);
+  padding: 1rem 2rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+  background-color: var(--color-secondary);
+  color: white;
+}
