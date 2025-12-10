@@ -1,0 +1,6 @@
+baseURL = "https://example.com/"
+languageCode = "en-us"
+title = "Food Truck Template V2"
+
+[params]
+  description = "A site built with Hugo CMS"

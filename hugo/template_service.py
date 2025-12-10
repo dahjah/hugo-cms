@@ -4,7 +4,7 @@ Template service for exporting websites to templates and creating websites from 
 from django.db import transaction
 from .models import (
     Website, Page, BlockInstance, BlockDefinition,
-    SiteTemplate, TemplateCategory
+    SiteTemplate
 )
 import uuid
 
@@ -58,22 +58,25 @@ def deserialize_blocks_from_template(blocks_data, page, parent=None, website=Non
             deserialize_blocks_from_template(children_data, page, parent=block, website=website)
 
 
-def export_website_to_template(website_id, template_id, name, description='', category_slug=None, thumbnail_url='', created_by=''):
+def export_website_to_template(website_id, template_slug, name, description='', tags=None, thumbnail_url='', created_by=''):
     """
     Export a website's pages, blocks, and CSS to a SiteTemplate.
     
     Args:
         website_id: UUID of the website to export
-        template_id: String ID for the new template (e.g., 'therapy')
+        template_slug: URL-friendly slug for the template (e.g., 'therapy-modern')
         name: Display name for the template
         description: Optional description
-        category_slug: Optional category slug
+        tags: Optional list of tag strings for LLM matching (e.g., ['therapist', 'healthcare'])
         thumbnail_url: Optional preview image URL
         created_by: Optional attribution
     
     Returns:
         SiteTemplate instance
     """
+    if tags is None:
+        tags = []
+    
     website = Website.objects.get(id=website_id)
     pages = Page.objects.filter(website=website)
     
@@ -103,22 +106,14 @@ def export_website_to_template(website_id, template_id, name, description='', ca
     
     global_blocks_json = serialize_blocks_for_template(global_blocks)
     
-    # Get category if provided
-    category = None
-    if category_slug:
-        try:
-            category = TemplateCategory.objects.get(slug=category_slug)
-        except TemplateCategory.DoesNotExist:
-            pass
-    
-    # Create or update the template
+    # Create or update the template (by slug)
     template, created = SiteTemplate.objects.update_or_create(
-        id=template_id,
+        slug=template_slug,
         defaults={
             'name': name,
             'description': description,
             'thumbnail_url': thumbnail_url,
-            'category': category,
+            'tags': tags,
             'base_css': website.custom_css or '',
             'pages_json': {
                 'pages': pages_json,
@@ -132,19 +127,19 @@ def export_website_to_template(website_id, template_id, name, description='', ca
 
 
 @transaction.atomic
-def create_website_from_template(template_id, website_name, website_slug):
+def create_website_from_template(template_slug, website_name, website_slug):
     """
     Create a new website with pages and blocks from a template.
     
     Args:
-        template_id: ID of the template to use
+        template_slug: Slug of the template to use
         website_name: Name for the new website
         website_slug: URL slug for the new website
     
     Returns:
         Website instance
     """
-    template = SiteTemplate.objects.get(id=template_id)
+    template = SiteTemplate.objects.get(slug=template_slug)
     
     # Create the website
     website = Website.objects.create(

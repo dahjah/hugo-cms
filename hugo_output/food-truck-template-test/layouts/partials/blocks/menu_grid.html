@@ -1,0 +1,21 @@
+
+<div class="py-16 px-4 {{ .css_classes }}">
+    {{ if .title }}
+    <h2 class="text-3xl font-bold text-center mb-12 text-slate-900">{{ .title }}</h2>
+    {{ end }}
+    <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {{ range .items }}
+        <div class="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
+            {{ if .image }}
+            <img src="{{ .image }}" alt="{{ .name }}" class="w-full h-48 object-cover"/>
+            {{ end }}
+            <div class="p-4">
+                <h4 class="text-lg font-semibold mb-2 text-slate-900">{{ .name }}</h4>
+                {{ if .description }}
+                <p class="text-sm text-slate-600">{{ .description }}</p>
+                {{ end }}
+            </div>
+        </div>
+        {{ end }}
+    </div>
+</div>

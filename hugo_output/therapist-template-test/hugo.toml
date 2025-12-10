@@ -1,0 +1,6 @@
+baseURL = "https://example.com/"
+languageCode = "en-us"
+title = "Therapist Template Test"
+
+[params]
+  description = "A site built with Hugo CMS"

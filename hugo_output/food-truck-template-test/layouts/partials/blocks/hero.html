@@ -1,0 +1,13 @@
+<div class="relative overflow-hidden mb-8 {{ .css_classes }}">
+    {{ if .bgImage }}
+    <img src="{{ .bgImage }}" alt="{{ .title }}" class="w-full h-64 md:h-96 object-cover" loading="eager">
+    {{ else }}
+    <div class="w-full h-64 md:h-96 bg-gradient-to-r from-indigo-600 to-purple-600"></div>
+    {{ end }}
+    <div class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
+        <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">{{ .title }}</h1>
+        {{ if .subtitle }}
+        <p class="text-lg md:text-xl text-white/90 max-w-2xl drop-shadow">{{ .subtitle }}</p>
+        {{ end }}
+    </div>
+</div>

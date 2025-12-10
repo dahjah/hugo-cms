@@ -1,0 +1,21 @@
+
+<div class="py-8 {{ .css_classes }}">
+    {{ if .title }}
+    <h2 class="text-3xl font-bold text-center mb-8 text-slate-900">{{ .title }}</h2>
+    {{ end }}
+    <div class="max-w-3xl mx-auto space-y-4">
+        {{ range $index, $item := .items }}
+        <details class="group bg-white rounded-lg shadow-md overflow-hidden" {{ if eq $index 0 }}open{{ end }}>
+            <summary class="cursor-pointer p-6 font-semibold text-slate-900 hover:bg-slate-50 transition-colors flex items-center justify-between list-none">
+                <span>{{ .title }}</span>
+                <svg class="w-5 h-5 text-slate-500 transform transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </summary>
+            <div class="px-6 pb-6 text-slate-600 border-t border-slate-100 pt-4">
+                {{ .content | safeHTML }}
+            </div>
+        </details>
+        {{ end }}
+    </div>
+</div>

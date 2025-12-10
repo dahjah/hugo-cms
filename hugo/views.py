@@ -189,35 +189,28 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             single_content = """{{ define "main" }}
 <div class="flex flex-col min-h-screen">
     {{/* Header Zone */}}
-    <header class="w-full">
+    <header class="w-full border-b" style="background: var(--color-header-bg, #ffffff); border-color: var(--color-border, #e5e7eb);">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
         {{ range .Params.header_blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
+        </div>
     </header>
 
-    <div class="container mx-auto px-4 py-8 flex-1 flex flex-col md:flex-row gap-8">
-        {{/* Sidebar Zone */}}
-        {{ if .Params.sidebar_blocks }}
-        <aside class="w-full md:w-64 flex-shrink-0">
-            {{ range .Params.sidebar_blocks }}
-                {{ partial "blocks/render-block.html" . }}
-            {{ end }}
-        </aside>
+    {{/* Main Zone */}}
+    <main class="flex-1 max-w-5xl mx-auto px-6 py-8 w-full">
+        {{ range .Params.main_blocks }}
+            {{ partial "blocks/render-block.html" . }}
         {{ end }}
-
-        {{/* Main Zone */}}
-        <main class="flex-1 min-w-0">
-            {{ range .Params.main_blocks }}
-                {{ partial "blocks/render-block.html" . }}
-            {{ end }}
-        </main>
-    </div>
+    </main>
 
     {{/* Footer Zone */}}
-    <footer class="w-full mt-auto">
+    <footer class="w-full mt-auto border-t" style="background: var(--color-footer-bg, #1f2937); border-color: var(--color-border, #e5e7eb);">
+        <div class="max-w-5xl mx-auto px-6 py-8">
         {{ range .Params.footer_blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
+        </div>
     </footer>
 </div>
 {{ end }}"""
@@ -231,55 +224,28 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 {{ $layout := .Params.layout | default "list" }}
 <div class="flex flex-col min-h-screen">
     {{/* Header Zone */}}
-    <header class="w-full">
+    <header class="w-full border-b" style="background: var(--color-header-bg, #ffffff); border-color: var(--color-border, #e5e7eb);">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
         {{ range .Params.header_blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
+        </div>
     </header>
     
-    {{ if eq $layout "rightsidebar" }}
-        {{/* Right Sidebar Layout */}}
-        <div class="container mx-auto px-4 py-8 flex-1 flex flex-col md:flex-row gap-8">
-            {{/* Main Zone (left) */}}
-            <main class="flex-1 min-w-0 min-h-[400px]">
-                {{ range .Params.main_blocks }}
-                    {{ partial "blocks/render-block.html" . }}
-                {{ end }}
-            </main>
-            {{/* Sidebar Zone (right) */}}
-            {{ if .Params.sidebar_blocks }}
-            <aside class="w-64 flex-shrink-0 border-r border-slate-100 bg-slate-50/30">
-                {{ range .Params.sidebar_blocks }}
-                    {{ partial "blocks/render-block.html" . }}
-                {{ end }}
-            </aside>
-            {{ end }}
-        </div>
-    {{ else }}
-        {{/* Default/List Layout (sidebar on left) */}}
-        <div class="container mx-auto px-4 py-8 flex-1 flex flex-col md:flex-row gap-8">
-            {{/* Sidebar Zone (left) */}}
-            {{ if .Params.sidebar_blocks }}
-            <aside class="w-full md:w-64 flex-shrink-0">
-                {{ range .Params.sidebar_blocks }}
-                    {{ partial "blocks/render-block.html" . }}
-                {{ end }}
-            </aside>
-            {{ end }}
-            {{/* Main Zone (right) */}}
-            <main class="flex-1 min-w-0">
-                {{ range .Params.main_blocks }}
-                    {{ partial "blocks/render-block.html" . }}
-                {{ end }}
-            </main>
-        </div>
-    {{ end }}
+    {{/* Main Zone */}}
+    <main class="flex-1 max-w-5xl mx-auto px-6 py-8 w-full">
+        {{ range .Params.main_blocks }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </main>
     
     {{/* Footer Zone */}}
-    <footer class="w-full mt-auto">
+    <footer class="w-full mt-auto border-t" style="background: var(--color-footer-bg, #1f2937); border-color: var(--color-border, #e5e7eb);">
+        <div class="max-w-5xl mx-auto px-6 py-8">
         {{ range .Params.footer_blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
+        </div>
     </footer>
 </div>
 {{ end }}"""
@@ -302,20 +268,25 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 
             # 5. Generate basic templates for known block types
             block_templates = {
-                'hero': """<div class="relative overflow-hidden mb-8 {{ .css_classes }}">
+                'hero': """<div class="relative overflow-hidden w-full {{ .css_classes }}">
     {{ if .bgImage }}
     <img src="{{ .bgImage }}" alt="{{ .title }}" class="w-full h-64 md:h-96 object-cover" loading="eager">
     {{ else }}
-    <div class="w-full h-64 md:h-96 bg-gradient-to-r from-indigo-600 to-purple-600"></div>
+    <div class="w-full h-64 md:h-96" style="background: linear-gradient(135deg, var(--color-primary, #f59e0b) 0%, var(--color-primary-dark, #d97706) 100%);"></div>
     {{ end }}
     <div class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
-        <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">{{ .title }}</h1>
-        {{ if .subtitle }}
-        <p class="text-lg md:text-xl text-white/90 max-w-2xl drop-shadow">{{ .subtitle }}</p>
-        {{ end }}
+        <div class="container mx-auto">
+            <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">{{ .title }}</h1>
+            {{ if .subtitle }}
+            <p class="text-lg md:text-xl text-white/90 max-w-2xl mx-auto drop-shadow">{{ .subtitle }}</p>
+            {{ end }}
+            {{ if .cta_text }}
+            <a href="{{ .cta_url | default "#" }}" class="inline-block mt-6 px-8 py-3 rounded-full text-white font-semibold shadow-lg transition-all hover:scale-105" style="background: var(--color-primary, #f59e0b);">{{ .cta_text }}</a>
+            {{ end }}
+        </div>
     </div>
 </div>""",
-                'text': """<div class="prose max-w-none mb-8 {{ .css_classes }}">
+                'text': """<div class="prose max-w-none py-6 {{ .css_classes }}">
     {{ .content | safeHTML }}
 </div>""",
                 'markdown': """<div class="prose max-w-none mb-8 {{ .css_classes }}">
@@ -487,18 +458,18 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     {{ end }}
 </div>""",
                 'brand_logo': """
-{{ $logoSize := .logo_size | default "80" }}
+{{ $logoSize := .logo_size | default "48" }}
 {{ $linkUrl := .link_url | default "/" }}
-<a class="brand-logo inline-flex items-center gap-2 no-underline transition-opacity hover:opacity-85 {{ .css_classes }}" href="{{ $linkUrl }}">
+<a class="brand-logo inline-flex items-center gap-3 no-underline transition-opacity hover:opacity-85 {{ .css_classes }}" href="{{ $linkUrl }}">
     {{ if .logo_image }}
-    <img src="{{ .logo_image }}" alt="{{ .brand_name }}" class="logo-icon" style="width: {{ $logoSize }}px; height: {{ $logoSize }}px; object-fit: contain;">
+    <img src="{{ .logo_image }}" alt="{{ .brand_name }}" class="logo-icon rounded-full" style="width: {{ $logoSize }}px; height: {{ $logoSize }}px; object-fit: cover;">
     {{ end }}
-    <div class="logo-text flex flex-col gap-0.5">
+    <div class="logo-text flex flex-col">
         {{ if .brand_name }}
-        <div class="brand-name font-serif font-bold text-xl text-slate-800" style="line-height: 1.2;">{{ .brand_name }}</div>
+        <div class="brand-name font-bold text-lg" style="color: var(--color-text, #1f2937); line-height: 1.2;">{{ .brand_name }}</div>
         {{ end }}
         {{ if .tagline }}
-        <div class="brand-tagline text-xs text-slate-500 tracking-wider uppercase font-medium" style="line-height: 1;">{{ .tagline }}</div>
+        <div class="brand-tagline text-xs tracking-wider uppercase font-medium" style="color: var(--color-text-light, #6b7280); line-height: 1;">{{ .tagline }}</div>
         {{ end }}
     </div>
 </a>""",
@@ -519,28 +490,41 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     {{ $sizeClasses = "px-6 py-3 text-base" }}
 {{ end }}
 
-{{ $styleClasses := "" }}
-{{ if eq $style "primary" }}
-    {{ $styleClasses = "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg" }}
-{{ else if eq $style "secondary" }}
-    {{ $styleClasses = "bg-slate-600 text-white hover:bg-slate-700 shadow-md hover:shadow-lg" }}
-{{ else if eq $style "outline" }}
-    {{ $styleClasses = "border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50" }}
-{{ else if eq $style "ghost" }}
-    {{ $styleClasses = "text-indigo-600 hover:bg-indigo-50" }}
-{{ end }}
-
 {{ $widthClass := "" }}
 {{ if $fullWidth }}
     {{ $widthClass = "w-full" }}
 {{ end }}
 
 <div class="mb-4 {{ .css_classes }}">
+    {{ if eq $style "primary" }}
     <a href="{{ .url | default "#" }}" 
-       class="{{ $baseClasses }} {{ $sizeClasses }} {{ $styleClasses }} {{ $widthClass }}"
+       class="{{ $baseClasses }} {{ $sizeClasses }} {{ $widthClass }} text-white shadow-md hover:shadow-lg"
+       style="background: var(--color-primary, #f59e0b);"
        {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
         {{ .text | default "Button" }}
     </a>
+    {{ else if eq $style "secondary" }}
+    <a href="{{ .url | default "#" }}" 
+       class="{{ $baseClasses }} {{ $sizeClasses }} {{ $widthClass }} text-white shadow-md hover:shadow-lg"
+       style="background: var(--color-secondary, #1f2937);"
+       {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
+        {{ .text | default "Button" }}
+    </a>
+    {{ else if eq $style "outline" }}
+    <a href="{{ .url | default "#" }}" 
+       class="{{ $baseClasses }} {{ $sizeClasses }} {{ $widthClass }} border-2"
+       style="border-color: var(--color-primary, #f59e0b); color: var(--color-primary, #f59e0b);"
+       {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
+        {{ .text | default "Button" }}
+    </a>
+    {{ else }}
+    <a href="{{ .url | default "#" }}" 
+       class="{{ $baseClasses }} {{ $sizeClasses }} {{ $widthClass }}"
+       style="color: var(--color-primary, #f59e0b);"
+       {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
+        {{ .text | default "Button" }}
+    </a>
+    {{ end }}
 </div>""",
                 'youtube': """<div class="mb-8 {{ .css_classes }}" style="width: {{ .width | default "100%" }}; margin: 0 auto;">
     <div class="aspect-w-16 aspect-h-9 relative" style="padding-bottom: {{ if eq .aspect_ratio "4/3" }}75%{{ else }}56.25%{{ end }};">
@@ -617,63 +601,63 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     </div>
 </div>""",
                 'process_steps': """
-<div class="py-16 px-4 bg-slate-50 {{ .css_classes }}">
+<div class="py-12 px-4 {{ .css_classes }}">
     {{ if .title }}
-    <h2 class="text-3xl font-bold text-center mb-12 text-slate-900">{{ .title }}</h2>
+    <h2 class="text-3xl font-bold text-center mb-10" style="color: var(--color-text, #1f2937);">{{ .title }}</h2>
     {{ end }}
-    <div class="max-w-4xl mx-auto space-y-8">
+    <div class="max-w-3xl mx-auto space-y-6">
         {{ range $index, $step := .steps }}
-        <div class="flex gap-6 items-start">
+        <div class="flex gap-5 items-start">
             <div class="flex-shrink-0">
-                <div class="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xl font-bold">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold text-white" style="background: var(--color-primary, #f59e0b);">
                     {{ add $index 1 }}
                 </div>
             </div>
             <div class="flex-1">
-                <h3 class="text-2xl font-semibold mb-2 text-slate-900">{{ .title }}</h3>
-                <p class="text-slate-600 leading-relaxed">{{ .description }}</p>
+                <h3 class="text-xl font-semibold mb-1" style="color: var(--color-text, #1f2937);">{{ .title }}</h3>
+                <p class="text-base leading-relaxed" style="color: var(--color-text-light, #6b7280);">{{ .description }}</p>
             </div>
         </div>
         {{ end }}
     </div>
 </div>""",
                 'stats_counter': """
-<div class="py-16 px-4 bg-indigo-600 text-white {{ .css_classes }}">
-    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+<div class="py-12 px-4 text-white {{ .css_classes }}" style="background: var(--color-primary, #f59e0b);">
+    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
         {{ range .stats }}
         <div>
-            <div class="text-5xl font-bold mb-2">{{ .value }}{{ if .suffix }}{{ .suffix }}{{ end }}</div>
-            <div class="text-indigo-100 text-lg">{{ .label }}</div>
+            <div class="text-4xl font-bold mb-1">{{ .value }}{{ if .suffix }}{{ .suffix }}{{ end }}</div>
+            <div class="text-base opacity-90">{{ .label }}</div>
         </div>
         {{ end }}
     </div>
 </div>""",
                 'stats': """
-<div class="py-16 px-4 bg-indigo-600 text-white {{ .css_classes }}">
-    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+<div class="py-12 px-4 text-white {{ .css_classes }}" style="background: var(--color-primary, #f59e0b);">
+    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
         {{ range .items }}
         <div class="stat-item" data-animate="{{ $.animate | default true }}">
-            <div class="text-5xl font-bold mb-2 stat-value">{{ .value }}{{ if .suffix }}{{ .suffix }}{{ end }}</div>
-            <div class="text-indigo-100 text-lg">{{ .label }}</div>
+            <div class="text-4xl font-bold mb-1 stat-value">{{ .value }}{{ if .suffix }}{{ .suffix }}{{ end }}</div>
+            <div class="text-base opacity-90">{{ .label }}</div>
         </div>
         {{ end }}
     </div>
 </div>""",
                 'menu_grid': """
-<div class="py-16 px-4 {{ .css_classes }}">
+<div class="py-12 px-4 {{ .css_classes }}">
     {{ if .title }}
-    <h2 class="text-3xl font-bold text-center mb-12 text-slate-900">{{ .title }}</h2>
+    <h2 class="text-3xl font-bold text-center mb-10" style="color: var(--color-text, #1f2937);">{{ .title }}</h2>
     {{ end }}
-    <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {{ range .items }}
-        <div class="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
+        <div class="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow" style="border: 1px solid var(--color-border, #e5e7eb);">
             {{ if .image }}
-            <img src="{{ .image }}" alt="{{ .name }}" class="w-full h-48 object-cover"/>
+            <img src="{{ .image }}" alt="{{ .name }}" class="w-full h-40 object-cover"/>
             {{ end }}
             <div class="p-4">
-                <h4 class="text-lg font-semibold mb-2 text-slate-900">{{ .name }}</h4>
+                <h4 class="text-lg font-semibold mb-2" style="color: var(--color-text, #1f2937);">{{ .name }}</h4>
                 {{ if .description }}
-                <p class="text-sm text-slate-600">{{ .description }}</p>
+                <p class="text-sm" style="color: var(--color-text-light, #6b7280);">{{ .description }}</p>
                 {{ end }}
             </div>
         </div>
@@ -1044,7 +1028,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
 {{ $wrapClass := "flex-wrap" }}
 {{ if $flexMode }}{{ $wrapClass = "flex-nowrap" }}{{ end }}
 
-<div class="flex {{ $wrapClass }} gap-{{ $gap }} mb-8 {{ $justifyClass }} {{ $alignClass }} {{ .css_classes }}">
+<div class="flex {{ $wrapClass }} gap-{{ $gap }} {{ $justifyClass }} {{ $alignClass }} {{ .css_classes }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
@@ -2221,10 +2205,10 @@ class SiteTemplateViewSet(viewsets.ModelViewSet):
         try:
             template = export_website_to_template(
                 website_id=serializer.validated_data['website_id'],
-                template_id=serializer.validated_data['template_id'],
+                template_slug=serializer.validated_data['template_slug'],
                 name=serializer.validated_data['name'],
                 description=serializer.validated_data.get('description', ''),
-                category_slug=serializer.validated_data.get('category'),
+                tags=serializer.validated_data.get('tags', []),
                 thumbnail_url=serializer.validated_data.get('thumbnail_url', ''),
                 created_by=request.user.username if request.user.is_authenticated else ''
             )
@@ -2277,7 +2261,7 @@ class SiteTemplateViewSet(viewsets.ModelViewSet):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             website = create_website_from_template(
-                template_id=template.id,
+                template_slug=template.slug,
                 website_name=website_name,
                 website_slug=website_slug
             )

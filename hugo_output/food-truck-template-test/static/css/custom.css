@@ -1,0 +1,30 @@
+:root {
+    --color-primary: #ffffff;
+    --color-secondary: #0000ee;
+    --color-accent: #2b2b2b;
+    --color-bg: #8e8e8e;
+    --color-text: #057f04;
+    --color-muted: #e93d3d;
+    --color-site-ltsh2338: #F4F4F4;
+    --color-site-lto1j81j: #F3F6F8;
+    --color-site-lto01e83: #2667FF;
+    --color-site-text-color: #000000;
+    --color-site-m3m16p7d: #f6750b;
+    --color-site-m3mgatdy: #FCDAA7;
+    --color-site-link-color: #188bf6;
+
+    --font-primary: "Familjen Grotesk", sans-serif;
+    --font-secondary: "Montserrat", sans-serif;
+    --font-accent: "Lato", sans-serif;
+    --text-xs: 5px;
+    --text-sm: 12px;
+    --text-base: 14px;
+    --text-lg: 15px;
+    --text-xl: 16px;
+    --text-2xl: 17px;
+    --text-3xl: 19px;
+    --text-4xl: 20px;
+
+
+
+}

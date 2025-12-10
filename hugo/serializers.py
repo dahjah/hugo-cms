@@ -120,15 +120,15 @@ class SiteTemplateDetailSerializer(serializers.ModelSerializer):
 class CreateTemplateFromWebsiteSerializer(serializers.Serializer):
     """Serializer for creating a template from an existing website."""
     website_id = serializers.UUIDField()
-    template_id = serializers.CharField(max_length=50)
+    template_slug = serializers.SlugField(max_length=50)
     name = serializers.CharField(max_length=100)
     description = serializers.CharField(required=False, allow_blank=True, default='')
-    category = serializers.CharField(max_length=50, required=False, allow_blank=True, default=None)
+    tags = serializers.ListField(child=serializers.CharField(), required=False, default=list)
     thumbnail_url = serializers.CharField(max_length=500, required=False, allow_blank=True, default='')
 
 
 class CreateWebsiteFromTemplateSerializer(serializers.Serializer):
     """Serializer for creating a new website from a template."""
-    template_id = serializers.CharField(max_length=50)
+    template_slug = serializers.SlugField(max_length=50)
     website_name = serializers.CharField(max_length=200)
     website_slug = serializers.CharField(max_length=200)
