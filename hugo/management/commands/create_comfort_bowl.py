@@ -170,7 +170,7 @@ body {
             params={
                 "title": "Why We Are The Best",
                 "columns": "3",
-                "items": [
+                "features": [
                     {"icon": "award", "title": "Award Winning", "description": "Voted Best of State 2023 for our famous Katsu."},
                     {"icon": "flame", "title": "Freshly Grilled", "description": "Our Teriyaki Chicken is grilled fresh daily."},
                     {"icon": "heart", "title": "Locally Loved", "description": "A local Utah favorite serving authentic comfort food since 2015."}

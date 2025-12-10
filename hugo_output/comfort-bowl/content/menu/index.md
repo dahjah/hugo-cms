@@ -8,6 +8,7 @@ layout = "single"
   gap = "4"
   justify = "between"
   align = "center"
+  css_classes = "w-full"
   [[header_blocks.blocks]]
     type = "brand_logo"
     brand_name = "Comfort Bowl"

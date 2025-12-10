@@ -1239,26 +1239,32 @@ class WebsiteViewSet(viewsets.ModelViewSet):
                 zone_order = zone.get('order', 0)
                 
                 if zone_width == 'w-full':
-                    # Full-width zone (header/footer)
+                    # Full-width zone (header/footer) with inner container for consistent width
                     if zone_name == 'header':
                         template_parts.append(f'    {{{{/* Header Zone */}}}}')
                         template_parts.append(f'    <header class="w-full {zone_css}">')
+                        template_parts.append(f'        <div class="container mx-auto px-4 py-4 flex items-center justify-between">')
                         template_parts.append(f'        {{{{ range .Params.{zone_name}_blocks }}}}')
                         template_parts.append(f'            {{{{ partial "blocks/render-block.html" . }}}}')
                         template_parts.append(f'        {{{{ end }}}}')
+                        template_parts.append(f'        </div>')
                         template_parts.append(f'    </header>')
                     elif zone_name == 'footer':
                         template_parts.append(f'    {{{{/* Footer Zone */}}}}')
                         template_parts.append(f'    <footer class="w-full mt-auto {zone_css}">')
+                        template_parts.append(f'        <div class="container mx-auto px-4 py-8">')
                         template_parts.append(f'        {{{{ range .Params.{zone_name}_blocks }}}}')
                         template_parts.append(f'            {{{{ partial "blocks/render-block.html" . }}}}')
                         template_parts.append(f'        {{{{ end }}}}')
+                        template_parts.append(f'        </div>')
                         template_parts.append(f'    </footer>')
                     else:
                         template_parts.append(f'    <div class="w-full {zone_css}">')
+                        template_parts.append(f'        <div class="container mx-auto px-4 py-4">')
                         template_parts.append(f'        {{{{ range .Params.{zone_name}_blocks }}}}')
                         template_parts.append(f'            {{{{ partial "blocks/render-block.html" . }}}}')
                         template_parts.append(f'        {{{{ end }}}}')
+                        template_parts.append(f'        </div>')
                         template_parts.append(f'    </div>')
                 
                 # Check if we need to start a flex container for non-full-width zones
@@ -1487,18 +1493,19 @@ draft = false
                 
                 # Handle features_grid-specific parameters
                 if block.definition_id == 'features_grid':
-                    items = params.get('items', [])
-                    if items:
-                        items_toml = "["
-                        for i, item in enumerate(items):
+                    # Support both 'features' and 'items' keys, output as 'features' for template
+                    features = params.get('features', params.get('items', []))
+                    if features:
+                        features_toml = "["
+                        for i, item in enumerate(features):
                             if i > 0:
-                                items_toml += ", "
+                                features_toml += ", "
                             icon = str(item.get("icon", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
                             title = str(item.get("title", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
                             description = str(item.get("description", "")).replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-                            items_toml += f'{{icon = "{icon}", title = "{title}", description = "{description}"}}'
-                        items_toml += "]\n"
-                        output += f'{indent}  items = {items_toml}'
+                            features_toml += f'{{icon = "{icon}", title = "{title}", description = "{description}"}}'
+                        features_toml += "]\n"
+                        output += f'{indent}  features = {features_toml}'
                 
                 # Handle process_steps-specific parameters
                 if block.definition_id == 'process_steps':
