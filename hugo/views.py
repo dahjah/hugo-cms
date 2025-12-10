@@ -1230,6 +1230,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             
             # Render full-width zones in order, with flex zones in a container
             current_order = 0
+            flex_rendered = False  # Track if flex container was already rendered
             
             for zone in zones:
                 zone_name = zone.get('name', 'main')
@@ -1261,7 +1262,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
                         template_parts.append(f'    </div>')
                 
                 # Check if we need to start a flex container for non-full-width zones
-                elif zone_order > current_order and any(z.get('order', 0) > current_order and z.get('width') != 'w-full' for z in zones):
+                elif not flex_rendered and zone_order > current_order and any(z.get('order', 0) > current_order and z.get('width') != 'w-full' for z in zones):
                     # This is the first flex zone, start container
                     if current_order == 0 or (current_order > 0 and zones[current_order-1].get('width') == 'w-full'):
                         template_parts.append('    <div class="container mx-auto px-4 py-8 flex-1 flex flex-col md:flex-row gap-8">')
@@ -1290,7 +1291,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
                             template_parts.append(f'        </main>')
                     
                     template_parts.append('    </div>')
-                    break  # Only process flex container once
+                    flex_rendered = True  # Mark flex as done, continue to render footer
             
             template_parts.append('</div>')
             template_parts.append('{{ end }}')

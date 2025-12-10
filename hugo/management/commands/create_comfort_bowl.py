@@ -178,58 +178,60 @@ body {
             }
         )
 
-        # Reviews / Testimonials (Carousel - JSON structure match)
+        # Reviews Section Title
+        BlockInstance.objects.create(
+            page=home_page,
+            definition_id="text",
+            placement_key="main",
+            sort_order=3,
+            params={
+                "content": '<div class="text-center py-8"><h2 class="text-3xl font-bold">What Our Customers Say</h2></div>'
+            }
+        )
+
+        # Reviews Carousel (Google Reviews inside slides)
+        reviews_data = [
+            {"name": "Sarah M. (Yelp)", "text": "Can't get enough of their Chicken Katsu! The roasted garlic and ginger sauce is incredible.", "rating": 5},
+            {"name": "James L. (Yelp)", "text": "Best food truck in SLC. The portions are huge and the flavor is authentic.", "rating": 5},
+            {"name": "Emily R. (Yelp)", "text": "Always fresh and the staff is so friendly. Love the Thai salad side.", "rating": 5},
+            {"name": "Michael T.", "text": "The Teriyaki Chicken is perfectly grilled. A healthy and delicious lunch option.", "rating": 5},
+            {"name": "Jessica K.", "text": "Gyoza is a must-have side. Crispy and flavorful.", "rating": 4}
+        ]
+
+        carousel_slides = []
+        for review in reviews_data:
+            carousel_slides.append({
+                "id": str(uuid.uuid4()),
+                "children": [
+                    {
+                        "id": str(uuid.uuid4()),
+                        "type": "google_reviews",
+                        "params": {
+                            "show_rating": True,
+                            "columns": 1,
+                            "reviews": [{
+                                "name": review["name"],
+                                "rating": review["rating"],
+                                "text": review["text"],
+                                "date": "1 month ago",
+                                "image": "" 
+                            }]
+                        }
+                    }
+                ]
+            })
+
         BlockInstance.objects.create(
             page=home_page,
             definition_id="carousel",
             placement_key="main",
-            sort_order=3,
+            sort_order=4,
             params={
                 "auto_advance": True,
                 "interval_seconds": 6,
                 "show_dots": True,
                 "show_arrows": True,
-                "slides": [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "children": [
-                            {
-                                "id": str(uuid.uuid4()),
-                                "type": "testimonial",
-                                "params": {
-                                    "quote": "Can't get enough of their Chicken Katsu! The roasted garlic and ginger sauce is incredible.",
-                                    "author": "Sarah M. (Yelp)"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "id": str(uuid.uuid4()),
-                        "children": [
-                            {
-                                "id": str(uuid.uuid4()),
-                                "type": "testimonial",
-                                "params": {
-                                    "quote": "Best food truck in SLC. The portions are huge and the flavor is authentic.",
-                                    "author": "James L. (Yelp)"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "id": str(uuid.uuid4()),
-                        "children": [
-                            {
-                                "id": str(uuid.uuid4()),
-                                "type": "testimonial",
-                                "params": {
-                                    "quote": "Always fresh and the staff is so friendly. Love the Thai salad side.",
-                                    "author": "Emily R. (Yelp)"
-                                }
-                            }
-                        ]
-                    }
-                ]
+                "slides": carousel_slides
             }
         )
 
@@ -238,7 +240,7 @@ body {
             page=home_page,
             definition_id="menu_grid",
             placement_key="main",
-            sort_order=4,
+            sort_order=5,
             params={
                 "title": "Fan Favorites",
                 "items": [
@@ -254,7 +256,7 @@ body {
             page=home_page,
             definition_id="text",
             placement_key="main",
-            sort_order=5,
+            sort_order=6,
             params={
                 "content": f"""<div id="location" class="bg-gray-100 py-12 text-center">
                     <h2 class="text-3xl font-bold mb-4">Find Us</h2>

@@ -6,7 +6,7 @@ layout = "single"
 [[header_blocks]]
   type = "row"
   gap = "4"
-  justify = "space-between"
+  justify = "between"
   align = "center"
   [[header_blocks.blocks]]
     type = "brand_logo"
@@ -16,7 +16,9 @@ layout = "single"
   [[header_blocks.blocks]]
     type = "menu"
     style = "pills"
-    responsive = true
+    responsive = "false"
+    alignment = "left"
+    position = "normal"
     items = [{label = "Home", url = "/", type = "link"}, {label = "Menu", url = "/menu", type = "link"}, {label = "Visit Us", url = "/#location", type = "link"}]
 
 [[main_blocks]]

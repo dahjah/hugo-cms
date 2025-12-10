@@ -6,7 +6,7 @@ type = "single"
 [[header_blocks]]
   type = "row"
   gap = "4"
-  justify = "space-between"
+  justify = "between"
   align = "center"
   [[header_blocks.blocks]]
     type = "brand_logo"
@@ -16,7 +16,9 @@ type = "single"
   [[header_blocks.blocks]]
     type = "menu"
     style = "pills"
-    responsive = true
+    responsive = "false"
+    alignment = "left"
+    position = "normal"
     items = [{label = "Home", url = "/", type = "link"}, {label = "Menu", url = "/menu", type = "link"}, {label = "Visit Us", url = "/#location", type = "link"}]
 
 [[main_blocks]]
@@ -35,23 +37,39 @@ type = "single"
   columns = "3"
   items = [{icon = "award", title = "Award Winning", description = "Voted Best of State 2023 for our famous Katsu."}, {icon = "flame", title = "Freshly Grilled", description = "Our Teriyaki Chicken is grilled fresh daily."}, {icon = "heart", title = "Locally Loved", description = "A local Utah favorite serving authentic comfort food since 2015."}]
 [[main_blocks]]
+  type = "text"
+  content = "<div class=\"text-center py-8\"><h2 class=\"text-3xl font-bold\">What Our Customers Say</h2></div>"
+[[main_blocks]]
   type = "carousel"
   auto_advance = true
   interval_seconds = "6"
   show_dots = true
   show_arrows = true
   [[main_blocks.blocks]]
-    type = "testimonial"
-    quote = "Can't get enough of their Chicken Katsu! The roasted garlic and ginger sauce is incredible."
-    author = "Sarah M. (Yelp)"
+    type = "google_reviews"
+    show_rating = true
+    columns = 1
+    reviews = [{name = "Sarah M. (Yelp)", rating = "5", text = "Can't get enough of their Chicken Katsu! The roasted garlic and ginger sauce is incredible.", date = "1 month ago", image = ""}]
   [[main_blocks.blocks]]
-    type = "testimonial"
-    quote = "Best food truck in SLC. The portions are huge and the flavor is authentic."
-    author = "James L. (Yelp)"
+    type = "google_reviews"
+    show_rating = true
+    columns = 1
+    reviews = [{name = "James L. (Yelp)", rating = "5", text = "Best food truck in SLC. The portions are huge and the flavor is authentic.", date = "1 month ago", image = ""}]
   [[main_blocks.blocks]]
-    type = "testimonial"
-    quote = "Always fresh and the staff is so friendly. Love the Thai salad side."
-    author = "Emily R. (Yelp)"
+    type = "google_reviews"
+    show_rating = true
+    columns = 1
+    reviews = [{name = "Emily R. (Yelp)", rating = "5", text = "Always fresh and the staff is so friendly. Love the Thai salad side.", date = "1 month ago", image = ""}]
+  [[main_blocks.blocks]]
+    type = "google_reviews"
+    show_rating = true
+    columns = 1
+    reviews = [{name = "Michael T.", rating = "5", text = "The Teriyaki Chicken is perfectly grilled. A healthy and delicious lunch option.", date = "1 month ago", image = ""}]
+  [[main_blocks.blocks]]
+    type = "google_reviews"
+    show_rating = true
+    columns = 1
+    reviews = [{name = "Jessica K.", rating = "4", text = "Gyoza is a must-have side. Crispy and flavorful.", date = "1 month ago", image = ""}]
 [[main_blocks]]
   type = "menu_grid"
   title = "Fan Favorites"

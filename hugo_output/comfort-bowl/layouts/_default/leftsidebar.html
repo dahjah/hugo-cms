@@ -22,5 +22,11 @@
             {{ end }}
         </main>
     </div>
+    {{/* Footer Zone */}}
+    <footer class="w-full mt-auto bg-slate-50/50">
+        {{ range .Params.footer_blocks }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </footer>
 </div>
 {{ end }}
