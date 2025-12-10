@@ -27,7 +27,7 @@ class PsychologyTodayScraper(BaseScraper):
     
     supported_fields: ClassVar[Set[str]] = {
         'name', 'description', 'logo_url', 'hero_image_url',
-        'location_str', 'phone', 'categories'
+        'location_str', 'phone', 'categories', 'email'
     }
     
     @classmethod
@@ -120,6 +120,12 @@ class PsychologyTodayScraper(BaseScraper):
                 if meta_desc:
                     profile.description = meta_desc.get('content', '')
             
+            # Email extraction
+            if profile.description:
+                email = cls._extract_email(profile.description)
+                if email:
+                    profile.email = email
+            
             # Location
             location_el = soup.find('div', class_='profile-location') or soup.find('address')
             if location_el:
@@ -168,6 +174,38 @@ class PsychologyTodayScraper(BaseScraper):
             # Add therapy-related categories if none found
             if not profile.categories:
                 profile.categories = ['Therapist', 'Mental Health']
+            
+            # Endorsements (as Reviews)
+            endorsements = soup.find_all('div', class_='endorsement')
+            if endorsements:
+                print(f"[PsychologyTodayScraper] Found {len(endorsements)} endorsements")
+                from hugo.schemas import Review
+                
+                for endo in endorsements:
+                    try:
+                        # Text
+                        msg_el = endo.find('div', class_='endorsement-message')
+                        text = msg_el.get_text(strip=True) if msg_el else ""
+                        
+                        # Author info
+                        title_el = endo.find('div', class_='title')
+                        author_name = title_el.get_text(strip=True) if title_el else "Colleague"
+                        
+                        # Image
+                        img_el = endo.find('img', class_='photo')
+                        author_img = img_el['src'] if img_el and img_el.has_attr('src') else ""
+                        
+                        if text:
+                            profile.reviews.append(Review(
+                                author=author_name,
+                                rating=5.0, # Endorsements are implicitly positive
+                                text=text,
+                                date="", # No date provided
+                                author_image=author_img,
+                                platform='psychologytoday'
+                            ))
+                    except Exception as ex:
+                        print(f"[PsychologyTodayScraper] Endorsement Error: {ex}")
             
             print(f"[PsychologyTodayScraper] ✓ Found: {profile.name}")
             

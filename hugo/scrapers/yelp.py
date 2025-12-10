@@ -35,7 +35,7 @@ class YelpScraper(BaseScraper):
     
     supported_fields: ClassVar[Set[str]] = {
         'name', 'rating', 'review_count', 'reviews', 'menu_items',
-        'hours', 'photos', 'location_str', 'address', 'phone', 'price_level', 'categories'
+        'hours', 'photos', 'location_str', 'address', 'phone', 'price_level', 'categories', 'email'
     }
     
     @classmethod
@@ -577,11 +577,15 @@ class YelpScraper(BaseScraper):
                             text = text.get('full', '')
                         
                         author = node.get('author', {})
+                        photo = author.get('profilePhoto') or {}
+                        photo_url = photo.get('src') or photo.get('url') or ""
+                        
                         profile.reviews.append(Review(
                             author=author.get('displayName', ''),
                             rating=node.get('rating', 0),
                             text=text,
                             date=node.get('localizedDate', ''),
+                            author_image=photo_url,
                             platform='yelp'
                         ))
                     
@@ -599,6 +603,14 @@ class YelpScraper(BaseScraper):
                         hist_desc = history.get('description', '')
                         if hist_desc and not profile.description:
                             profile.description = hist_desc
+
+                    # Email extraction using BaseScraper helper
+                    if not profile.email:
+                        hist_text = history.get('description') if isinstance(history, dict) else ""
+                        combined_text = (specialties or "") + " " + (hist_text or "")
+                        email = cls._extract_email(combined_text)
+                        if email:
+                            profile.email = email
                     
                     print(f"[YelpScraper] Batched GQL: {len(profile.hours)} hours, {len(profile.gallery_images)} photos, {len(profile.reviews)} reviews, description={'Yes' if profile.description else 'No'}")
                         

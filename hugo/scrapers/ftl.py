@@ -23,7 +23,7 @@ class FoodTruckLeagueScraper(BaseScraper):
     
     supported_fields: ClassVar[Set[str]] = {
         'name', 'tagline', 'description', 'logo_url',
-        'gallery_images', 'booking_url', 'location_str'
+        'gallery_images', 'booking_url', 'location_str', 'email'
     }
     
     @classmethod
@@ -102,6 +102,12 @@ class FoodTruckLeagueScraper(BaseScraper):
                 p_tag = story_div.find('p')
                 if p_tag:
                     profile.description = p_tag.get_text(strip=True)
+            
+            # Email extraction
+            if profile.description:
+                email = cls._extract_email(profile.description)
+                if email:
+                    profile.email = email
             
             # Images - collect all CDN images
             img_tags = soup.find_all('img', src=True)

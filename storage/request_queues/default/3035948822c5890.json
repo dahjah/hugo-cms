@@ -1,0 +1,17 @@
+{
+  "unique_key": "https://www.yelp.com/biz/strippin-dippin-chicken-west-jordan",
+  "url": "https://www.yelp.com/biz/strippin-dippin-chicken-west-jordan",
+  "method": "GET",
+  "payload": null,
+  "headers": {},
+  "user_data": {
+    "__crawlee": {
+      "state": 4,
+      "sessionRotationCount": 2
+    }
+  },
+  "retry_count": 0,
+  "no_retry": false,
+  "loaded_url": "https://www.yelp.com/biz/strippin-dippin-chicken-west-jordan",
+  "handled_at": "2025-12-10 22:58:41.062617+00:00"
+}

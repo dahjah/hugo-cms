@@ -20,6 +20,7 @@ class Review:
     rating: float
     text: str
     date: str = ""
+    author_image: str = ""
     platform: str = "yelp"
 
 @dataclass
@@ -83,7 +84,19 @@ class BusinessProfile:
             
             # Lists: Extend if source has items
             elif isinstance(value, list) and value:
-                current.extend(value)
+                # Deduplicate strings (simple list)
+                if value and isinstance(value[0], str):
+                    existing = set(current)
+                    for item in value:
+                        if item not in existing:
+                            current.append(item)
+                            existing.add(item)
+                else:
+                    current.extend(value)
+            
+            # Dicts (stats, colors): Update
+            elif isinstance(value, dict) and value:
+                current.update(value)
                 
     def to_dict(self) -> dict:
         """Convert to dict for template population."""

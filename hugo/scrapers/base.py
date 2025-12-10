@@ -102,3 +102,12 @@ class BaseScraper(ABC):
         if not ctx.is_valid:
             raise ValueError(f"Connection failed: {ctx.error}")
         return cls.scrape(ctx)
+
+    @staticmethod
+    def _extract_email(text: str) -> str:
+        """Helper to extract email from text block."""
+        import re
+        if not text: return ""
+        # Simple regex for email extraction
+        match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
+        return match.group(0) if match else ""

@@ -23,7 +23,7 @@ class InstagramScraper(BaseScraper):
     
     supported_fields: ClassVar[Set[str]] = {
         'name', 'description', 'logo_url', 'hero_image_url',
-        'gallery_images', 'website_url', 'stats'
+        'gallery_images', 'website_url', 'stats', 'email'
     }
     
     # HikerAPI config
@@ -114,6 +114,12 @@ class InstagramScraper(BaseScraper):
             profile.description = user.get('biography', '')
             profile.logo_url = user.get('profile_pic_url_hd', '')
             profile.website_url = user.get('external_url', '')
+            
+            # Email extraction
+            if profile.description:
+                email = cls._extract_email(profile.description)
+                if email:
+                    profile.email = email
             
             # Stats (followers, following, posts)
             profile.stats = {
