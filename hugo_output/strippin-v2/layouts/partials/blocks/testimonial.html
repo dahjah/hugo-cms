@@ -1,0 +1,14 @@
+
+<div class="bg-gradient-to-r from-indigo-50 to-slate-50 py-12 px-8 rounded-lg shadow-sm mb-8 {{ .css_classes }}">
+    <div class="max-w-2xl mx-auto text-center">
+        <p class="text-2xl font-serif italic text-slate-700 mb-6">"{{ .quote }}"</p>
+        <div class="flex items-center justify-center gap-4">
+            {{ if .image }}
+            <img src="{{ .image }}" alt="{{ .author }}" class="w-12 h-12 rounded-full object-cover shadow">
+            {{ end }}
+            {{ if .author }}
+            <span class="font-semibold text-slate-800">{{ .author }}</span>
+            {{ end }}
+        </div>
+    </div>
+</div>

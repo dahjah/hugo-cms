@@ -1,0 +1,5 @@
+<div class="testimonials {{ .css_classes }}">
+    {{ range .blocks }}
+        {{ partial "blocks/render-block.html" . }}
+    {{ end }}
+</div>

@@ -1,0 +1,10 @@
+{{ if .type }}
+    {{ $partialPath := printf "blocks/%s.html" .type }}
+    {{ if templates.Exists (printf "partials/%s" $partialPath) }}
+        {{ partial $partialPath . }}
+    {{ else }}
+        <div class="p-4 border border-red-200 bg-red-50 text-red-700 rounded my-4">
+            <strong>Missing Block Template:</strong> {{ .type }}
+        </div>
+    {{ end }}
+{{ end }}
