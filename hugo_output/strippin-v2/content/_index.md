@@ -14,7 +14,7 @@ type = "home"
     brand_name = "Strippin Dippin Chicken"
     tagline = ""
     link_url = "/"
-    logo_image = "https://scontent-vie1-1.cdninstagram.com/v/t51.2885-19/132955810_824625285053035_230977350139597472_n.jpg?stp=dst-jpg_s640x640_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=scontent-vie1-1.cdninstagram.com&_nc_cat=107&_nc_oc=Q6cZ2QG6BmmbOSTG0BGlYrqBsKIvJGVNjp2JqaBCWhFBeI8K09xx8ao13evahJ5suWKBvnw&_nc_ohc=GwdXFAA7lVUQ7kNvwGN80N7&_nc_gid=KaLWarA-7MRP_8PkfBm6Mg&edm=AKralEIBAAAA&ccb=7-5&ig_cache_key=GKK_7AdrOjAJ-u0CAKBSOxqtmDQDbkULAAAB6406400j-ccb7-5&oh=00_AflXkN7v2B3yK8LSiGDLhRz0Jz7dZNNkvDaRioMWCA5zVw&oe=693FE36F&_nc_sid=2fe71f"
+    logo_image = "/media/uploads/00919c7d-c866-4e76-b042-897b869a56e2.jpg"
   [[header_blocks.blocks]]
     type = "menu"
     style = "pills"
@@ -28,9 +28,9 @@ type = "home"
   id = "hero"
   [[main_blocks.blocks]]
     type = "hero"
-    title = "We serve up chicken strips, BBQ chicken salad, and sliders! Get your meal with fries and choose two complimentary sauce flavors. Add a cookie of the day and a drink, and you've got yourself a Strippin' Dippin' Chicken meal!"
+    title = "Delicious Strippin Dippin Chicken"
     subtitle = "Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces."
-    bgImage = "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/o.jpg"
+    bgImage = "/media/uploads/4fe8340d-7bf0-447b-a137-3680dbdd0ac0.jpg"
     cta_text = "View Menu"
     cta_url = "/menu"
 
@@ -40,7 +40,7 @@ type = "home"
   id = "highlights"
   [[main_blocks.blocks]]
     type = "text"
-    content = "<h2 class=\"text-center\"></h2><p class=\"text-center\"></p>"
+    content = "<h2 class=\"text-center\">Highlights</h2>"
   [[main_blocks.blocks]]
     type = "features_grid"
     columns = "3"
@@ -52,7 +52,7 @@ type = "home"
   id = "menu"
   [[main_blocks.blocks]]
     type = "text"
-    content = "<h2></h2>"
+    content = "<h2>Menu</h2>"
   [[main_blocks.blocks]]
     type = "markdown"
     content = "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you."
@@ -60,7 +60,7 @@ type = "home"
     type = "menu_grid"
     columns = "3"
     show_images = true
-    items = [{name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/2NRRmCOMrk8WYpvYeUzPIQ/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/LOzXwX76a3XgwXfurHOLhw/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/jRfqRtK96uKcT5pFvm4IGA/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/II7vts50IqLHzrSA-FqoLA/l.jpg", description = ""}]
+    items = [{name = "Famous Chicken Strips", image = "", description = "Crispy, golden-brown chicken tenders served with our signature house sauce. ($12.99)"}, {name = "Hand-Cut Fries", image = "", description = "Freshly cut potatoes, twice-fried for extra crispiness. ($5.99)"}, {name = "Combo Meal", image = "", description = "3 strips, fries, and a drink. ($16.99)"}, {name = "Spicy Dippin Sauce", image = "", description = "Our secret blend of spices and creaminess. ($0.50)"}]
   [[main_blocks.blocks]]
     type = "row"
     justify = "center"
@@ -78,17 +78,7 @@ type = "home"
   id = "locations"
   [[main_blocks.blocks]]
     type = "text"
-    content = "<h2></h2>"
-  [[main_blocks.blocks]]
-    type = "text"
-    content = ""
-  [[main_blocks.blocks]]
-    type = "process_steps"
-    layout = "horizontal"
-  [[main_blocks.blocks]]
-    type = "embed"
-    embed_code = ""
-    height = "400px"
+    content = "<h2>Locations</h2>"
 
 [[main_blocks]]
   type = "section"
@@ -101,6 +91,26 @@ type = "home"
     [[main_blocks.blocks.blocks]]
       type = "column"
       width_percent = "50"
+      [[main_blocks.blocks.blocks.blocks]]
+        type = "column"
+        [[main_blocks.blocks.blocks.blocks.blocks]]
+          type = "text"
+          content = "<h2>Catering</h2>"
+        [[main_blocks.blocks.blocks.blocks.blocks]]
+          type = "markdown"
+          content = "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you."
+        [[main_blocks.blocks.blocks.blocks.blocks]]
+          type = "button"
+          text = "Get Catering Info"
+          url = "/catering"
+          style = "primary"
+
+      [[main_blocks.blocks.blocks.blocks]]
+        type = "column"
+        [[main_blocks.blocks.blocks.blocks.blocks]]
+          type = "accordion"
+          items = [{title = "Do you travel for private events?", content = "Yes! We love bringing our truck to weddings, parties, and corporate events."}, {title = "What is the minimum spend?", content = "Our minimums vary by location and date. Please contact us for a custom quote."}, {title = "Do I need to provide power?", content = "We are fully self-sufficient with our own generator."}, {title = "How far in advance should I book?", content = "We recommend booking at least 2-3 months in advance."}]
+
     [[main_blocks.blocks.blocks]]
       type = "column"
       width_percent = "50"
@@ -116,6 +126,27 @@ type = "home"
     [[main_blocks.blocks.blocks]]
       type = "column"
       width_percent = "55"
+      [[main_blocks.blocks.blocks.blocks]]
+        type = "column"
+        [[main_blocks.blocks.blocks.blocks.blocks]]
+          type = "text"
+          content = "<h2>About</h2>"
+        [[main_blocks.blocks.blocks.blocks.blocks]]
+          type = "markdown"
+          content = "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you."
+        [[main_blocks.blocks.blocks.blocks.blocks]]
+          type = "quote"
+          text = ""
+          author = ""
+          title = ""
+
+      [[main_blocks.blocks.blocks.blocks]]
+        type = "column"
+        [[main_blocks.blocks.blocks.blocks.blocks]]
+          type = "image"
+          src = ""
+          alt = ""
+
     [[main_blocks.blocks.blocks]]
       type = "column"
       width_percent = "45"
@@ -126,11 +157,13 @@ type = "home"
   id = "reviews"
   [[main_blocks.blocks]]
     type = "text"
-    content = "<h2 class=\"text-center\"></h2>"
+    content = "<h2 class=\"text-center\">Reviews</h2>"
   [[main_blocks.blocks]]
     type = "carousel"
     auto_advance = true
     interval_seconds = "6"
+    show_dots = true
+    show_arrows = true
     [[main_blocks.blocks.blocks]]
       type = "image"
       src = "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg"
@@ -151,7 +184,6 @@ type = "home"
       type = "image"
       src = "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg"
       alt = "Gallery Image"
-
   [[main_blocks.blocks]]
     type = "google_reviews"
     columns = "3"
@@ -164,6 +196,7 @@ type = "home"
   [[main_blocks.blocks]]
     type = "stats_counter"
     animate = true
+    stats = [{value = "3.3", suffix = "", label = "Rating"}, {value = "14", suffix = "", label = "Review_count"}, {value = "465", suffix = "", label = "Followers"}, {value = "299", suffix = "", label = "Following"}, {value = "746", suffix = "", label = "Posts"}, {value = "14", suffix = "+", label = "Reviews"}]
 
 [[main_blocks]]
   type = "section"
@@ -171,7 +204,7 @@ type = "home"
   id = "contact"
   [[main_blocks.blocks]]
     type = "text"
-    content = "<h2 class=\"text-center\"></h2><p class=\"text-center\"></p>"
+    content = "<h2 class=\"text-center\">Contact</h2>"
   [[main_blocks.blocks]]
     type = "row"
     justify = "center"
@@ -181,11 +214,13 @@ type = "home"
       text = "Order Now"
       url = "/menu"
       style = "primary"
+      url_type = "page"
     [[main_blocks.blocks.blocks]]
       type = "button"
       text = "Contact Us"
       url = "/contact"
       style = "secondary"
+      url_type = "page"
 
 
 [[footer_blocks]]

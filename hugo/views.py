@@ -1376,15 +1376,12 @@ draft = false
                     
                     # Get children grouped by placement_key
                     fc_children = BlockInstance.objects.filter(parent=block).order_by('sort_order')
-                    children_by_col = {}
-                    for child in fc_children:
-                        col_key = child.placement_key or 'col_0'
-                        if col_key not in children_by_col:
-                            children_by_col[col_key] = []
-                        children_by_col[col_key].append(child)
                     
-                    # Output as row with flex_mode=true (no justify-between, let widths fill naturally)
+                    # Check if children use legacy col_N keys
+                    has_legacy_keys = any(child.placement_key and child.placement_key.startswith('col_') for child in fc_children)
+                    
                     output += f"{indent}[[{zone_name}]]\n"
+                    # Treat flex_columns as a row with flex_mode=true
                     output += f'{indent}  type = "row"\n'
                     output += f'{indent}  flex_mode = true\n'
                     output += f'{indent}  gap = "2"\n'
@@ -1392,17 +1389,34 @@ draft = false
                         css = str(block.params['css_classes']).replace('\\', '\\\\').replace('"', '\\"')
                         output += f'{indent}  css_classes = "{css}"\n'
                     
-                    # Output each column with width_percent
-                    for col_index, width in enumerate(col_widths):
-                        col_key = f'col_{col_index}'
-                        output += f"{indent}  [[{zone_name}.blocks]]\n"
-                        output += f'{indent}    type = "column"\n'
-                        output += f'{indent}    width_percent = "{width}"\n'
-                        
-                        # Recursively render column's children
-                        col_children = children_by_col.get(col_key, [])
-                        if col_children:
-                            output += render_blocks(col_children, f"{zone_name}.blocks.blocks", depth + 2)
+                    if not has_legacy_keys and fc_children.exists():
+                        # NEW FORMAT: Children are likely 'column' blocks (or sequential content)
+                        # We just render them as children of the row.
+                        # If they are 'column' type, they will be rendered as columns.
+                        output += render_blocks(fc_children, f"{zone_name}.blocks", depth + 1)
+                    
+                    else:
+                        # LEGACY FORMAT: Children are mapped to col_N
+                        children_by_col = {}
+                        for child in fc_children:
+                            col_key = child.placement_key or 'col_0'
+                            if col_key not in children_by_col:
+                                children_by_col[col_key] = []
+                            children_by_col[col_key].append(child)
+                            
+                        # Output each column with width_percent
+                        for col_index, width in enumerate(col_widths):
+                            col_key = f'col_{col_index}'
+                            # Only generate a column wrapper if we are in Legacy mode AND converting content to columns
+                            # For Legacy, the children were CONTENT, so we wrap them in a Column block.
+                            output += f"{indent}  [[{zone_name}.blocks]]\n"
+                            output += f'{indent}    type = "column"\n'
+                            output += f'{indent}    width_percent = "{width}"\n'
+                            
+                            # Recursively render column's children
+                            col_children = children_by_col.get(col_key, [])
+                            if col_children:
+                                output += render_blocks(col_children, f"{zone_name}.blocks.blocks", depth + 2)
                     
                     continue  # Skip default handling
 
@@ -1643,6 +1657,8 @@ draft = false
                         output += f'{indent}  items = {items_toml}'
                 
                 # Handle carousel-specific parameters (slides are stored as JSON, not BlockInstance children)
+                # NOTE: Carousels MUST use 'params.slides' as defined in the BlockDefinition schema (see migration 0031).
+                # Do NOT use 'children' (BlockInstance.children) for carousel slides, as the Editor expects 'slides' property.
                 if block.definition_id == 'carousel':
                     slides = params.get('slides', [])
                     if slides:

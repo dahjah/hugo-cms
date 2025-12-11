@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 from django.core.management.base import BaseCommand
 from hugo.models import SiteTemplate
 from hugo.scrapers.yelp import YelpScraper
@@ -180,13 +181,21 @@ class Command(BaseCommand):
             "global_blocks": []
         }
         
-        def fill_blocks(blocks):
+        def fill_blocks(blocks, parent_context=None):
+            if parent_context is None: parent_context = {}
             filled = []
+            
             for t_block in blocks:
                 new_block = t_block.copy()
                 b_id = new_block.get('type') # Start using type
                 params = new_block.get('params', {}).copy()
                 
+                # --- Context Update ---
+                current_context = parent_context.copy()
+                if b_id == 'section':
+                     if params.get('id'):
+                         current_context['section_id'] = params['id']
+
                 # --- FILLING LOGIC ---
                 if b_id == 'hero':
                     params['title'] = synthesized_content.get('hero_headline') or profile.tagline or profile.name
@@ -276,31 +285,53 @@ class Command(BaseCommand):
                 elif b_id == 'carousel':
                     # Populate carousel with gallery images
                     if profile.gallery_images:
-                        carousel_items = []
+                        slides = []
                         # Use top 5 images
                         for img in profile.gallery_images[:5]:
-                            carousel_items.append({
+                            # Each slide contains one image block
+                            slide_content = {
                                 'type': 'image',
                                 'params': {'src': img, 'alt': 'Gallery Image'}
+                            }
+                            
+                            slides.append({
+                                'id': str(uuid.uuid4()),
+                                'children': [slide_content]
                             })
-                        # Carousels store items in children
-                        new_block['children'] = carousel_items
+                        
+                        params['slides'] = slides
+                        params['auto_advance'] = True
+                        params['interval_seconds'] = 6
+                        params['show_dots'] = True
+                        params['show_arrows'] = True
+                        
+                        # Clear children to prevent duplication/confusion
+                        if 'children' in new_block:
+                            del new_block['children']
                 
                 elif b_id == 'text':
-                    # Heuristic: Find specific text blocks by context?
-                    # About content usually follows a 'flex_columns' or is in 'about' section.
-                    # For now, if we have about_content and the block is in a section with style 'light' or id 'about'
-                    # But verifying 'id' of parent section is hard here as we are recursing.
-                    # However, we can use placement_key or just fill first massive Markdown block?
+                    # Auto-fill empty headers based on section ID
+                    content = params.get('content', '')
+                    clean_content = content.replace('\n', '').strip()
+                    empty_h2s = ['<h2></h2>', '<h2 class="text-center"></h2>', '<h2 class="text-center"></h2><p class="text-center"></p>']
                     
-                    # Better approach: check content. But content is empty.
-                    pass 
+                    is_empty_header = False
+                    for empty_h2 in empty_h2s:
+                        if empty_h2 in clean_content: # Simple substring check sufficient for these templates
+                             is_empty_header = True
+                             break
+                    
+                    if is_empty_header:
+                         sec_id = current_context.get('section_id')
+                         if sec_id and sec_id not in ['hero', 'main']: # Don't label hero
+                              title = sec_id.replace('-', ' ').title()
+                              if 'text-center' in content:
+                                  params['content'] = f'<h2 class="text-center">{title}</h2>'
+                              else:
+                                  params['content'] = f'<h2>{title}</h2>'
                 
                 elif b_id == 'markdown':
                      if synthesized_content.get('about_content'):
-                         # Very crude heuristic: fill any empty markdown block with about content?
-                         # Or better, let's target the 'About' section specifically in the page loop if possible.
-                         # Instead, let's just fill it if params['content'] is empty.
                          if not params.get('content'):
                              params['content'] = synthesized_content['about_content']
 
@@ -313,10 +344,38 @@ class Command(BaseCommand):
 
                 # Recurse
                 if new_block.get('children'):
-                    new_block['children'] = fill_blocks(new_block['children'])
+                    new_block['children'] = fill_blocks(new_block['children'], parent_context=current_context)
                 
-                new_block['params'] = params
-                filled.append(new_block)
+                # --- CLEANUP LOGIC ---
+                should_skip = False
+                
+                # 1. Empty Process Steps
+                if b_id == 'process_steps' and not params.get('steps'): should_skip = True
+                
+                # 2. Empty Embeds
+                if b_id == 'embed' and not params.get('embed_code'): should_skip = True
+                
+                # 3. Still Empty Text (after auto-fill attempt)
+                if b_id == 'text':
+                    content = params.get('content', '')
+                    clean_content = content.replace('\n', '').strip()
+                    empty_checks = ['<h2></h2>', '<h2 class="text-center"></h2>', '<h2 class="text-center"></h2><p class="text-center"></p>', '']
+                    for check in empty_checks:
+                        if clean_content == check:
+                            should_skip = True
+                            break
+                            
+                # 4. Empty Flex Columns (if children were removed)
+                # If we have flex_columns with children, but after recursion children became empty -> remove parent
+                if b_id == 'flex_columns' and new_block.get('children') == []: should_skip = True
+
+                # 5. Empty Columns (similarly)
+                if b_id == 'column' and new_block.get('children') == []: should_skip = True
+                
+                if not should_skip:
+                    new_block['params'] = params
+                    filled.append(new_block)
+                    
             return filled
 
         for t_page in template_pages:
@@ -356,7 +415,6 @@ class Command(BaseCommand):
             from django.conf import settings
             from hugo.models import UploadedFile
             from pathlib import Path
-            import uuid
             
             def download_and_cache(url, website):
                 if not url or not url.startswith('http'): 

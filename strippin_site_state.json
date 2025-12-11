@@ -38,7 +38,7 @@
             {
               "type": "text",
               "params": {
-                "content": "<h2 class=\"text-center\"></h2><p class=\"text-center\"></p>"
+                "content": "<h2 class=\"text-center\">Highlights</h2>"
               }
             },
             {
@@ -77,7 +77,7 @@
             {
               "type": "text",
               "params": {
-                "content": "<h2></h2>"
+                "content": "<h2>Menu</h2>"
               }
             },
             {
@@ -145,27 +145,7 @@
             {
               "type": "text",
               "params": {
-                "content": "<h2></h2>"
-              }
-            },
-            {
-              "type": "text",
-              "params": {
-                "content": ""
-              }
-            },
-            {
-              "type": "process_steps",
-              "params": {
-                "steps": [],
-                "layout": "horizontal"
-              }
-            },
-            {
-              "type": "embed",
-              "params": {
-                "embed_code": "",
-                "height": "400px"
+                "content": "<h2>Locations</h2>"
               }
             }
           ]
@@ -190,7 +170,7 @@
                     {
                       "type": "text",
                       "params": {
-                        "content": "<h2></h2>"
+                        "content": "<h2>Catering</h2>"
                       }
                     },
                     {
@@ -263,7 +243,7 @@
                     {
                       "type": "text",
                       "params": {
-                        "content": "<h2></h2>"
+                        "content": "<h2>About</h2>"
                       }
                     },
                     {
@@ -311,52 +291,79 @@
             {
               "type": "text",
               "params": {
-                "content": "<h2 class=\"text-center\"></h2>"
+                "content": "<h2 class=\"text-center\">Reviews</h2>"
               }
             },
             {
               "type": "carousel",
               "params": {
                 "auto_advance": true,
-                "interval_seconds": 6
-              },
-              "children": [
-                {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg",
-                    "alt": "Gallery Image"
+                "interval_seconds": 6,
+                "slides": [
+                  {
+                    "id": "73b26a70-0cfb-4323-8f8e-47c76bc0d513",
+                    "children": [
+                      {
+                        "type": "image",
+                        "params": {
+                          "src": "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg",
+                          "alt": "Gallery Image"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "da1f54c9-c914-4840-9c6a-22145d11d3f5",
+                    "children": [
+                      {
+                        "type": "image",
+                        "params": {
+                          "src": "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg",
+                          "alt": "Gallery Image"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "34cf6a0d-7964-400e-9706-b3d28bd6211a",
+                    "children": [
+                      {
+                        "type": "image",
+                        "params": {
+                          "src": "https://s3-media0.fl.yelpcdn.com/bphoto/2NRRmCOMrk8WYpvYeUzPIQ/l.jpg",
+                          "alt": "Gallery Image"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "22209e39-07e9-4dc8-8c4e-7498dff30e22",
+                    "children": [
+                      {
+                        "type": "image",
+                        "params": {
+                          "src": "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg",
+                          "alt": "Gallery Image"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "d098db9a-ab41-40c3-b7d4-c9b9301ffe3c",
+                    "children": [
+                      {
+                        "type": "image",
+                        "params": {
+                          "src": "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg",
+                          "alt": "Gallery Image"
+                        }
+                      }
+                    ]
                   }
-                },
-                {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg",
-                    "alt": "Gallery Image"
-                  }
-                },
-                {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/2NRRmCOMrk8WYpvYeUzPIQ/l.jpg",
-                    "alt": "Gallery Image"
-                  }
-                },
-                {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg",
-                    "alt": "Gallery Image"
-                  }
-                },
-                {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg",
-                    "alt": "Gallery Image"
-                  }
-                }
-              ]
+                ],
+                "show_dots": true,
+                "show_arrows": true
+              }
             },
             {
               "type": "google_reviews",
@@ -464,7 +471,7 @@
             {
               "type": "text",
               "params": {
-                "content": "<h2 class=\"text-center\"></h2><p class=\"text-center\"></p>"
+                "content": "<h2 class=\"text-center\">Contact</h2>"
               }
             },
             {
@@ -520,12 +527,6 @@
           },
           "children": [
             {
-              "type": "text",
-              "params": {
-                "content": "<h2></h2>"
-              }
-            },
-            {
               "type": "menu_grid",
               "params": {
                 "items": [
@@ -567,45 +568,72 @@
               "type": "carousel",
               "params": {
                 "auto_advance": true,
-                "interval_seconds": 5
-              },
-              "children": [
-                {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg",
-                    "alt": "Gallery Image"
+                "interval_seconds": 6,
+                "slides": [
+                  {
+                    "id": "a09bfcb4-848b-46d8-a840-c898622dd6c5",
+                    "children": [
+                      {
+                        "type": "image",
+                        "params": {
+                          "src": "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg",
+                          "alt": "Gallery Image"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "f3260ef4-6a20-4ec4-8330-bea5974f1347",
+                    "children": [
+                      {
+                        "type": "image",
+                        "params": {
+                          "src": "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg",
+                          "alt": "Gallery Image"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "ca7cc523-61c5-4c9e-8464-315c4897310f",
+                    "children": [
+                      {
+                        "type": "image",
+                        "params": {
+                          "src": "https://s3-media0.fl.yelpcdn.com/bphoto/2NRRmCOMrk8WYpvYeUzPIQ/l.jpg",
+                          "alt": "Gallery Image"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "a58987c3-422d-47c7-8a5f-3a63b2caca41",
+                    "children": [
+                      {
+                        "type": "image",
+                        "params": {
+                          "src": "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg",
+                          "alt": "Gallery Image"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "7f2c849f-30a0-4e0e-91da-8416e16088b3",
+                    "children": [
+                      {
+                        "type": "image",
+                        "params": {
+                          "src": "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg",
+                          "alt": "Gallery Image"
+                        }
+                      }
+                    ]
                   }
-                },
-                {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg",
-                    "alt": "Gallery Image"
-                  }
-                },
-                {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/2NRRmCOMrk8WYpvYeUzPIQ/l.jpg",
-                    "alt": "Gallery Image"
-                  }
-                },
-                {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg",
-                    "alt": "Gallery Image"
-                  }
-                },
-                {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg",
-                    "alt": "Gallery Image"
-                  }
-                }
-              ]
+                ],
+                "show_dots": true,
+                "show_arrows": true
+              }
             }
           ]
         }
@@ -634,12 +662,6 @@
             "style": "default"
           },
           "children": [
-            {
-              "type": "text",
-              "params": {
-                "content": "<h2></h2>"
-              }
-            },
             {
               "type": "markdown",
               "params": {
@@ -677,21 +699,7 @@
           "params": {
             "style": "alt"
           },
-          "children": [
-            {
-              "type": "text",
-              "params": {
-                "content": "<h2></h2>"
-              }
-            },
-            {
-              "type": "process_steps",
-              "params": {
-                "steps": [],
-                "layout": "vertical"
-              }
-            }
-          ]
+          "children": []
         },
         {
           "type": "section",
@@ -700,12 +708,6 @@
             "style": "default"
           },
           "children": [
-            {
-              "type": "text",
-              "params": {
-                "content": "<h2></h2>"
-              }
-            },
             {
               "type": "accordion",
               "params": {
@@ -772,12 +774,6 @@
               "type": "text",
               "params": {
                 "content": "<h1></h1>"
-              }
-            },
-            {
-              "type": "text",
-              "params": {
-                "content": ""
               }
             },
             {

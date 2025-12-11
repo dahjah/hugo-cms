@@ -14,7 +14,7 @@ layout = "contact"
     brand_name = "Strippin Dippin Chicken"
     tagline = ""
     link_url = "/"
-    logo_image = "https://scontent-vie1-1.cdninstagram.com/v/t51.2885-19/132955810_824625285053035_230977350139597472_n.jpg?stp=dst-jpg_s640x640_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=scontent-vie1-1.cdninstagram.com&_nc_cat=107&_nc_oc=Q6cZ2QG6BmmbOSTG0BGlYrqBsKIvJGVNjp2JqaBCWhFBeI8K09xx8ao13evahJ5suWKBvnw&_nc_ohc=GwdXFAA7lVUQ7kNvwGN80N7&_nc_gid=KaLWarA-7MRP_8PkfBm6Mg&edm=AKralEIBAAAA&ccb=7-5&ig_cache_key=GKK_7AdrOjAJ-u0CAKBSOxqtmDQDbkULAAAB6406400j-ccb7-5&oh=00_AflXkN7v2B3yK8LSiGDLhRz0Jz7dZNNkvDaRioMWCA5zVw&oe=693FE36F&_nc_sid=2fe71f"
+    logo_image = "/media/uploads/00919c7d-c866-4e76-b042-897b869a56e2.jpg"
   [[header_blocks.blocks]]
     type = "menu"
     style = "pills"
@@ -29,17 +29,26 @@ layout = "contact"
     type = "text"
     content = "<h1></h1>"
   [[main_blocks.blocks]]
-    type = "text"
-    content = ""
-  [[main_blocks.blocks]]
     type = "row"
     flex_mode = true
     gap = "2"
     [[main_blocks.blocks.blocks]]
       type = "column"
-      width_percent = "60"
+      [[main_blocks.blocks.blocks.blocks]]
+        type = "text"
+        content = "<h3></h3>"
+      [[main_blocks.blocks.blocks.blocks]]
+        type = "markdown"
+        content = "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you."
+
     [[main_blocks.blocks.blocks]]
       type = "column"
-      width_percent = "40"
+      [[main_blocks.blocks.blocks.blocks]]
+        type = "text"
+        content = "<h3></h3>"
+      [[main_blocks.blocks.blocks.blocks]]
+        type = "markdown"
+        content = "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you."
+
 
 +++

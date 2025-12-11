@@ -14,7 +14,7 @@ layout = "single"
     brand_name = "Strippin Dippin Chicken"
     tagline = ""
     link_url = "/"
-    logo_image = "https://scontent-vie1-1.cdninstagram.com/v/t51.2885-19/132955810_824625285053035_230977350139597472_n.jpg?stp=dst-jpg_s640x640_tt6&efg=eyJ2ZW5jb2RlX3RhZyI6InByb2ZpbGVfcGljLmRqYW5nby4xMDgwLmMyIn0&_nc_ht=scontent-vie1-1.cdninstagram.com&_nc_cat=107&_nc_oc=Q6cZ2QG6BmmbOSTG0BGlYrqBsKIvJGVNjp2JqaBCWhFBeI8K09xx8ao13evahJ5suWKBvnw&_nc_ohc=GwdXFAA7lVUQ7kNvwGN80N7&_nc_gid=KaLWarA-7MRP_8PkfBm6Mg&edm=AKralEIBAAAA&ccb=7-5&ig_cache_key=GKK_7AdrOjAJ-u0CAKBSOxqtmDQDbkULAAAB6406400j-ccb7-5&oh=00_AflXkN7v2B3yK8LSiGDLhRz0Jz7dZNNkvDaRioMWCA5zVw&oe=693FE36F&_nc_sid=2fe71f"
+    logo_image = "/media/uploads/00919c7d-c866-4e76-b042-897b869a56e2.jpg"
   [[header_blocks.blocks]]
     type = "menu"
     style = "pills"
@@ -24,22 +24,19 @@ layout = "single"
 
 [[main_blocks]]
   type = "hero"
-  title = "We serve up chicken strips, BBQ chicken salad, and sliders! Get your meal with fries and choose two complimentary sauce flavors. Add a cookie of the day and a drink, and you've got yourself a Strippin' Dippin' Chicken meal!"
+  title = "Delicious Strippin Dippin Chicken"
   subtitle = "Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces."
-  bgImage = "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/o.jpg"
+  bgImage = "/media/uploads/65d62a34-b3df-4a98-aeee-6f353d6e5d30.jpg"
   cta_text = "View Menu"
   cta_url = ""
 [[main_blocks]]
   type = "section"
   style = "default"
   [[main_blocks.blocks]]
-    type = "text"
-    content = "<h2></h2>"
-  [[main_blocks.blocks]]
     type = "menu_grid"
     columns = "3"
     show_images = true
-    items = [{name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/2NRRmCOMrk8WYpvYeUzPIQ/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/LOzXwX76a3XgwXfurHOLhw/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/jRfqRtK96uKcT5pFvm4IGA/l.jpg", description = ""}, {name = "", image = "https://s3-media0.fl.yelpcdn.com/bphoto/II7vts50IqLHzrSA-FqoLA/l.jpg", description = ""}]
+    items = [{name = "Famous Chicken Strips", image = "", description = "Crispy, golden-brown chicken tenders served with our signature house sauce. ($12.99)"}, {name = "Hand-Cut Fries", image = "", description = "Freshly cut potatoes, twice-fried for extra crispiness. ($5.99)"}, {name = "Combo Meal", image = "", description = "3 strips, fries, and a drink. ($16.99)"}, {name = "Spicy Dippin Sauce", image = "", description = "Our secret blend of spices and creaminess. ($0.50)"}]
 
 [[main_blocks]]
   type = "section"
@@ -47,7 +44,9 @@ layout = "single"
   [[main_blocks.blocks]]
     type = "carousel"
     auto_advance = true
-    interval_seconds = "5"
+    interval_seconds = "6"
+    show_dots = true
+    show_arrows = true
     [[main_blocks.blocks.blocks]]
       type = "image"
       src = "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg"
@@ -68,7 +67,6 @@ layout = "single"
       type = "image"
       src = "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg"
       alt = "Gallery Image"
-
 
 [[footer_blocks]]
   type = "social_links"
