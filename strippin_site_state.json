@@ -415,7 +415,9 @@
             {
               "type": "stats_counter",
               "params": {
-                "items": [
+                "items": [],
+                "animate": true,
+                "stats": [
                   {
                     "value": "3.3",
                     "label": "Rating",
@@ -446,8 +448,7 @@
                     "label": "Reviews",
                     "suffix": "+"
                   }
-                ],
-                "animate": true
+                ]
               }
             }
           ]

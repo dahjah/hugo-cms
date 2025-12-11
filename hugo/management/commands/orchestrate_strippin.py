@@ -222,7 +222,7 @@ class Command(BaseCommand):
                         s_list.append({'value': str(v), 'label': k.capitalize(), 'suffix': ''})
                     if profile.stats.get('review_count') and 'reviews' not in profile.stats:
                          s_list.append({'value': str(profile.stats.get('review_count')), 'label': 'Reviews', 'suffix': '+'})
-                    params['items'] = s_list # Note: Template uses 'items' or 'stats'? schema says 'stats', DB debug said 'items'. Using 'items' based on DB debug.
+                    params['stats'] = s_list # Corrected key to match template
 
                 elif b_id == 'google_reviews':
                     r_list = []
