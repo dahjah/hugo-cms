@@ -137,7 +137,12 @@ theme = []
              f.write("""{{ if .type }}
     {{ $partialPath := printf "blocks/%s.html" .type }}
     {{ if templates.Exists (printf "partials/%s" $partialPath) }}
-        {{ partial $partialPath . }}
+        {{/* Merge params into root context if they exist */}}
+        {{ $context := . }}
+        {{ if .params }}
+            {{ $context = merge . .params }}
+        {{ end }}
+        {{ partial $partialPath $context }}
     {{ else }}
         <div class="p-4 border border-red-200 bg-red-50 text-red-700 rounded my-4">
             <strong>Missing Block Template:</strong> {{ .type }}
