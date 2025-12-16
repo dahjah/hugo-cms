@@ -328,7 +328,7 @@ theme = []
             <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">{{ .title }}</h1>
             <p class="text-lg md:text-xl text-white/90 max-w-2xl mx-auto drop-shadow">{{ .subtitle }}</p>
             {{ if .cta_url }}
-            <a href="{{ .cta_url }}" class="inline-block mt-6 px-8 py-3 rounded-full text-white font-semibold shadow-lg transition-all hover:scale-105" style="background: var(--color-primary, #f59e0b);">{{ .cta_text }}</a>
+            <a href="{{ .cta_url }}" class="btn btn-primary inline-block mt-6 px-8 py-3 rounded-full font-semibold shadow-lg transition-all hover:scale-105">{{ .cta_text }}</a>
             {{ end }}
         </div>
     </div>
@@ -339,7 +339,7 @@ theme = []
 </div>"""
 
         button_tpl = """<div class="mb-4 {{ .css_classes }}">
-    <a href="{{ .url }}" class="inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 no-underline px-6 py-3 text-base text-white shadow-md hover:shadow-lg" style="background: var(--color-primary, #f59e0b);">{{ .text }}</a>
+    <a href="{{ .url }}" class="btn btn-primary inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 no-underline px-6 py-3 text-base shadow-md hover:shadow-lg">{{ .text }}</a>
 </div>"""
 
         accordion_tpl = """<div class="space-y-2 {{ .css_classes }}">
