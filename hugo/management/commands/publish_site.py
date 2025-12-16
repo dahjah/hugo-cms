@@ -335,6 +335,10 @@ theme = []
 </div>"""
 
         markdown_tpl = """<div class="prose max-w-none py-6 {{ .css_classes }}">
+    {{ .md | markdownify }}
+</div>"""
+
+        text_tpl = """<div class="prose max-w-none py-6 {{ .css_classes }}">
     {{ .content | markdownify }}
 </div>"""
 
@@ -493,10 +497,6 @@ theme = []
         with open(blocks / 'image.html', 'w') as f: f.write(image_tpl)
         with open(blocks / 'carousel.html', 'w') as f: f.write(carousel_tpl)
         
-        # --- ADDITIONAL BLOCK TEMPLATES ---
-        text_tpl = """<div class="prose max-w-none py-6 {{ .css_classes }}">
-    {{ .content | markdownify }}
-</div>"""
 
         gallery_tpl = """<div class="py-12 {{ .css_classes }}">
     {{ if .title }}<h2 class="text-3xl font-bold text-center mb-8 text-base-content">{{ .title }}</h2>{{ end }}

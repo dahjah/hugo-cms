@@ -53,10 +53,6 @@
           "type": "text"
         },
         {
-          "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
-          "type": "markdown"
-        },
-        {
           "items": [
             {
               "name": "Famous Chicken Strips",
@@ -112,6 +108,10 @@
       "type": "section",
       "blocks": [
         {
+          "content": "<p>Your content here...</p>",
+          "type": "text"
+        },
+        {
           "content": "<h2>Locations</h2>",
           "type": "text"
         }
@@ -135,18 +135,14 @@
                   "type": "column",
                   "blocks": [
                     {
-                      "content": "<h2>Catering</h2>",
-                      "type": "text"
-                    },
-                    {
-                      "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
-                      "type": "markdown"
-                    },
-                    {
                       "text": "Get Catering Info",
                       "url": "/catering",
                       "style": "primary",
                       "type": "button"
+                    },
+                    {
+                      "md": "## Heading\n\nYour markdown content here.",
+                      "type": "markdown"
                     }
                   ]
                 },
@@ -194,6 +190,10 @@
             }
           ],
           "css_classes": "flex-col md:flex-row md:flex-nowrap"
+        },
+        {
+          "md": "THIS IS A SECOND MARKDOWN",
+          "type": "markdown"
         }
       ]
     },
@@ -215,28 +215,14 @@
                   "type": "column",
                   "blocks": [
                     {
-                      "content": "<h2>About</h2>",
-                      "type": "text"
-                    },
-                    {
-                      "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
-                      "type": "markdown"
-                    },
-                    {
                       "text": "YOUR MOM",
                       "author": "KENNY",
                       "title": "",
                       "type": "quote"
-                    }
-                  ]
-                },
-                {
-                  "type": "column",
-                  "blocks": [
+                    },
                     {
-                      "src": "",
-                      "alt": "",
-                      "type": "image"
+                      "content": "YOUR MOM HERE",
+                      "type": "text"
                     }
                   ]
                 }
