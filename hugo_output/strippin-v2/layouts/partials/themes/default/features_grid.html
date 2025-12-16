@@ -4,7 +4,7 @@
     <h2 class="text-3xl font-bold text-center mb-12 text-slate-900">{{ .title }}</h2>
     {{ end }}
     <div class="max-w-6xl mx-auto flex flex-wrap justify-center gap-8">
-        {{ range .features }}
+        {{ range .items }}
         <div class="w-full md:w-1/3 lg:w-1/4 text-center p-6 rounded-lg hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 bg-white border border-slate-100">
             {{ if .icon }}
             <div class="w-16 h-16 mx-auto mb-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center shadow-sm">
