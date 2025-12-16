@@ -85,14 +85,22 @@
         },
         {
           "justify": "center",
-          "gap": "3",
+          "gap": "2",
+          "align": "center",
           "type": "row",
           "blocks": [
             {
-              "text": "See Full Menu",
-              "url": "/menu",
-              "style": "primary",
-              "type": "button"
+              "style": "default",
+              "padding": "normal",
+              "type": "section",
+              "blocks": [
+                {
+                  "text": "See Full Menu",
+                  "url": "/menu",
+                  "style": "primary",
+                  "type": "button"
+                }
+              ]
             }
           ]
         }
@@ -121,7 +129,7 @@
           "blocks": [
             {
               "type": "column",
-              "width_percent": "50",
+              "width_percent": "70.1",
               "blocks": [
                 {
                   "type": "column",
@@ -172,10 +180,20 @@
             },
             {
               "type": "column",
-              "width_percent": "50",
-              "blocks": []
+              "width_percent": "29.9",
+              "blocks": [
+                {
+                  "title": "Welcome",
+                  "subtitle": "Your tagline here",
+                  "bgImage": "",
+                  "cta_text": "",
+                  "cta_url": "",
+                  "type": "hero"
+                }
+              ]
             }
-          ]
+          ],
+          "css_classes": "flex-col md:flex-row md:flex-nowrap"
         }
       ]
     },
@@ -191,7 +209,7 @@
           "blocks": [
             {
               "type": "column",
-              "width_percent": "55",
+              "width_percent": "62.2",
               "blocks": [
                 {
                   "type": "column",
@@ -205,8 +223,8 @@
                       "type": "markdown"
                     },
                     {
-                      "text": "",
-                      "author": "",
+                      "text": "YOUR MOM",
+                      "author": "KENNY",
                       "title": "",
                       "type": "quote"
                     }
@@ -226,10 +244,17 @@
             },
             {
               "type": "column",
-              "width_percent": "45",
-              "blocks": []
+              "width_percent": "37.8",
+              "blocks": [
+                {
+                  "text": "WHY DOES ANTIGRAVITY KEEP BREAKING THIS BLOCK?????",
+                  "author": "",
+                  "type": "quote"
+                }
+              ]
             }
-          ]
+          ],
+          "css_classes": "flex-col md:flex-row md:flex-nowrap"
         }
       ]
     },

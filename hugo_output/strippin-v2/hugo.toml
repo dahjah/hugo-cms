@@ -6,7 +6,7 @@ theme = []
 
 [params]
     description = ''
-    theme_preset = 'fantasy'
+    theme_preset = 'cupcake'
     
 [mediaTypes]
 [mediaTypes."text/css"]

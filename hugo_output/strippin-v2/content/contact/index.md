@@ -42,7 +42,8 @@
                 }
               ]
             }
-          ]
+          ],
+          "css_classes": "flex-col md:flex-row md:flex-nowrap"
         }
       ]
     },
@@ -102,7 +103,8 @@
             }
           ]
         }
-      ]
+      ],
+      "css_classes": "flex-col md:flex-row md:flex-nowrap"
     },
     {
       "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",

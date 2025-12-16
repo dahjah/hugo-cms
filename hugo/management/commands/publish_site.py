@@ -937,8 +937,13 @@ theme = []
                         'gap': "2",
                         'blocks': [] # Will hold columns or content
                     }
+                    
+                    # Force responsive flex behavior: stack on mobile, row on desktop (no wrap)
+                    # flex-nowrap is crucial because explicit widths (flex-basis) + gap > 100% causes wrapping without it
+                    fc_classes = ['flex-col', 'md:flex-row', 'md:flex-nowrap']
                     if block.params.get('css_classes'):
-                        row_block['css_classes'] = block.params['css_classes']
+                        fc_classes.append(block.params['css_classes'])
+                    row_block['css_classes'] = ' '.join(fc_classes)
                         
                     if not has_legacy_keys and fc_children.exists():
                         # New format: children directly in row
