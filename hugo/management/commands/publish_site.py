@@ -771,6 +771,7 @@ theme = []
         with open(blocks / 'stats_counter.html', 'w') as f: f.write(stats_dispatcher)
         with open(blocks / 'gallery.html', 'w') as f: f.write(gallery_dispatcher)
         with open(blocks / 'social_links.html', 'w') as f: f.write(social_links_dispatcher)
+
         
         # Write default theme versions
         with open(default_theme_dir / 'google_reviews.html', 'w') as f: f.write(default_google_reviews)
@@ -785,17 +786,7 @@ theme = []
         with open(daisy_theme_dir / 'stats_counter.html', 'w') as f: f.write(stats_counter_tpl)
         with open(daisy_theme_dir / 'gallery.html', 'w') as f: f.write(gallery_tpl)
         with open(daisy_theme_dir / 'social_links.html', 'w') as f: f.write(daisy_social_links)
-        
-        # Write non-themed blocks directly
-        with open(blocks / 'text.html', 'w') as f: f.write(text_tpl)
-        with open(blocks / 'brand_logo.html', 'w') as f: f.write(brand_logo_tpl)
-        
-        # Write generic fallback ONLY for truly unknown ones
-        for name in ['embed', 'cta_hero', 'faq', 'flip_cards', 'process_steps']:
-              if not (blocks / f'{name}.html').exists():
-                  with open(blocks / f'{name}.html', 'w') as f: f.write(f'<div class="{name}">{{{{ . | jsonify }}}}</div>')
-        
-        menu_tpl = """{{ $position := .position | default "normal" }}
+        default_menu = """{{ $position := .position | default "normal" }}
 {{ $isAlwaysHamburger := or (eq .responsive true) (eq .responsive "true") }}
 {{ $hamburgerDir := .hamburgerDirection | default "dropdown" }}
 {{ $alignment := .alignment | default "left" }}
@@ -923,9 +914,183 @@ theme = []
         sidebarOverlay.addEventListener('click', closeSidebar);
     }
 </script>"""
-        
-        with open(blocks / 'menu.html', 'w') as f: f.write(menu_tpl)
 
+        daisy_menu = """{{ $position := .position | default "normal" }}
+{{ $isAlwaysHamburger := or (eq .responsive true) (eq .responsive "true") }}
+{{ $hamburgerDir := .hamburgerDirection | default "dropdown" }}
+{{ $alignment := .alignment | default "left" }}
+{{ $side := .sidebarSide | default "left" }}
+{{ $navbarStartClass := "" }}
+{{ $navbarCenterClass := "" }}
+{{ $navbarEndClass := "" }}
+
+{{ if eq $alignment "center" }}
+    {{ $navbarCenterClass = "flex-1" }}
+    {{ $navbarStartClass = "flex-1" }} 
+    {{ $navbarEndClass = "flex-1 justify-end" }}
+{{ else if eq $alignment "right" }}
+    {{ $navbarStartClass = "flex-1" }}
+    {{ $navbarEndClass = "flex-none" }}
+{{ else }}
+    {{ $navbarStartClass = "flex-1" }}
+    {{ $navbarEndClass = "flex-none" }}
+{{ end }}
+
+{{ $classes := "navbar bg-base-100 shadow-sm mb-8 z-40" }}
+{{ if eq $position "overlay" }}
+    {{ $classes = "navbar absolute top-0 left-0 right-0 z-40 bg-base-100/90 backdrop-blur-sm shadow-md" }}
+{{ else if eq $position "fixed" }}
+    {{ $classes = "navbar fixed top-0 left-0 right-0 z-40 bg-base-100 shadow-md" }}
+{{ end }}
+
+<div class="{{ $classes }} {{ .css_classes }}">
+    <!-- Navbar Start (Logo or Hamburger for sidebar) -->
+    <div class="navbar-start">
+        {{ if eq $hamburgerDir "sidebar" }}
+        <div class="{{ if not $isAlwaysHamburger }}lg:hidden{{ end }}">
+            <button id="daisy-sidebar-toggle" class="btn btn-ghost btn-circle">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
+            </button>
+        </div>
+        {{ else if eq $hamburgerDir "dropdown" }}
+        <div class="dropdown {{ if not $isAlwaysHamburger }}lg:hidden{{ end }}">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
+            </div>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                {{ range .items }}
+                <li><a href="{{ .url }}">{{ .label }}</a></li>
+                {{ end }}
+            </ul>
+        </div>
+        {{ end }}
+    </div>
+
+    <!-- Navbar Center (Hidden on mobile usually, or main links) -->
+    <div class="navbar-center {{ if not $isAlwaysHamburger }}hidden lg:flex{{ else }}hidden{{ end }}">
+        {{ if eq $alignment "center" }}
+        <ul class="menu menu-horizontal px-1">
+            {{ range .items }}
+            <li><a href="{{ .url }}">{{ .label }}</a></li>
+            {{ end }}
+        </ul>
+        {{ end }}
+    </div>
+
+    <!-- Navbar End (Links if right aligned, or buttons) -->
+    <div class="navbar-end">
+        {{ if ne $alignment "center" }}
+        <ul class="menu menu-horizontal px-1 {{ if not $isAlwaysHamburger }}hidden lg:flex{{ else }}hidden{{ end }}">
+            {{ range .items }}
+            <li><a href="{{ .url }}">{{ .label }}</a></li>
+            {{ end }}
+        </ul>
+        {{ end }}
+    </div>
+</div>
+
+{{ if eq $hamburgerDir "sidebar" }}
+<!-- Sidebar Overlay and Panel (Drawer Style) -->
+{{ $sideClass := "left-0" }}
+{{ $transClass := "-translate-x-full" }}
+{{ if eq $side "right" }}
+    {{ $sideClass = "right-0" }}
+    {{ $transClass = "translate-x-full" }}
+{{ end }}
+
+<div id="daisy-sidebar-overlay" class="fixed inset-0 bg-black/50 z-[100] hidden transition-opacity duration-300 opacity-0"></div>
+<div id="daisy-sidebar-panel" class="fixed top-0 {{ $sideClass }} h-full w-80 bg-base-200 z-[101] transform {{ $transClass }} transition-transform duration-300 shadow-xl flex flex-col" data-side="{{ $side }}">
+    <div class="p-4 flex justify-between items-center border-b border-base-300 flex-none">
+        <span class="text-xl font-bold">Menu</span>
+        <button id="daisy-sidebar-close" class="btn btn-ghost btn-circle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+    </div>
+    <div class="flex-1 overflow-y-auto">
+        <ul class="menu p-4 w-full text-base-content">
+            {{ range .items }}
+            <li><a href="{{ .url }}" class="text-lg">{{ .label }}</a></li>
+            {{ end }}
+        </ul>
+    </div>
+    {{ if .sidebarFooterBlocks }}
+    <div class="p-4 border-t border-base-300 flex-none bg-base-100">
+        {{ range .sidebarFooterBlocks }}
+            {{ partial "blocks/render-block.html" . }}
+        {{ end }}
+    </div>
+    {{ end }}
+</div>
+
+<script>
+    (function() {
+        const toggle = document.getElementById('daisy-sidebar-toggle');
+        const overlay = document.getElementById('daisy-sidebar-overlay');
+        const panel = document.getElementById('daisy-sidebar-panel');
+        const close = document.getElementById('daisy-sidebar-close');
+        
+        function openSidebar() {
+            if(!panel) return;
+            const side = panel.dataset.side || 'left';
+            const transClass = side === 'right' ? 'translate-x-full' : '-translate-x-full';
+            
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                panel.classList.remove(transClass);
+            }, 10);
+        }
+        
+        function closeSidebar() {
+            if(!panel) return;
+            const side = panel.dataset.side || 'left';
+            const transClass = side === 'right' ? 'translate-x-full' : '-translate-x-full';
+            
+            overlay.classList.add('opacity-0');
+            panel.classList.add(transClass);
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 300);
+        }
+        
+        if(toggle) toggle.addEventListener('click', openSidebar);
+        if(close) close.addEventListener('click', closeSidebar);
+        if(overlay) overlay.addEventListener('click', closeSidebar);
+    })();
+</script>
+{{ end }}
+"""
+
+        menu_dispatcher = """{{ $theme := site.Params.theme_preset | default "default" }}
+{{ $templateDir := "default" }}
+{{ if ne $theme "default" }}
+    {{ $templateDir = "daisy" }}
+{{ end }}
+{{ partial (printf "themes/%s/menu.html" $templateDir) . }}"""
+
+        # Write Menu files (Now that templates are defined)
+        with open(blocks / 'menu.html', 'w') as f: f.write(menu_dispatcher)
+        with open(daisy_theme_dir / 'menu.html', 'w') as f: f.write(daisy_menu)
+        with open(default_theme_dir / 'menu.html', 'w') as f: f.write(default_menu)
+        
+        # Write daisy theme versions (using existing DaisyUI templates)
+        with open(daisy_theme_dir / 'google_reviews.html', 'w') as f: f.write(google_reviews_tpl)
+        with open(daisy_theme_dir / 'accordion.html', 'w') as f: f.write(accordion_tpl)
+        with open(daisy_theme_dir / 'stats_counter.html', 'w') as f: f.write(stats_counter_tpl)
+        with open(daisy_theme_dir / 'gallery.html', 'w') as f: f.write(gallery_tpl)
+        with open(daisy_theme_dir / 'social_links.html', 'w') as f: f.write(daisy_social_links)
+        with open(daisy_theme_dir / 'menu.html', 'w') as f: f.write(daisy_menu)
+        with open(default_theme_dir / 'menu.html', 'w') as f: f.write(default_menu)
+        
+        # Write non-themed blocks directly
+        with open(blocks / 'text.html', 'w') as f: f.write(text_tpl)
+        with open(blocks / 'brand_logo.html', 'w') as f: f.write(brand_logo_tpl)
+        
+        # Write generic fallback ONLY for truly unknown ones
+        for name in ['embed', 'cta_hero', 'faq', 'flip_cards', 'process_steps']:
+              if not (blocks / f'{name}.html').exists():
+                  with open(blocks / f'{name}.html', 'w') as f: f.write(f'<div class="{name}">{{{{ . | jsonify }}}}</div>')
+        
         # Write generic fallback for others if they don't exist
         for name in ['text', 'gallery', 'stats', 'embed', 'cta_hero', 'social_links', 'faq', 'google_reviews', 'flip_cards', 'process_steps']:
              if not (blocks / f'{name}.html').exists():
