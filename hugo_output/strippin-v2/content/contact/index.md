@@ -14,7 +14,7 @@ layout = "contact"
     brand_name = "Strippin Dippin Chicken"
     tagline = ""
     link_url = "/"
-    logo_image = "/media/uploads/00919c7d-c866-4e76-b042-897b869a56e2.jpg"
+    logo_image = "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg"
   [[header_blocks.blocks]]
     type = "menu"
     style = "pills"

@@ -587,18 +587,30 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     {{ if .title }}
     <h2 class="text-3xl font-bold text-center mb-12 text-slate-900">{{ .title }}</h2>
     {{ end }}
-    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="max-w-6xl mx-auto flex flex-wrap justify-center gap-8">
         {{ range .features }}
-        <div class="text-center p-6 rounded-lg hover:shadow-lg transition-shadow">
+        <div class="w-full md:w-1/3 lg:w-1/4 text-center p-6 rounded-lg hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 bg-white border border-slate-100">
             {{ if .icon }}
-            <div class="w-16 h-16 mx-auto mb-4 bg-indigo-100 rounded-full flex items-center justify-center">
-                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            <div class="w-16 h-16 mx-auto mb-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center shadow-sm">
+                {{ if eq .icon "truck" }}
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path></svg>
+                {{ else if eq .icon "leaf" }}
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                {{ else if eq .icon "map-pin" }}
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                {{ else if eq .icon "heart" }}
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                {{ else if eq .icon "fire" }}
+                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg>
+                {{ else }}
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                 </svg>
+                {{ end }}
             </div>
             {{ end }}
-            <h4 class="text-xl font-semibold mb-3 text-slate-800">{{ .title }}</h4>
-            <p class="text-slate-600">{{ .description }}</p>
+            <h4 class="text-xl font-bold mb-3 text-slate-800">{{ .title }}</h4>
+            <p class="text-slate-600 leading-relaxed">{{ .description }}</p>
         </div>
         {{ end }}
     </div>
@@ -651,17 +663,27 @@ class WebsiteViewSet(viewsets.ModelViewSet):
     {{ if .title }}
     <h2 class="text-3xl font-bold text-center mb-10" style="color: var(--color-text, #1f2937);">{{ .title }}</h2>
     {{ end }}
-    <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {{ range .items }}
-        <div class="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow" style="border: 1px solid var(--color-border, #e5e7eb);">
+        <div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border border-slate-100 flex flex-col h-full">
             {{ if .image }}
-            <img src="{{ .image }}" alt="{{ .name }}" class="w-full h-40 object-cover"/>
+            <div class="relative h-48 overflow-hidden bg-gray-100">
+                <img src="{{ .image }}" alt="{{ .name }}" 
+                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                     onerror="this.onerror=null;this.parentElement.style.display='none';"/>
+            </div>
             {{ end }}
-            <div class="p-4">
-                <h4 class="text-lg font-semibold mb-2" style="color: var(--color-text, #1f2937);">{{ .name }}</h4>
+            <div class="p-5 flex-1 flex flex-col">
+                <div class="flex justify-between items-start mb-2">
+                    <h4 class="text-lg font-bold text-slate-900 leading-tight">{{ .name }}</h4>
+                </div>
                 {{ if .description }}
-                <p class="text-sm" style="color: var(--color-text-light, #6b7280);">{{ .description }}</p>
+                <p class="text-sm text-slate-500 leading-snug flex-1">{{ .description }}</p>
                 {{ end }}
+                <div class="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between text-xs font-medium text-slate-400 uppercase tracking-wider">
+                     <span>Menu Item</span>
+                     <span class="text-red-600">Order Now</span>
+                </div>
             </div>
         </div>
         {{ end }}

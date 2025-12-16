@@ -14,7 +14,7 @@ type = "home"
     brand_name = "Strippin Dippin Chicken"
     tagline = ""
     link_url = "/"
-    logo_image = "/media/uploads/00919c7d-c866-4e76-b042-897b869a56e2.jpg"
+    logo_image = "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg"
   [[header_blocks.blocks]]
     type = "menu"
     style = "pills"
@@ -30,7 +30,7 @@ type = "home"
     type = "hero"
     title = "Delicious Strippin Dippin Chicken"
     subtitle = "Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces."
-    bgImage = "/media/uploads/4fe8340d-7bf0-447b-a137-3680dbdd0ac0.jpg"
+    bgImage = "/media/uploads/ecf05118-0ecc-4a2f-bbcd-a74c45b8549a.jpg"
     cta_text = "View Menu"
     cta_url = "/menu"
 
@@ -44,7 +44,7 @@ type = "home"
   [[main_blocks.blocks]]
     type = "features_grid"
     columns = "3"
-    features = [{icon = "star", title = "Fresh & Made to Order", description = "Experience the taste of fresh, never frozen Chicken Shop, prepared right when you order."}, {icon = "star", title = "Fast & Friendly", description = "We bring the flavor to you! Perfect for quick lunches, events, and catering needs."}, {icon = "star", title = "Local Favorite", description = "A staple of the local food scene, serving up delicious bites for everyone to enjoy."}]
+    features = [{icon = "leaf", title = "Fresh & Made to Order", description = "Experience the taste of fresh, never frozen Chicken Shop, prepared right when you order."}, {icon = "truck", title = "Fast & Friendly", description = "We bring the flavor to you! Perfect for quick lunches, events, and catering needs."}, {icon = "map-pin", title = "Local Favorite", description = "A staple of the local food scene, serving up delicious bites for everyone to enjoy."}]
 
 [[main_blocks]]
   type = "section"
@@ -60,7 +60,7 @@ type = "home"
     type = "menu_grid"
     columns = "3"
     show_images = true
-    items = [{name = "Famous Chicken Strips", image = "", description = "Crispy, golden-brown chicken tenders served with our signature house sauce. ($12.99)"}, {name = "Hand-Cut Fries", image = "", description = "Freshly cut potatoes, twice-fried for extra crispiness. ($5.99)"}, {name = "Combo Meal", image = "", description = "3 strips, fries, and a drink. ($16.99)"}, {name = "Spicy Dippin Sauce", image = "", description = "Our secret blend of spices and creaminess. ($0.50)"}]
+    items = [{name = "Famous Chicken Strips", image = "/media/uploads/3279c6b6-6931-4883-a551-3e36e2099e6a.jpg", description = "Crispy, golden-brown chicken tenders served with our signature house sauce. ($12.99)"}, {name = "Hand-Cut Fries", image = "/media/uploads/480b990d-0982-4be6-aa33-2c6e8bd7392f.jpg", description = "Freshly cut potatoes, twice-fried for extra crispiness. ($5.99)"}, {name = "Combo Meal", image = "/media/uploads/c6cd5097-cf1b-421c-8230-fc0b01d96282.jpg", description = "3 strips, fries, and a drink. ($16.99)"}, {name = "Spicy Dippin Sauce", image = "/media/uploads/4f170473-f379-4ebc-8641-4fb95d65d3f9.jpg", description = "Our secret blend of spices and creaminess. ($0.50)"}]
   [[main_blocks.blocks]]
     type = "row"
     justify = "center"
@@ -214,13 +214,11 @@ type = "home"
       text = "Order Now"
       url = "/menu"
       style = "primary"
-      url_type = "page"
     [[main_blocks.blocks.blocks]]
       type = "button"
       text = "Contact Us"
       url = "/contact"
       style = "secondary"
-      url_type = "page"
 
 
 [[footer_blocks]]

@@ -48,17 +48,17 @@
                   {
                     "title": "Fresh & Made to Order",
                     "description": "Experience the taste of fresh, never frozen Chicken Shop, prepared right when you order.",
-                    "icon": "star"
+                    "icon": "leaf"
                   },
                   {
                     "title": "Fast & Friendly",
                     "description": "We bring the flavor to you! Perfect for quick lunches, events, and catering needs.",
-                    "icon": "star"
+                    "icon": "truck"
                   },
                   {
                     "title": "Local Favorite",
                     "description": "A staple of the local food scene, serving up delicious bites for everyone to enjoy.",
-                    "icon": "star"
+                    "icon": "map-pin"
                   }
                 ],
                 "columns": 3
@@ -92,22 +92,22 @@
                 "items": [
                   {
                     "name": "Famous Chicken Strips",
-                    "image": "",
+                    "image": "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg",
                     "description": "Crispy, golden-brown chicken tenders served with our signature house sauce. ($12.99)"
                   },
                   {
                     "name": "Hand-Cut Fries",
-                    "image": "",
+                    "image": "https://foodtruckleague.com/_next/image?url=https%3A%2F%2Fcdn.files.smartsuite.com%2Fsecurity%3Dp%3AeyJjYWxsIjogWyJyZWFkIiwgImNvbnZlcnQiXSwgImV4cGlyeSI6IDIzOTU3MTc1MzguNDAwNzE1LCAiaGFuZGxlIjogImE1bFJHODlFVE9PWjBHSFBPN3RNIn0%3D%2Cs%3Abbc0c652352ad19c65f9c1f866a69ee86aaa7500957c20152f2ac33e3494ac1e%2Fa5lRG89ETOOZ0GHPO7tM&w=3840&q=75",
                     "description": "Freshly cut potatoes, twice-fried for extra crispiness. ($5.99)"
                   },
                   {
                     "name": "Combo Meal",
-                    "image": "",
+                    "image": "https://s3-media0.fl.yelpcdn.com/bphoto/gc4c-P-lbyHKjuOp0SIqpA/l.jpg",
                     "description": "3 strips, fries, and a drink. ($16.99)"
                   },
                   {
                     "name": "Spicy Dippin Sauce",
-                    "image": "",
+                    "image": "https://s3-media0.fl.yelpcdn.com/bphoto/LOzXwX76a3XgwXfurHOLhw/l.jpg",
                     "description": "Our secret blend of spices and creaminess. ($0.50)"
                   }
                 ],
@@ -301,7 +301,7 @@
                 "interval_seconds": 6,
                 "slides": [
                   {
-                    "id": "73b26a70-0cfb-4323-8f8e-47c76bc0d513",
+                    "id": "90465e6b-50c8-4191-803d-696e1484396e",
                     "children": [
                       {
                         "type": "image",
@@ -313,7 +313,7 @@
                     ]
                   },
                   {
-                    "id": "da1f54c9-c914-4840-9c6a-22145d11d3f5",
+                    "id": "3cb5f25f-7318-4ae8-b865-3d057eb27ec4",
                     "children": [
                       {
                         "type": "image",
@@ -325,7 +325,7 @@
                     ]
                   },
                   {
-                    "id": "34cf6a0d-7964-400e-9706-b3d28bd6211a",
+                    "id": "59cdd50a-84ed-406b-9bb4-ab5ab58c4071",
                     "children": [
                       {
                         "type": "image",
@@ -337,7 +337,7 @@
                     ]
                   },
                   {
-                    "id": "22209e39-07e9-4dc8-8c4e-7498dff30e22",
+                    "id": "6ec3c664-72cd-4cba-a571-1c8afa03987e",
                     "children": [
                       {
                         "type": "image",
@@ -349,7 +349,7 @@
                     ]
                   },
                   {
-                    "id": "d098db9a-ab41-40c3-b7d4-c9b9301ffe3c",
+                    "id": "22d345ad-cd5b-4850-808c-6e33298826b7",
                     "children": [
                       {
                         "type": "image",
@@ -532,22 +532,22 @@
                 "items": [
                   {
                     "name": "Famous Chicken Strips",
-                    "image": "",
+                    "image": "https://scontent-lax3-1.cdninstagram.com/v/t39.30808-6/594537857_1370143675122669_8822570300923800162_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=104&ig_cache_key=Mzc4Mzk2MDA3MzkwODAzNTU2Mw%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjE1MzN4MTkxNi5zZHIuQzMifQ%3D%3D&_nc_ohc=htnYbY3kG3sQ7kNvwF0VOsW&_nc_oc=AdkwyDrJkvVfZ9ubuA1xaLww5rYk7SAEmLT1hu6yOZORizlqP3XZmqls3IsAy5ltipQ&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&se=8&_nc_ht=scontent-lax3-1.cdninstagram.com&_nc_gid=hAT43aF6sC7EgyyOmiSH3A&oh=00_Afl12IEPN7julANp-TPBkdyirdU7U2-P5T8pWB4e0hP4XA&oe=693FE484",
                     "description": "Crispy, golden-brown chicken tenders served with our signature house sauce. ($12.99)"
                   },
                   {
                     "name": "Hand-Cut Fries",
-                    "image": "",
+                    "image": "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg",
                     "description": "Freshly cut potatoes, twice-fried for extra crispiness. ($5.99)"
                   },
                   {
                     "name": "Combo Meal",
-                    "image": "",
+                    "image": "https://s3-media0.fl.yelpcdn.com/bphoto/ZEkXrS1i_ftg35SoHpQ3tg/l.jpg",
                     "description": "3 strips, fries, and a drink. ($16.99)"
                   },
                   {
                     "name": "Spicy Dippin Sauce",
-                    "image": "",
+                    "image": "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg",
                     "description": "Our secret blend of spices and creaminess. ($0.50)"
                   }
                 ],
@@ -571,7 +571,7 @@
                 "interval_seconds": 6,
                 "slides": [
                   {
-                    "id": "a09bfcb4-848b-46d8-a840-c898622dd6c5",
+                    "id": "6340e393-027e-457a-9bb6-a38e272a6c2e",
                     "children": [
                       {
                         "type": "image",
@@ -583,7 +583,7 @@
                     ]
                   },
                   {
-                    "id": "f3260ef4-6a20-4ec4-8330-bea5974f1347",
+                    "id": "dcd99479-54cb-4bdc-b3af-34165d0f4e78",
                     "children": [
                       {
                         "type": "image",
@@ -595,7 +595,7 @@
                     ]
                   },
                   {
-                    "id": "ca7cc523-61c5-4c9e-8464-315c4897310f",
+                    "id": "42f0a4cd-d61b-44b7-8a92-6950370392d9",
                     "children": [
                       {
                         "type": "image",
@@ -607,7 +607,7 @@
                     ]
                   },
                   {
-                    "id": "a58987c3-422d-47c7-8a5f-3a63b2caca41",
+                    "id": "1e5faee7-48d4-4e28-9eb5-189d7082ffbc",
                     "children": [
                       {
                         "type": "image",
@@ -619,7 +619,7 @@
                     ]
                   },
                   {
-                    "id": "7f2c849f-30a0-4e0e-91da-8416e16088b3",
+                    "id": "bd23a16e-8dae-4285-a1b7-fd7cb3751988",
                     "children": [
                       {
                         "type": "image",
@@ -675,17 +675,17 @@
                   {
                     "title": "Fresh & Made to Order",
                     "description": "Experience the taste of fresh, never frozen Chicken Shop, prepared right when you order.",
-                    "icon": "star"
+                    "icon": "leaf"
                   },
                   {
                     "title": "Fast & Friendly",
                     "description": "We bring the flavor to you! Perfect for quick lunches, events, and catering needs.",
-                    "icon": "star"
+                    "icon": "truck"
                   },
                   {
                     "title": "Local Favorite",
                     "description": "A staple of the local food scene, serving up delicious bites for everyone to enjoy.",
-                    "icon": "star"
+                    "icon": "map-pin"
                   }
                 ],
                 "columns": 3

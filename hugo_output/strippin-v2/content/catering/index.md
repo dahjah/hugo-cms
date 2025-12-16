@@ -14,7 +14,7 @@ layout = "contact"
     brand_name = "Strippin Dippin Chicken"
     tagline = ""
     link_url = "/"
-    logo_image = "/media/uploads/00919c7d-c866-4e76-b042-897b869a56e2.jpg"
+    logo_image = "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg"
   [[header_blocks.blocks]]
     type = "menu"
     style = "pills"
@@ -26,7 +26,7 @@ layout = "contact"
   type = "hero"
   title = "Delicious Strippin Dippin Chicken"
   subtitle = "Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces."
-  bgImage = "/media/uploads/958704c5-db8d-4546-90c2-b670c69eda4e.jpg"
+  bgImage = "/media/uploads/fa756b53-fb29-42db-87a4-87cb613bd4cf.jpg"
   cta_text = "View Menu"
   cta_url = ""
 [[main_blocks]]
@@ -38,7 +38,7 @@ layout = "contact"
   [[main_blocks.blocks]]
     type = "features_grid"
     columns = "3"
-    features = [{icon = "star", title = "Fresh & Made to Order", description = "Experience the taste of fresh, never frozen Chicken Shop, prepared right when you order."}, {icon = "star", title = "Fast & Friendly", description = "We bring the flavor to you! Perfect for quick lunches, events, and catering needs."}, {icon = "star", title = "Local Favorite", description = "A staple of the local food scene, serving up delicious bites for everyone to enjoy."}]
+    features = [{icon = "leaf", title = "Fresh & Made to Order", description = "Experience the taste of fresh, never frozen Chicken Shop, prepared right when you order."}, {icon = "truck", title = "Fast & Friendly", description = "We bring the flavor to you! Perfect for quick lunches, events, and catering needs."}, {icon = "map-pin", title = "Local Favorite", description = "A staple of the local food scene, serving up delicious bites for everyone to enjoy."}]
 
 [[main_blocks]]
   type = "section"

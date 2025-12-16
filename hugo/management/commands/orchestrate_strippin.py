@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+import random
 from django.core.management.base import BaseCommand
 from hugo.models import SiteTemplate
 from hugo.scrapers.yelp import YelpScraper
@@ -207,14 +208,26 @@ class Command(BaseCommand):
                     if 'features_grid' in synthesized_content:
                         f_items = []
                         for f in synthesized_content['features_grid']:
+                            # UX Polish: Smart Icon Mapping
+                            icon = 'star'
+                            title_lower = f['title'].lower()
+                            desc_lower = f['description'].lower()
+                            
+                            if 'fresh' in title_lower or 'fresh' in desc_lower: icon = 'leaf'
+                            elif 'fast' in title_lower or 'quick' in desc_lower: icon = 'truck'
+                            elif 'local' in title_lower or 'community' in desc_lower: icon = 'map-pin'
+                            elif 'love' in title_lower or 'passion' in desc_lower: icon = 'heart'
+                            elif 'hot' in title_lower or 'spicy' in desc_lower: icon = 'fire'
+                            
                             f_items.append({
                                 'title': f['title'],
                                 'description': f['description'],
-                                'icon': 'star'
+                                'icon': icon
                             })
                         params['items'] = f_items
 
                 elif b_id == 'brand_logo':
+                    # ... existing brand_logo logic ...
                     params['brand_name'] = profile.name
                     params['logo_image'] = profile.logo_url
                     
@@ -253,25 +266,36 @@ class Command(BaseCommand):
                     # 1. Prefer Real Menu Items (Scraped)
                     if profile.menu_items:
                         for item in profile.menu_items[:12]: # Show up to 12 items
+                             # Prepare base item
                              if isinstance(item, dict):
-                                 m_list.append({
+                                 m_item = {
                                      'name': item.get('name'), 
                                      'image': item.get('image_url') or '',
                                      'description': f"{item.get('description', '')} ({item.get('price', '')})".strip()
-                                 })
+                                 }
                              else:
-                                 m_list.append({
+                                 m_item = {
                                      'name': item.name, 
                                      'image': item.image_url,
                                      'description': f"{item.description} ({item.price})".strip()
-                                 })
+                                 }
+                                 
+                             # UX Polish: Fallback Image
+                             if not m_item['image'] and profile.gallery_images:
+                                 m_item['image'] = random.choice(profile.gallery_images)
+                                 
+                             m_list.append(m_item)
                     
                     # 2. Use Synthesized Menu Items (LLM)
                     elif 'menu_items' in synthesized_content:
                         for item in synthesized_content['menu_items']:
+                             img = ''
+                             if profile.gallery_images:
+                                 img = random.choice(profile.gallery_images)
+                                 
                              m_list.append({
                                  'name': item.get('name', 'Delicious Item'),
-                                 'image': '', # No image for synthesized items
+                                 'image': img, 
                                  'description': f"{item.get('description', '')} ({item.get('price', '')})".strip()
                              })
 

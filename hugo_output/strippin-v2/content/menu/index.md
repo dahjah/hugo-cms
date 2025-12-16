@@ -14,7 +14,7 @@ layout = "single"
     brand_name = "Strippin Dippin Chicken"
     tagline = ""
     link_url = "/"
-    logo_image = "/media/uploads/00919c7d-c866-4e76-b042-897b869a56e2.jpg"
+    logo_image = "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg"
   [[header_blocks.blocks]]
     type = "menu"
     style = "pills"
@@ -26,7 +26,7 @@ layout = "single"
   type = "hero"
   title = "Delicious Strippin Dippin Chicken"
   subtitle = "Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces."
-  bgImage = "/media/uploads/65d62a34-b3df-4a98-aeee-6f353d6e5d30.jpg"
+  bgImage = "/media/uploads/9fc3825d-56d4-4bf1-aad5-ba2747a5181c.jpg"
   cta_text = "View Menu"
   cta_url = ""
 [[main_blocks]]
@@ -36,7 +36,7 @@ layout = "single"
     type = "menu_grid"
     columns = "3"
     show_images = true
-    items = [{name = "Famous Chicken Strips", image = "", description = "Crispy, golden-brown chicken tenders served with our signature house sauce. ($12.99)"}, {name = "Hand-Cut Fries", image = "", description = "Freshly cut potatoes, twice-fried for extra crispiness. ($5.99)"}, {name = "Combo Meal", image = "", description = "3 strips, fries, and a drink. ($16.99)"}, {name = "Spicy Dippin Sauce", image = "", description = "Our secret blend of spices and creaminess. ($0.50)"}]
+    items = [{name = "Famous Chicken Strips", image = "/media/uploads/fa644162-8c1d-41c3-9789-9b347d65be5c.jpg", description = "Crispy, golden-brown chicken tenders served with our signature house sauce. ($12.99)"}, {name = "Hand-Cut Fries", image = "/media/uploads/9ac9e2ff-7124-4f72-ba67-3f1b85050cf2.jpg", description = "Freshly cut potatoes, twice-fried for extra crispiness. ($5.99)"}, {name = "Combo Meal", image = "/media/uploads/05ba3815-7ea5-454a-aed6-b6f305f3b32e.jpg", description = "3 strips, fries, and a drink. ($16.99)"}, {name = "Spicy Dippin Sauce", image = "/media/uploads/b8246d65-4db2-4341-b506-8741cd0f1b5b.jpg", description = "Our secret blend of spices and creaminess. ($0.50)"}]
 
 [[main_blocks]]
   type = "section"
