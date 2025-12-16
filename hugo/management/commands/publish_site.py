@@ -137,12 +137,7 @@ theme = []
              f.write("""{{ if .type }}
     {{ $partialPath := printf "blocks/%s.html" .type }}
     {{ if templates.Exists (printf "partials/%s" $partialPath) }}
-        {{/* Merge params into root context if they exist */}}
-        {{ $context := . }}
-        {{ if .params }}
-            {{ $context = merge . .params }}
-        {{ end }}
-        {{ partial $partialPath $context }}
+        {{ partial $partialPath . }}
     {{ else }}
         <div class="p-4 border border-red-200 bg-red-50 text-red-700 rounded my-4">
             <strong>Missing Block Template:</strong> {{ .type }}
@@ -367,8 +362,8 @@ theme = []
 </blockquote>"""
 
         image_tpl = """<figure class="mb-8 {{ .css_classes }}" style="width: 100%; margin: 0 auto;">
-    <img src="{{ .src }}" alt="{{ .alt }}" class="w-full rounded-lg shadow-md" style="height: auto; object-fit: cover;">
-    {{ if .caption }}<figcaption class="text-center text-sm text-slate-500 mt-2">{{ .caption }}</figcaption>{{ end }}
+    <img src="{{ .src | default .params.src }}" alt="{{ .alt | default .params.alt }}" class="w-full rounded-lg shadow-md" style="height: auto; object-fit: cover;">
+    {{ if or .caption .params.caption }}<figcaption class="text-center text-sm text-slate-500 mt-2">{{ .caption | default .params.caption }}</figcaption>{{ end }}
 </figure>"""
 
         carousel_tpl = """<div class="carousel-container py-8 {{ .css_classes }}" 
