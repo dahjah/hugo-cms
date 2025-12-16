@@ -1,11 +1,6 @@
-
-<div class="py-12 px-4 text-white {{ .css_classes }}" style="background: var(--color-primary, #f59e0b);">
-    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-        {{ range .stats }}
-        <div>
-            <div class="text-4xl font-bold mb-1">{{ .value }}{{ if .suffix }}{{ .suffix }}{{ end }}</div>
-            <div class="text-base opacity-90">{{ .label }}</div>
-        </div>
-        {{ end }}
-    </div>
-</div>
+{{ $theme := site.Params.theme_preset | default "default" }}
+{{ $templateDir := "default" }}
+{{ if ne $theme "default" }}
+    {{ $templateDir = "daisy" }}
+{{ end }}
+{{ partial (printf "themes/%s/stats_counter.html" $templateDir) . }}

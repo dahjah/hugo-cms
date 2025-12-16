@@ -1,0 +1,28 @@
+
+<div class="py-12 px-4 {{ .css_classes }}">
+    {{ if .title }}
+    <h2 class="text-3xl font-bold text-center mb-10 text-base-content">{{ .title }}</h2>
+    {{ end }}
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {{ range .items }}
+        <div class="card card-compact bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
+            {{ if .image }}
+            <figure class="h-48 overflow-hidden">
+                <img src="{{ .image }}?v=2" alt="{{ .name }}" 
+                     class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                     onerror="this.onerror=null;this.parentElement.style.display='none';"/>
+            </figure>
+            {{ end }}
+            <div class="card-body">
+                <h2 class="card-title text-base-content">{{ .name }}</h2>
+                {{ if .description }}
+                <p class="text-base-content/70">{{ .description }}</p>
+                {{ end }}
+                <div class="card-actions justify-end mt-4">
+                    <button class="btn btn-primary btn-sm">Order Now</button>
+                </div>
+            </div>
+        </div>
+        {{ end }}
+    </div>
+</div>

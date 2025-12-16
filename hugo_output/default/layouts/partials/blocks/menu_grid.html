@@ -1,0 +1,6 @@
+{{ $theme := site.Params.theme_preset | default "default" }}
+{{ if templates.Exists (printf "partials/themes/%s/menu_grid.html" $theme) }}
+    {{ partial (printf "themes/%s/menu_grid.html" $theme) . }}
+{{ else }}
+    {{ partial "themes/default/menu_grid.html" . }}
+{{ end }}

@@ -1,0 +1,13 @@
+<div class="debug-dispatcher" style="border: 1px solid red; padding: 5px; margin: 5px; background: #fff0f0;">
+    Dispatcher: Features Grid<br>
+    Theme: [{{ site.Params.theme_preset }}]<br>
+    Path: partials/themes/{{ site.Params.theme_preset }}/features_grid.html<br>
+    Exists: {{ templates.Exists (printf "partials/themes/%s/features_grid.html" (site.Params.theme_preset | default "default")) }}
+</div>
+{{ $theme := site.Params.theme_preset | default "default" }}
+{{ if templates.Exists (printf "partials/themes/%s/features_grid.html" $theme) }}
+    {{ partial (printf "themes/%s/features_grid.html" $theme) . }}
+{{ else }}
+    FALLBACK TO DEFAULT
+    {{ partial "themes/default/features_grid.html" . }}
+{{ end }}

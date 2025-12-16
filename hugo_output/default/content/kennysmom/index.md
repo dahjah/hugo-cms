@@ -1,40 +1,38 @@
-+++
-title = "New Page"
-date = "2025-11-26"
-draft = false
-layout = "single"
-[[header_blocks]]
-  type = "menu"
-  orientation = "horizontal"
-  alignment = "left"
-  style = "pills"
-  responsive = "true"
-  hamburgerDirection = "sidebar"
-  sticky = "true"
-  sidebarSide = "left"
-  position = "normal"
-  items = [{label = "Home", url = "/", type = "page"}, {label = "About", url = "/kennysmom", type = "page"}, {label = "Contact", url = "/over9000", type = "page"}]
-  sidebarFooterBlocks = [{type = "markdown", md = "## Hello World\nThis is **markdown** content."}]
-
-[[header_blocks]]
-  type = "hero"
-  title = "Welcome Home"
-  subtitle = "Start your journey here"
-  bgImage = "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&q=80"
-
-[[main_blocks]]
-  type = "flex_columns"
-  col_widths = "50.0, 50.0"
-  [[main_blocks.col_0]]
-    type = "image"
-    src = "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80"
-    caption = "A beautiful view"
-    width = "100%"
-    height = "auto"
-
-  [[main_blocks.col_1]]
-    type = "text"
-    content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-
-
-+++
+---
+{
+  "title": "New Page",
+  "layout": "single",
+  "main_blocks": [
+    {
+      "type": "row",
+      "flex_mode": true,
+      "gap": "2",
+      "blocks": [
+        {
+          "type": "column",
+          "width_percent": "50.0",
+          "blocks": [
+            {
+              "src": "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80",
+              "caption": "A beautiful view",
+              "width": "100%",
+              "height": "auto",
+              "type": "image"
+            }
+          ]
+        },
+        {
+          "type": "column",
+          "width_percent": "50.0",
+          "blocks": [
+            {
+              "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+---

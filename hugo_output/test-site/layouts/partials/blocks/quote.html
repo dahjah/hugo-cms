@@ -1,6 +1,4 @@
 <blockquote class="border-l-4 border-indigo-500 pl-4 py-2 mb-8 italic text-slate-700 {{ .css_classes }}">
-    <p class="text-lg">{{ .text }}</p>
-    {{ if .author }}
-    <footer class="text-sm text-slate-500 mt-2 not-italic">— {{ .author }}</footer>
-    {{ end }}
+    <p class="text-lg">"{{ .text }}"</p>
+    {{ if .author }}<cite class="block mt-2 text-sm font-semibold text-slate-900">- {{ .author }}</cite>{{ end }}
 </blockquote>

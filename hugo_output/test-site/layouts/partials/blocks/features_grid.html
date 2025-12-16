@@ -1,21 +1,6 @@
-
-<div class="py-16 px-4 {{ .css_classes }}">
-    {{ if .title }}
-    <h2 class="text-3xl font-bold text-center mb-12 text-slate-900">{{ .title }}</h2>
-    {{ end }}
-    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-        {{ range .features }}
-        <div class="text-center p-6 rounded-lg hover:shadow-lg transition-shadow">
-            {{ if .icon }}
-            <div class="w-16 h-16 mx-auto mb-4 bg-indigo-100 rounded-full flex items-center justify-center">
-                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-            </div>
-            {{ end }}
-            <h4 class="text-xl font-semibold mb-3 text-slate-800">{{ .title }}</h4>
-            <p class="text-slate-600">{{ .description }}</p>
-        </div>
-        {{ end }}
-    </div>
-</div>
+{{ $theme := site.Params.theme_preset | default "default" }}
+{{ $templateDir := "default" }}
+{{ if ne $theme "default" }}
+    {{ $templateDir = "daisy" }}
+{{ end }}
+{{ partial (printf "themes/%s/features_grid.html" $templateDir) . }}

@@ -25,9 +25,15 @@ class StorageSettingsSerializer(serializers.ModelSerializer):
         }
 
 class WebsiteSerializer(serializers.ModelSerializer):
+    theme_choices = serializers.SerializerMethodField()
+    
     class Meta:
         model = Website
-        fields = ['id', 'name', 'slug', 'custom_css', 'deployment_provider']
+        fields = ['id', 'name', 'slug', 'custom_css', 'deployment_provider', 'theme_preset', 'theme_choices']
+    
+    def get_theme_choices(self, obj):
+        """Return available theme choices for the dropdown"""
+        return [{'value': choice[0], 'label': choice[1]} for choice in Website.THEME_CHOICES]
 
 class BlockDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -113,7 +119,7 @@ class SiteTemplateDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = SiteTemplate
         fields = ['id', 'slug', 'name', 'description', 'thumbnail_url', 'tags', 
-                  'base_css', 'pages_json', 'placeholder_schema', 'created_by', 
+                  'base_css', 'theme_preset', 'pages_json', 'placeholder_schema', 'created_by', 
                   'is_featured', 'is_public', 'created_at', 'updated_at']
 
 

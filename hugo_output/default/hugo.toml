@@ -1,6 +1,14 @@
-baseURL = "https://example.com/"
-languageCode = "en-us"
-title = "My Hugo Site"
+
+baseURL = 'https://default.monu.dev'
+languageCode = 'en-us'
+title = 'Default Site'
+theme = []
 
 [params]
-  description = "A site built with Hugo CMS"
+    description = ''
+    theme_preset = 'default'
+    
+[mediaTypes]
+[mediaTypes."text/css"]
+    suffixes = ["css"]
+            

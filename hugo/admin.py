@@ -1,5 +1,17 @@
 from django.contrib import admin
-from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate
+from .models import Page, BlockDefinition, BlockInstance, LayoutTemplate, Website, SiteTemplate
+
+@admin.register(Website)
+class WebsiteAdmin(admin.ModelAdmin):
+    list_display = ['name', 'slug', 'theme_preset', 'created_at']
+    search_fields = ['name', 'slug']
+    list_editable = ['theme_preset']
+
+@admin.register(SiteTemplate)
+class SiteTemplateAdmin(admin.ModelAdmin):
+    list_display = ['name', 'slug', 'theme_preset', 'is_featured']
+    list_filter = ['is_featured', 'theme_preset']
+
 
 @admin.register(LayoutTemplate)
 class LayoutTemplateAdmin(admin.ModelAdmin):

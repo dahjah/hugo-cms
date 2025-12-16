@@ -1,54 +1,130 @@
-+++
-title = "Contact"
-date = ""
-draft = false
-layout = "contact"
-[[header_blocks]]
-  type = "row"
-  gap = "4"
-  justify = "space-between"
-  align = "center"
-  [[header_blocks.blocks]]
-    type = "brand_logo"
-    logo_url = ""
-    brand_name = "Strippin Dippin Chicken"
-    tagline = ""
-    link_url = "/"
-    logo_image = "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg"
-  [[header_blocks.blocks]]
-    type = "menu"
-    style = "pills"
-    responsive = true
-    hamburgerDirection = "dropdown"
-    items = [{label = "Home", url = "/", type = "link"}, {label = "Menu", url = "/menu", type = "link"}, {label = "Catering", url = "/catering", type = "link"}, {label = "Contact", url = "/contact", type = "link"}]
-
-[[main_blocks]]
-  type = "section"
-  style = "default"
-  [[main_blocks.blocks]]
-    type = "text"
-    content = "<h1></h1>"
-  [[main_blocks.blocks]]
-    type = "row"
-    flex_mode = true
-    gap = "2"
-    [[main_blocks.blocks.blocks]]
-      type = "column"
-      [[main_blocks.blocks.blocks.blocks]]
-        type = "text"
-        content = "<h3></h3>"
-      [[main_blocks.blocks.blocks.blocks]]
-        type = "markdown"
-        content = "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you."
-
-    [[main_blocks.blocks.blocks]]
-      type = "column"
-      [[main_blocks.blocks.blocks.blocks]]
-        type = "text"
-        content = "<h3></h3>"
-      [[main_blocks.blocks.blocks.blocks]]
-        type = "markdown"
-        content = "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you."
-
-
-+++
+---
+{
+  "title": "Contact",
+  "layout": "contact",
+  "main_blocks": [
+    {
+      "style": "default",
+      "type": "section",
+      "blocks": [
+        {
+          "content": "<h1></h1>",
+          "type": "text"
+        },
+        {
+          "type": "row",
+          "flex_mode": true,
+          "gap": "2",
+          "blocks": [
+            {
+              "type": "column",
+              "blocks": [
+                {
+                  "content": "<h3></h3>",
+                  "type": "text"
+                },
+                {
+                  "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
+                  "type": "markdown"
+                }
+              ]
+            },
+            {
+              "type": "column",
+              "blocks": [
+                {
+                  "content": "<h3></h3>",
+                  "type": "text"
+                },
+                {
+                  "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
+                  "type": "markdown"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "content": "<h1></h1>",
+      "type": "text"
+    },
+    {
+      "type": "column",
+      "blocks": [
+        {
+          "content": "<h3></h3>",
+          "type": "text"
+        },
+        {
+          "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
+          "type": "markdown"
+        }
+      ]
+    },
+    {
+      "content": "<h3></h3>",
+      "type": "text"
+    },
+    {
+      "content": "<h3></h3>",
+      "type": "text"
+    },
+    {
+      "type": "row",
+      "flex_mode": true,
+      "gap": "2",
+      "blocks": [
+        {
+          "type": "column",
+          "blocks": [
+            {
+              "content": "<h3></h3>",
+              "type": "text"
+            },
+            {
+              "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
+              "type": "markdown"
+            }
+          ]
+        },
+        {
+          "type": "column",
+          "blocks": [
+            {
+              "content": "<h3></h3>",
+              "type": "text"
+            },
+            {
+              "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
+              "type": "markdown"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
+      "type": "markdown"
+    },
+    {
+      "type": "column",
+      "blocks": [
+        {
+          "content": "<h3></h3>",
+          "type": "text"
+        },
+        {
+          "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
+          "type": "markdown"
+        }
+      ]
+    },
+    {
+      "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
+      "type": "markdown"
+    }
+  ]
+}
+---

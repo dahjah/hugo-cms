@@ -27,11 +27,41 @@ class Website(models.Model):
     """
     Represents a distinct website managed by the CMS.
     """
+    THEME_CHOICES = [
+        ('light', 'Light'),
+        ('dark', 'Dark'),
+        ('cupcake', 'Cupcake'),
+        ('corporate', 'Corporate'),
+        ('retro', 'Retro'),
+        ('cyberpunk', 'Cyberpunk'),
+        ('valentine', 'Valentine'),
+        ('halloween', 'Halloween'),
+        ('garden', 'Garden'),
+        ('forest', 'Forest'),
+        ('aqua', 'Aqua'),
+        ('lofi', 'Lo-Fi'),
+        ('pastel', 'Pastel'),
+        ('fantasy', 'Fantasy'),
+        ('wireframe', 'Wireframe'),
+        ('black', 'Black'),
+        ('luxury', 'Luxury'),
+        ('dracula', 'Dracula'),
+        ('cmyk', 'CMYK'),
+        ('autumn', 'Autumn'),
+        ('business', 'Business'),
+        ('acid', 'Acid'),
+        ('lemonade', 'Lemonade'),
+        ('night', 'Night'),
+        ('coffee', 'Coffee'),
+        ('winter', 'Winter'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=200, unique=True, help_text="URL slug for the website (e.g., 'my-site')")
     custom_css = models.TextField(blank=True, null=True, help_text="Global CSS for the website")
     deployment_provider = models.ForeignKey('DeploymentProvider', on_delete=models.SET_NULL, null=True, blank=True, related_name='websites', help_text="Deployment configuration for this website")
+    theme_preset = models.CharField(max_length=50, choices=THEME_CHOICES, default="light", help_text="DaisyUI theme for the website")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -252,6 +282,8 @@ class SiteTemplate(models.Model):
     # Tags for LLM selection (simple JSON array - works with SQLite)
     # Use TemplateTag model for autocomplete/controlled vocabulary
     tags = JSONField(default=list, help_text="List of tag names for template categorization and LLM selection")
+
+    theme_preset = models.CharField(max_length=50, default="default", help_text="The theme engine this template is optimized for.")
     
     # Serialized template content
     base_css = models.TextField(blank=True, help_text="CSS variables and base styles")

@@ -1,6 +1,14 @@
-baseURL = "https://example.com/"
-languageCode = "en-us"
-title = "Strippin Dippin Chicken V2"
+
+baseURL = 'https://strippin-v2.monu.dev'
+languageCode = 'en-us'
+title = 'Strippin Dippin Chicken V2'
+theme = []
 
 [params]
-  description = "A site built with Hugo CMS"
+    description = ''
+    theme_preset = 'fantasy'
+    
+[mediaTypes]
+[mediaTypes."text/css"]
+    suffixes = ["css"]
+            
