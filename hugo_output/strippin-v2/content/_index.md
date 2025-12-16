@@ -2,11 +2,58 @@
 {
   "title": "Home",
   "type": "home",
+  "header_blocks": [
+    {
+      "gap": "4",
+      "justify": "space-between",
+      "align": "center",
+      "type": "row",
+      "blocks": [
+        {
+          "logo_url": "",
+          "brand_name": "Strippin Dippin Chicken",
+          "tagline": "If your Chicken wants to strip, who's to stop them?",
+          "link_url": "/",
+          "logo_image": "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg",
+          "link_url_type": "page",
+          "type": "brand_logo"
+        },
+        {
+          "items": [
+            {
+              "label": "Home",
+              "url": "/",
+              "type": "page"
+            },
+            {
+              "label": "Menu",
+              "url": "/menu",
+              "type": "page"
+            },
+            {
+              "label": "Catering",
+              "url": "/catering",
+              "type": "page"
+            },
+            {
+              "label": "Contact",
+              "url": "/contact",
+              "type": "page"
+            }
+          ],
+          "style": "pills",
+          "responsive": "true",
+          "hamburgerDirection": "sidebar",
+          "type": "menu"
+        }
+      ]
+    }
+  ],
   "main_blocks": [
     {
       "title": "Delicious Strippin Dippin Chicken!",
       "subtitle": "Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces.",
-      "bgImage": "/media/uploads/ecf05118-0ecc-4a2f-bbcd-a74c45b8549a.jpg",
+      "bgImage": "/media/uploads/strippin-v2/de64b56b-37c3-4866-a4ee-8c899535296d.jpg",
       "cta_text": "View Menu",
       "cta_url": "/menu",
       "type": "hero"
@@ -49,10 +96,6 @@
       "type": "section",
       "blocks": [
         {
-          "content": "<h2>Menu</h2>",
-          "type": "text"
-        },
-        {
           "items": [
             {
               "name": "Famous Chicken Strips",
@@ -77,6 +120,7 @@
           ],
           "columns": 3,
           "show_images": true,
+          "title": "Menu",
           "type": "menu_grid"
         },
         {
@@ -439,6 +483,26 @@
           ]
         }
       ]
+    }
+  ],
+  "footer_blocks": [
+    {
+      "links": [
+        {
+          "platform": "yelp",
+          "url": "https://www.yelp.com/biz/strippin-dippin-chicken-west-jordan"
+        },
+        {
+          "platform": "instagram",
+          "url": "https://www.instagram.com/strippindippinchicken/"
+        },
+        {
+          "platform": "facebook",
+          "url": "https://foodtruckleague.com/Utah/trucks/677ec632f7fd49c21152b236"
+        }
+      ],
+      "css_classes": "",
+      "type": "social_links"
     }
   ]
 }

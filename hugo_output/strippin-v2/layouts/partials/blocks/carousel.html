@@ -16,11 +16,11 @@
         {{ end }}
         
         {{ if gt (len .slides) 1 }}
-        <button data-carousel-prev style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;" class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
-            <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        <button data-carousel-prev style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;" class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-base-100/80 hover:bg-base-200 border border-base-200 backdrop-blur text-base-content hover:text-primary">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
         </button>
-        <button data-carousel-next style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;" class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
-            <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        <button data-carousel-next style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;" class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-base-100/80 hover:bg-base-200 border border-base-200 backdrop-blur text-base-content hover:text-primary">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
         </button>
         {{ end }}
     </div>
@@ -28,7 +28,7 @@
     {{ if gt (len .slides) 1 }}
     <div class="flex justify-center gap-3 mt-6">
         {{ range $index, $slide := .slides }}
-        <button data-carousel-dot="{{ $index }}" class="transition-all duration-200 border-0 cursor-pointer p-0" style="width:{{ if eq $index 0 }}32px{{ else }}12px{{ end }}; border-radius: {{ if eq $index 0 }}6px{{ else }}50%{{ end }}; background: {{ if eq $index 0 }}var(--color-primary, #6366f1){{ else }}#e2e8f0{{ end }}; height: 12px;"></button>
+        <button data-carousel-dot="{{ $index }}" class="transition-all duration-300 h-3 rounded-full {{ if eq $index 0 }}w-8 bg-primary{{ else }}w-3 bg-base-300 hover:bg-primary/50{{ end }}"></button>
         {{ end }}
     </div>
     {{ end }}
@@ -69,13 +69,11 @@
         
         dots.forEach((dot, i) => {
             if (i === index) {
-                dot.style.width = '32px';
-                dot.style.borderRadius = '6px';
-                dot.style.background = 'var(--color-primary, #6366f1)';
+                dot.classList.remove('w-3', 'bg-base-300', 'hover:bg-primary/50');
+                dot.classList.add('w-8', 'bg-primary');
             } else {
-                dot.style.width = '12px';
-                dot.style.borderRadius = '50%';
-                dot.style.background = '#e2e8f0';
+                dot.classList.remove('w-8', 'bg-primary');
+                dot.classList.add('w-3', 'bg-base-300', 'hover:bg-primary/50');
             }
         });
         
