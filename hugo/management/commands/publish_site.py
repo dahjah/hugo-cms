@@ -366,8 +366,9 @@ theme = []
     {{ if or .caption .params.caption }}<figcaption class="text-center text-sm text-slate-500 mt-2">{{ .caption | default .params.caption }}</figcaption>{{ end }}
 </figure>"""
 
-        carousel_tpl = """<div class="carousel-container py-8 {{ .css_classes }}" 
-     data-carousel-id="{{ now.UnixNano }}"
+        carousel_tpl = """{{ $carouselId := now.UnixNano }}
+<div class="carousel-container py-8 {{ .css_classes }}" 
+     data-carousel-id="{{ $carouselId }}"
      data-auto-advance="{{ .auto_advance | default true }}"
      data-interval="{{ .interval_seconds | default 5 }}">
     {{ if .slides }}
@@ -402,7 +403,7 @@ theme = []
     
 <script>
 (function() {
-    const container = document.querySelector('[data-carousel-id="{{ now.UnixNano }}"]');
+    const container = document.querySelector('[data-carousel-id="{{ $carouselId }}"]');
     if (!container) return;
     
     const slides = container.querySelectorAll('.carousel-slide');
