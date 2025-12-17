@@ -304,7 +304,7 @@ theme = []
     </div>
 </div>"""
 
-        row_tpl = """<div class="flex flex-wrap {{ if .gap }}gap-{{ .gap }}{{ else }}gap-4{{ end }} {{ .justify | default "justify-start" }} {{ .align | default "items-start" }} {{ .css_classes }}">
+        row_tpl = """<div class="flex flex-wrap {{ if .gap }}gap-{{ .gap }}{{ else }}gap-4{{ end }} justify-{{ .justify | default "start" }} items-{{ .align | default "start" }} {{ .css_classes }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
@@ -936,11 +936,11 @@ theme = []
     {{ $navbarEndClass = "flex-none" }}
 {{ end }}
 
-{{ $classes := "navbar bg-base-100 shadow-sm mb-8 z-40" }}
+{{ $classes := "navbar bg-base-100 shadow-sm z-40 w-auto" }}
 {{ if eq $position "overlay" }}
-    {{ $classes = "navbar absolute top-0 left-0 right-0 z-40 bg-base-100/90 backdrop-blur-sm shadow-md" }}
+    {{ $classes = "navbar absolute top-0 left-0 right-0 z-40 bg-base-100/90 backdrop-blur-sm shadow-md w-full" }}
 {{ else if eq $position "fixed" }}
-    {{ $classes = "navbar fixed top-0 left-0 right-0 z-40 bg-base-100 shadow-md" }}
+    {{ $classes = "navbar fixed top-0 left-0 right-0 z-40 bg-base-100 shadow-md w-full" }}
 {{ end }}
 
 <div class="{{ $classes }} {{ .css_classes }}">
