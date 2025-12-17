@@ -1360,7 +1360,8 @@
                                                         </template>
 
                                                         <!-- Image Handler -->
-                                                        <template v-else-if="field.item_schema && field.item_schema[prop] === 'image'">
+                                                        <template
+                                                            v-else-if="field.item_schema && field.item_schema[prop] === 'image'">
                                                             <div class="flex space-x-2">
                                                                 <input type="text" v-model="item[prop]"
                                                                     class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -1368,7 +1369,8 @@
                                                                 <label
                                                                     class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
                                                                     title="Upload Image">
-                                                                    <input type="file" class="hidden" accept="image/*" @change="async (e) => {
+                                                                    <input type="file" class="hidden" accept="image/*"
+                                                                        @change="async (e) => {
                                                                         if (e.target.files.length > 0) {
                                                                             try {
                                                                                 const result = await uploadFile(e.target.files[0]);
@@ -1390,7 +1392,8 @@
                                                         </template>
 
                                                         <!-- Image Handler -->
-                                                        <template v-else-if="field.item_schema && field.item_schema[prop] === 'image'">
+                                                        <template
+                                                            v-else-if="field.item_schema && field.item_schema[prop] === 'image'">
                                                             <div class="flex space-x-2">
                                                                 <input type="text" v-model="item[prop]"
                                                                     class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -1398,7 +1401,8 @@
                                                                 <label
                                                                     class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
                                                                     title="Upload Image">
-                                                                    <input type="file" class="hidden" accept="image/*" @change="async (e) => {
+                                                                    <input type="file" class="hidden" accept="image/*"
+                                                                        @change="async (e) => {
                                                                         if (e.target.files.length > 0) {
                                                                             try {
                                                                                 const result = await uploadFile(e.target.files[0]);
@@ -2137,18 +2141,56 @@
                     </div>
 
                     <div v-else-if="getDefinition(block.type).is_container && block.type !== 'carousel' && block.type !== 'flex_columns'" class="p-4 border border-slate-100 rounded-lg">
-                         <div class="text-xs font-bold text-slate-400 uppercase mb-2">{{ getDefinition(block.type).label || block.type }}</div>
-                         <drop-zone 
-                            zone="children" 
-                            :blocks="block.children || []" 
-                            :is-active="isEditable"
-                            :parent-block-id="block.id"
-                            :is-nested="true"
-                            @drop-item="handleNestedDrop"
-                            @select-block="handleSelectBlock"
-                            @drag-start-block="handleNestedDragStart"
-                        ></drop-zone>
+                        <div class="text-xs font-bold text-slate-400 uppercase mb-2">{{ getDefinition(block.type).label || block.type }}</div>
+                        
+                        <!-- Resizable Container for Section -->
+                        <div v-if="block.type === 'section'" :style="{ width: block.params.width || '100%', margin: '0 auto' }" class="relative group/resize">
+                            <!-- Left Handle -->
+                            <div @mousedown.stop.prevent="(e) => startBlockResize(e, block, 'left')"
+                                 class="absolute top-0 left-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/resize:opacity-100 transition-opacity z-20">
+                                <div class="w-1 h-8 bg-black/20 rounded-full"></div>
+                            </div>
+
+                            <drop-zone 
+                                zone="children" 
+                                :blocks="block.children || []" 
+                                :is-active="isEditable"
+                                :parent-block-id="block.id"
+                                :is-nested="true"
+                                @drop-item="handleNestedDrop"
+                                @select-block="handleSelectBlock"
+                                @drag-start-block="handleNestedDragStart"
+                            ></drop-zone>
+
+                            <!-- Right Handle -->
+                            <div @mousedown.stop.prevent="(e) => startBlockResize(e, block, 'right')"
+                                 class="absolute top-0 right-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/resize:opacity-100 transition-opacity z-20">
+                                <div class="w-1 h-8 bg-black/20 rounded-full"></div>
+                            </div>
+
+
+                            <!-- Width Indicator -->
+                            <div v-if="isResizing && currentResizingBlockId === block.id" 
+                                 class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded">
+                                {{ block.params.width || '100%' }}
+                            </div>
+                        </div>
+
+                        <!-- Standard Container (Non-resizable) -->
+                        <div v-else>
+                            <drop-zone 
+                                zone="children" 
+                                :blocks="block.children || []" 
+                                :is-active="isEditable"
+                                :parent-block-id="block.id"
+                                :is-nested="true"
+                                @drop-item="handleNestedDrop"
+                                @select-block="handleSelectBlock"
+                                @drag-start-block="handleNestedDragStart"
+                            ></drop-zone>
+                        </div>
                     </div>
+
 
                     <div v-else-if="block.type === 'flex_columns'">
                         <!-- Editor Mode: Show container with labels and borders -->

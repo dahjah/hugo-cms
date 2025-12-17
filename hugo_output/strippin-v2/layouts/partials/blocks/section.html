@@ -1,4 +1,4 @@
-<div class="section py-12 {{ .css_classes }}">
+<div class="section py-12 {{ .css_classes }}" style="width:{{ .width | default "100%" }};margin:0 auto">
     <div class="container mx-auto px-4">
         {{ range .blocks }}
             {{ partial "blocks/render-block.html" . }}

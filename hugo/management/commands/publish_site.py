@@ -296,7 +296,7 @@ theme = []
         with open(daisy_theme_dir / 'menu_grid.html', 'w') as f: f.write(daisy_menu)
         
         # --- STRUCTURAL BLOCKS ---
-        section_tpl = """<div class="section py-12 {{ .css_classes }}">
+        section_tpl = """<div class="section py-12 {{ .css_classes }}" style="width:{{ .width | default "100%" }};margin:0 auto">
     <div class="container mx-auto px-4">
         {{ range .blocks }}
             {{ partial "blocks/render-block.html" . }}
@@ -370,8 +370,8 @@ theme = []
     {{ end }}
 </div>"""
 
-        youtube_tpl = """<div class="w-full aspect-video rounded-lg overflow-hidden shadow-lg {{ .css_classes }}">
-    <iframe src="https://www.youtube.com/embed/{{ .video_id }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+        youtube_tpl = """<div class="w-full aspect-video rounded-lg overflow-hidden shadow-lg {{ .css_classes }}" style="width:{{ .width | default "100%" }};margin:0 auto">
+    <iframe src="https://www.youtube.com/embed/{{ .videoId | default .params.videoId }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
 </div>"""
 
         alert_tpl = """<div role="alert" class="alert alert-{{ .type | default \"info\" }} {{ .css_classes }}">
@@ -439,7 +439,7 @@ theme = []
     {{ if .author }}<cite class="block mt-2 text-sm font-semibold text-base-content">- {{ .author }}</cite>{{ end }}
 </blockquote>"""
 
-        image_tpl = """<figure class="mb-8 {{ .css_classes }}" style="width: 100%; margin: 0 auto;">
+        image_tpl = """<figure class="mb-8 {{ .css_classes }}" style="width:{{ .width | default "100%" }};margin:0 auto">
     <img src="{{ .src | default .params.src }}" alt="{{ .alt | default .params.alt }}" class="w-full rounded-lg shadow-md" style="height: auto; object-fit: cover;">
     {{ if or .caption .params.caption }}<figcaption class="text-center text-sm text-slate-500 mt-2">{{ .caption | default .params.caption }}</figcaption>{{ end }}
 </figure>"""

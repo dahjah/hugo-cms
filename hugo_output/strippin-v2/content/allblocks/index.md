@@ -83,6 +83,21 @@
       "block_type": "hero"
     },
     {
+      "style": "default",
+      "padding": "normal",
+      "width": "35.7%",
+      "id": "29d7203a-ae8e-48fa-8f74-66be44b4469c",
+      "block_type": "section",
+      "blocks": [
+        {
+          "type": "info",
+          "message": "Important message here.",
+          "id": "069d7971-4d9d-495d-9ec6-dfed1a05fdb2",
+          "block_type": "alert"
+        }
+      ]
+    },
+    {
       "content": "KENNYS MOM",
       "id": "8bac1658-60e2-4ea5-ab9c-0ccde313d31e",
       "block_type": "text"
@@ -90,6 +105,7 @@
     {
       "style": "default",
       "padding": "normal",
+      "width": "100%",
       "id": "4b69b341-f500-4922-9751-49297b6f1a3f",
       "block_type": "section",
       "blocks": [
@@ -97,7 +113,7 @@
           "src": "/media/uploads/strippin-v2/6dc0a0fc-29cb-423b-86a5-a6ce4032f75a.png",
           "alt": "",
           "caption": "",
-          "width": "19.4%",
+          "width": "10%",
           "id": "296eb54e-aff1-402a-bc37-fd8d9f74f761",
           "block_type": "image"
         }
@@ -148,6 +164,7 @@
     {
       "videoId": "dQw4w9WgXcQ",
       "title": "TITLE",
+      "width": "49.7%",
       "id": "d435878e-fa61-4461-897b-5fa7469fe138",
       "block_type": "youtube"
     },
@@ -265,8 +282,7 @@
           "value": "2",
           "suffix": "k+",
           "label": "Happy Clients"
-        },
-        {}
+        }
       ],
       "id": "0ae098be-6672-4a38-a4c5-f94be05a7637",
       "block_type": "stats_counter"
@@ -294,7 +310,11 @@
           "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80",
           "description": "Smoky BBQ goodness"
         },
-        {}
+        {
+          "name": "",
+          "image": "",
+          "description": ""
+        }
       ],
       "id": "2db909fa-8b6a-4482-b37f-b58c334e9c7a",
       "block_type": "menu_grid"
