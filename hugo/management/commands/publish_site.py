@@ -134,13 +134,13 @@ theme = []
         
         # Render Block Partial
         with open(blocks / 'render-block.html', 'w') as f:
-             f.write("""{{ if .type }}
-    {{ $partialPath := printf "blocks/%s.html" .type }}
+             f.write("""{{ if .block_type }}
+    {{ $partialPath := printf "blocks/%s.html" .block_type }}
     {{ if templates.Exists (printf "partials/%s" $partialPath) }}
         {{ partial $partialPath . }}
     {{ else }}
         <div class="p-4 border border-red-200 bg-red-50 text-red-700 rounded my-4">
-            <strong>Missing Block Template:</strong> {{ .type }}
+            <strong>Missing Block Template:</strong> {{ .block_type }}
         </div>
     {{ end }}
 {{ end }}""")
@@ -346,18 +346,24 @@ theme = []
     <a href="{{ .url }}" class="btn btn-{{ .style | default "primary" }} btn-lg rounded-lg shadow-md hover:shadow-lg">{{ .text }}</a>
 </div>"""
 
-        accordion_tpl = """<div class="join join-vertical w-full {{ .css_classes }}">
+        accordion_tpl = """<!-- Determine spacing based on .spacing parameter -->
+{{ $gapClass := "gap-0" }}
+{{ if eq .spacing "compact" }}{{ $gapClass = "gap-1" }}{{ end }}
+{{ if eq .spacing "normal" }}{{ $gapClass = "gap-4" }}{{ end }}
+{{ if eq .spacing "relaxed" }}{{ $gapClass = "gap-6" }}{{ end }}
+
+<div class="join join-vertical w-full {{ $gapClass }} {{ .css_classes }}">
     {{ $id := .id }}
     {{ $allowMultiple := .allow_multiple }}
-    {{ range .items }}
-    <div class="collapse collapse-arrow join-item border border-base-300">
-        <input type="{{ if $allowMultiple }}checkbox{{ else }}radio{{ end }}" name="accordion-{{ $id }}" /> 
-        <div class="collapse-title text-xl font-medium">
-            {{ .title }}
-        </div>
+    {{ range $index, $item := .items }}
+    <div tabindex="0" class="collapse collapse-arrow bg-base-100 join-item border border-base-300">
+        <input type="{{ if $allowMultiple }}checkbox{{ else }}radio{{ end }}" name="accordion-{{ $id }}" id="accordion-{{ $id }}-{{ $index }}"{{ if $item._isOpen }} checked="checked"{{ end }} /> 
+        <label for="accordion-{{ $id }}-{{ $index }}" class="collapse-title text-xl font-medium cursor-pointer">
+            {{ $item.title }}
+        </label>
         <div class="collapse-content"> 
             <div class="prose max-w-none">
-                {{ .content | safeHTML }}
+                {{ $item.content | safeHTML }}
             </div>
         </div>
     </div>
@@ -368,12 +374,9 @@ theme = []
     <iframe src="https://www.youtube.com/embed/{{ .video_id }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
 </div>"""
 
-        alert_tpl = """<div role="alert" class="alert alert-{{ .type | default "info" }} shadow-lg {{ .css_classes }}">
+        alert_tpl = """<div role="alert" class="alert alert-{{ .type | default \"info\" }} {{ .css_classes }}">
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-  <div>
-    <h3 class="font-bold">{{ .title }}</h3>
-    <div class="text-xs">{{ .content }}</div>
-  </div>
+  <span>{{ .message | safeHTML }}</span>
 </div>"""
 
         testimonial_tpl = """<div class="card bg-base-100 shadow-xl border border-base-200 {{ .css_classes }}">
@@ -1285,7 +1288,8 @@ theme = []
                 # Standard Block
                 block_data = block.params.copy() if block.params else {}
                 block_data['id'] = str(block.id) # Inject ID as string for unique element targeting (e.g. accordion groups)
-                block_data['type'] = block.definition.id
+                block_data['block_type'] = block.definition.id
+
                 
                 # Helper to fix image paths (uploads/ -> /media/uploads/)
                 def sanitize_url(url):

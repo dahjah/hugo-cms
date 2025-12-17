@@ -1,6 +1,6 @@
 {{ define "main" }}
 <div class="flex flex-col min-h-screen">
-    <header class="w-full border-b bg-white border-gray-200">
+    <header class="w-full border-b bg-base-100 border-base-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {{ range .Params.header_blocks }}
             {{ partial "blocks/render-block.html" . }}
@@ -12,7 +12,7 @@
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
     </main>
-    <footer class="w-full mt-auto border-t bg-gray-900 border-gray-800 text-white">
+    <footer class="w-full mt-auto border-t bg-base-300 border-base-300 text-base-content">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {{ range .Params.footer_blocks }}
             {{ partial "blocks/render-block.html" . }}

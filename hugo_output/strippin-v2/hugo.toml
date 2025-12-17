@@ -6,7 +6,7 @@ theme = []
 
 [params]
     description = ''
-    theme_preset = 'dark'
+    theme_preset = 'light'
     
 [mediaTypes]
 [mediaTypes."text/css"]

@@ -5,9 +5,11 @@
   "header_blocks": [
     {
       "gap": "4",
-      "justify": "space-between",
+      "justify": "between",
       "align": "center",
-      "type": "row",
+      "css_classes": "w-full",
+      "id": "69aac272-a4b5-4f12-ba73-6d422582ccae",
+      "block_type": "row",
       "blocks": [
         {
           "logo_url": "",
@@ -16,7 +18,8 @@
           "link_url": "/",
           "logo_image": "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg",
           "link_url_type": "page",
-          "type": "brand_logo"
+          "id": "4ea26512-4eea-4ede-a0dd-896ea73b499e",
+          "block_type": "brand_logo"
         },
         {
           "items": [
@@ -43,8 +46,27 @@
           ],
           "style": "pills",
           "responsive": "true",
-          "hamburgerDirection": "sidebar",
-          "type": "menu"
+          "hamburgerDirection": "dropdown",
+          "sidebarSide": "right",
+          "alignment": "center",
+          "position": "normal",
+          "sidebarFooterBlocks": [
+            {
+              "id": "2bf83921-39cd-4d49-bff6-b6cad3db60b0",
+              "type": "image",
+              "params": {
+                "src": "/media/uploads/strippin-v2/256826ee-24f2-47e9-a7e6-7ad6a0ed9c77.jpg",
+                "alt": "",
+                "caption": ""
+              },
+              "children": null,
+              "placement_key": "menu_footer_37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
+              "parent_id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
+              "sort_order": 0
+            }
+          ],
+          "id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
+          "block_type": "menu"
         }
       ]
     }
@@ -56,7 +78,8 @@
       "bgImage": "/media/uploads/9fc3825d-56d4-4bf1-aad5-ba2747a5181c.jpg",
       "cta_text": "View Menu",
       "cta_url": "",
-      "type": "hero"
+      "id": "ac7d249a-14a0-46f6-9b2a-277b03f18f3c",
+      "block_type": "hero"
     },
     {
       "items": [
@@ -83,7 +106,8 @@
       ],
       "columns": 3,
       "show_images": true,
-      "type": "menu_grid"
+      "id": "f7ba9c98-a461-4d9a-a35c-d9c0296c46d8",
+      "block_type": "menu_grid"
     },
     {
       "auto_advance": true,
@@ -152,11 +176,13 @@
       ],
       "show_dots": true,
       "show_arrows": true,
-      "type": "carousel"
+      "id": "a6dff10e-451d-4844-a38a-fab0354db735",
+      "block_type": "carousel"
     },
     {
       "style": "default",
-      "type": "section",
+      "id": "38c58042-dcff-4771-9bd2-5b8a81f8cb59",
+      "block_type": "section",
       "blocks": [
         {
           "items": [
@@ -183,13 +209,15 @@
           ],
           "columns": 3,
           "show_images": true,
-          "type": "menu_grid"
+          "id": "f7ba9c98-a461-4d9a-a35c-d9c0296c46d8",
+          "block_type": "menu_grid"
         }
       ]
     },
     {
       "style": "alt",
-      "type": "section",
+      "id": "a723f2b8-15d8-4998-9abb-73ab1a5e27c9",
+      "block_type": "section",
       "blocks": [
         {
           "auto_advance": true,
@@ -258,7 +286,8 @@
           ],
           "show_dots": true,
           "show_arrows": true,
-          "type": "carousel"
+          "id": "a6dff10e-451d-4844-a38a-fab0354db735",
+          "block_type": "carousel"
         }
       ]
     }
@@ -280,7 +309,8 @@
         }
       ],
       "css_classes": "",
-      "type": "social_links"
+      "id": "ce65d583-8fa0-40a6-8914-be7cf88d32cf",
+      "block_type": "social_links"
     }
   ]
 }

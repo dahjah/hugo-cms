@@ -1,1 +1,6 @@
-<div class="social_links">{{ . | jsonify }}</div>
+{{ $theme := site.Params.theme_preset | default "default" }}
+{{ $templateDir := "default" }}
+{{ if ne $theme "default" }}
+    {{ $templateDir = "daisy" }}
+{{ end }}
+{{ partial (printf "themes/%s/social_links.html" $templateDir) . }}

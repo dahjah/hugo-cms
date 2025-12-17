@@ -1,0 +1,12 @@
+<div class="card bg-base-100 shadow-xl border border-base-200 {{ .css_classes }}">
+  <div class="card-body">
+    <div class="flex items-center gap-4 mb-4">
+        {{ if .avatar }}<div class="avatar"><div class="w-12 h-12 rounded-full"><img src="{{ .avatar }}" /></div></div>{{ end }}
+        <div>
+            <h2 class="card-title text-base">{{ .author }}</h2>
+            <p class="text-sm opacity-70">{{ .role }}</p>
+        </div>
+    </div>
+    <p class="italic text-base-content/80">"{{ .quote | default .text }}"</p>
+  </div>
+</div>

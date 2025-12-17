@@ -4,15 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ .Title }} | {{ .Site.Title }}</title>
-    {{ if eq .Site.Params.theme_preset "daisy" }}
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.min.css" rel="stylesheet" type="text/css" />
-    {{ end }}
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/custom.css">
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
-    <div style="background: #333; color: #fff; padding: 10px; font-family: monospace; z-index: 9999; position: relative;">
-        <strong>DEBUG INFO:</strong><br>
+<body class="bg-base-200 text-base-content font-sans min-h-screen flex flex-col" data-theme="{{ .Site.Params.theme_preset }}">
+    <div data-theme="default" style="background: #333; color: #fff; padding: 10px; font-family: monospace; z-index: 9999; position: relative;">
+        <strong>DEBUG INFO:</strong> <span class="badge badge-primary">Theme: default</span><br>
         Theme Preset: [{{ site.Params.theme_preset }}]<br>
     </div>
     {{ block "main" . }}{{ end }}

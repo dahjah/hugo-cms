@@ -5,9 +5,11 @@
   "header_blocks": [
     {
       "gap": "4",
-      "justify": "space-between",
+      "justify": "between",
       "align": "center",
-      "type": "row",
+      "css_classes": "w-full",
+      "id": "69aac272-a4b5-4f12-ba73-6d422582ccae",
+      "block_type": "row",
       "blocks": [
         {
           "logo_url": "",
@@ -16,7 +18,8 @@
           "link_url": "/",
           "logo_image": "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg",
           "link_url_type": "page",
-          "type": "brand_logo"
+          "id": "4ea26512-4eea-4ede-a0dd-896ea73b499e",
+          "block_type": "brand_logo"
         },
         {
           "items": [
@@ -43,8 +46,27 @@
           ],
           "style": "pills",
           "responsive": "true",
-          "hamburgerDirection": "sidebar",
-          "type": "menu"
+          "hamburgerDirection": "dropdown",
+          "sidebarSide": "right",
+          "alignment": "center",
+          "position": "normal",
+          "sidebarFooterBlocks": [
+            {
+              "id": "2bf83921-39cd-4d49-bff6-b6cad3db60b0",
+              "type": "image",
+              "params": {
+                "src": "/media/uploads/strippin-v2/256826ee-24f2-47e9-a7e6-7ad6a0ed9c77.jpg",
+                "alt": "",
+                "caption": ""
+              },
+              "children": null,
+              "placement_key": "menu_footer_37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
+              "parent_id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
+              "sort_order": 0
+            }
+          ],
+          "id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
+          "block_type": "menu"
         }
       ]
     }
@@ -53,19 +75,21 @@
     {
       "title": "Delicious Strippin Dippin Chicken!",
       "subtitle": "Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces.",
-      "bgImage": "/media/uploads/strippin-v2/de64b56b-37c3-4866-a4ee-8c899535296d.jpg",
+      "bgImage": "/media/uploads/strippin-v2/5588a4f8-644a-452a-847f-452d17c30f22.jpg",
       "cta_text": "View Menu",
       "cta_url": "/menu",
-      "type": "hero"
+      "id": "20e64769-eb87-4697-bbf4-7c1d7c6567a7",
+      "block_type": "hero"
     },
     {
       "style": "default",
-      "id": "highlights",
-      "type": "section",
+      "id": "292f16de-a5a7-4e27-9112-a4d8123505f8",
+      "block_type": "section",
       "blocks": [
         {
           "content": "<h2 class=\"text-center\">Highlights</h2>",
-          "type": "text"
+          "id": "73ea5f10-5848-4c90-bc49-849a79a1201b",
+          "block_type": "text"
         },
         {
           "items": [
@@ -86,14 +110,15 @@
             }
           ],
           "columns": 3,
-          "type": "features_grid"
+          "id": "a44e133c-bd20-494e-a7cf-457d44dfb09a",
+          "block_type": "features_grid"
         }
       ]
     },
     {
       "style": "alt",
-      "id": "menu",
-      "type": "section",
+      "id": "e934d869-a7bb-4c9a-a9c8-63038263bfed",
+      "block_type": "section",
       "blocks": [
         {
           "items": [
@@ -121,24 +146,28 @@
           "columns": 3,
           "show_images": true,
           "title": "Menu",
-          "type": "menu_grid"
+          "id": "750ee62b-c52d-488c-8fa5-09c934745a1c",
+          "block_type": "menu_grid"
         },
         {
           "justify": "center",
           "gap": "2",
           "align": "center",
-          "type": "row",
+          "id": "b50e03bf-69e3-46d6-8883-3d685d798a70",
+          "block_type": "row",
           "blocks": [
             {
               "style": "default",
               "padding": "normal",
-              "type": "section",
+              "id": "1baa979f-85fc-4193-a5fe-a8fb16c78362",
+              "block_type": "section",
               "blocks": [
                 {
                   "text": "See Full Menu",
                   "url": "/menu",
                   "style": "primary",
-                  "type": "button"
+                  "id": "5ae6d0b3-006e-4d52-8ea0-76c289b7fae4",
+                  "block_type": "button"
                 }
               ]
             }
@@ -148,23 +177,25 @@
     },
     {
       "style": "default",
-      "id": "locations",
-      "type": "section",
+      "id": "3c79dac4-79d9-46f3-a634-5ea4c1df632b",
+      "block_type": "section",
       "blocks": [
         {
           "content": "<p>Your content here...</p>",
-          "type": "text"
+          "id": "b1a81b3f-b6ee-4cdf-9d23-ec7ab6e39344",
+          "block_type": "text"
         },
         {
           "content": "<h2>Locations</h2>",
-          "type": "text"
+          "id": "0453e101-d4b2-4242-bf9b-48c07c4af754",
+          "block_type": "text"
         }
       ]
     },
     {
       "style": "alt",
-      "id": "catering",
-      "type": "section",
+      "id": "69fd52a8-8f69-435b-82b0-d1e9dce3c4ef",
+      "block_type": "section",
       "blocks": [
         {
           "type": "row",
@@ -176,22 +207,35 @@
               "width_percent": "70.1",
               "blocks": [
                 {
-                  "type": "column",
+                  "id": "7e961a31-ced3-484d-aba1-3a0b76d64840",
+                  "block_type": "column",
                   "blocks": [
                     {
-                      "text": "Get Catering Info",
-                      "url": "/catering",
-                      "style": "primary",
-                      "type": "button"
+                      "gap": "4",
+                      "justify": "center",
+                      "align": "stretch",
+                      "id": "caddb537-22d4-45fe-bf21-d68bed084473",
+                      "block_type": "row",
+                      "blocks": [
+                        {
+                          "text": "Get Catering Info",
+                          "url": "/catering",
+                          "style": "primary",
+                          "id": "7ab99c24-3b9f-4eff-97e6-6b14f6755c1d",
+                          "block_type": "button"
+                        }
+                      ]
                     },
                     {
                       "md": "## Heading\n\nYour markdown content here.",
-                      "type": "markdown"
+                      "id": "0707ad33-26a8-4bd3-8374-8eeaa146792f",
+                      "block_type": "markdown"
                     }
                   ]
                 },
                 {
-                  "type": "column",
+                  "id": "a9015f0a-e93a-4e07-9114-d9ac264114db",
+                  "block_type": "column",
                   "blocks": [
                     {
                       "items": [
@@ -212,7 +256,8 @@
                           "content": "We recommend booking at least 2-3 months in advance."
                         }
                       ],
-                      "type": "accordion"
+                      "id": "ef2a5714-a64c-4fc4-9a94-9e418110a7ba",
+                      "block_type": "accordion"
                     }
                   ]
                 }
@@ -228,7 +273,8 @@
                   "bgImage": "",
                   "cta_text": "",
                   "cta_url": "",
-                  "type": "hero"
+                  "id": "e3a4b650-1328-4e97-9c50-c97edbaa843d",
+                  "block_type": "hero"
                 }
               ]
             }
@@ -237,14 +283,15 @@
         },
         {
           "md": "THIS IS A SECOND MARKDOWN",
-          "type": "markdown"
+          "id": "eeb72a1b-7e3b-4780-9a85-3ef70245e164",
+          "block_type": "markdown"
         }
       ]
     },
     {
       "style": "light",
-      "id": "about",
-      "type": "section",
+      "id": "69344089-5097-45c5-8e02-6276bc631b9c",
+      "block_type": "section",
       "blocks": [
         {
           "type": "row",
@@ -256,17 +303,20 @@
               "width_percent": "62.2",
               "blocks": [
                 {
-                  "type": "column",
+                  "id": "f2380c25-4a38-4f56-89af-e7949d2dafe5",
+                  "block_type": "column",
                   "blocks": [
                     {
                       "text": "YOUR MOM",
                       "author": "KENNY",
                       "title": "",
-                      "type": "quote"
+                      "id": "bfaa01c8-b622-44e4-a3fa-784035761b6d",
+                      "block_type": "quote"
                     },
                     {
                       "content": "YOUR MOM HERE",
-                      "type": "text"
+                      "id": "5642a347-9894-45b6-9c6f-a2a9a3ff8705",
+                      "block_type": "text"
                     }
                   ]
                 }
@@ -278,8 +328,9 @@
               "blocks": [
                 {
                   "text": "WHY DOES ANTIGRAVITY KEEP BREAKING THIS BLOCK?????",
-                  "author": "",
-                  "type": "quote"
+                  "author": "DJ",
+                  "id": "bb1bc7b6-01c9-4ffc-8fab-434caa717d88",
+                  "block_type": "quote"
                 }
               ]
             }
@@ -290,12 +341,13 @@
     },
     {
       "style": "alt",
-      "id": "reviews",
-      "type": "section",
+      "id": "0c7e6ecb-4de8-4507-83e6-8013ca39dff9",
+      "block_type": "section",
       "blocks": [
         {
-          "content": "<h2 class=\"text-center\">Reviews</h2>",
-          "type": "text"
+          "content": "LOOK AT THIS CAROUSEL",
+          "id": "3c3f8809-5eb8-49f4-b183-8ba06dc4e980",
+          "block_type": "text"
         },
         {
           "auto_advance": true,
@@ -360,11 +412,30 @@
                   }
                 }
               ]
+            },
+            {
+              "id": "mja59vxrkzwyrevai1",
+              "children": [
+                {
+                  "id": "8fab976b-13c3-4b38-91be-53a1ddab7bb2",
+                  "type": "image",
+                  "params": {
+                    "src": "/media/uploads/strippin-v2/ee99ac37-640a-497e-a0d9-aee7aec60d5f.png",
+                    "alt": "",
+                    "caption": ""
+                  },
+                  "children": null,
+                  "placement_key": "carousel_slide_28cae8cb-3252-4e9e-b823-3368c0e5339b_5",
+                  "parent_id": "28cae8cb-3252-4e9e-b823-3368c0e5339b",
+                  "sort_order": 0
+                }
+              ]
             }
           ],
           "show_dots": true,
           "show_arrows": true,
-          "type": "carousel"
+          "id": "28cae8cb-3252-4e9e-b823-3368c0e5339b",
+          "block_type": "carousel"
         },
         {
           "reviews": [
@@ -407,13 +478,15 @@
           ],
           "columns": 3,
           "show_rating": true,
-          "type": "google_reviews"
+          "id": "96abd938-81d4-431b-a3c6-cd5c3126e2ac",
+          "block_type": "google_reviews"
         }
       ]
     },
     {
       "style": "cta",
-      "type": "section",
+      "id": "40ef5994-a0d7-4d65-97b2-6d2f49637735",
+      "block_type": "section",
       "blocks": [
         {
           "items": [],
@@ -450,35 +523,41 @@
               "suffix": "+"
             }
           ],
-          "type": "stats_counter"
+          "id": "6546e7b7-3ce0-4044-bb19-37846f2583ab",
+          "block_type": "stats_counter"
         }
       ]
     },
     {
       "style": "cta",
-      "id": "contact",
-      "type": "section",
+      "id": "c32fd530-ee39-4b43-a35c-62da1fd0227a",
+      "block_type": "section",
       "blocks": [
         {
           "content": "<h2 class=\"text-center\">Contact</h2>",
-          "type": "text"
+          "id": "1c4aa2fa-7101-4d16-9f3c-b901c71b3c4f",
+          "block_type": "text"
         },
         {
           "justify": "center",
           "gap": "4",
-          "type": "row",
+          "id": "85daef87-4e6a-462c-ba6a-33dc1ed2cc33",
+          "block_type": "row",
           "blocks": [
             {
               "text": "Order Now",
               "url": "/menu",
               "style": "primary",
-              "type": "button"
+              "id": "dee87d96-dee9-49d7-a77d-e7710616b335",
+              "block_type": "button"
             },
             {
               "text": "Contact Us",
               "url": "/contact",
               "style": "secondary",
-              "type": "button"
+              "css_classes": "btn-secondary",
+              "id": "ad020a7e-95d8-47ad-aac1-2df55b5d3d83",
+              "block_type": "button"
             }
           ]
         }
@@ -502,7 +581,8 @@
         }
       ],
       "css_classes": "",
-      "type": "social_links"
+      "id": "ce65d583-8fa0-40a6-8914-be7cf88d32cf",
+      "block_type": "social_links"
     }
   ]
 }

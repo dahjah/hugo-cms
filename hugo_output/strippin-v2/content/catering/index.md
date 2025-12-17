@@ -5,9 +5,11 @@
   "header_blocks": [
     {
       "gap": "4",
-      "justify": "space-between",
+      "justify": "between",
       "align": "center",
-      "type": "row",
+      "css_classes": "w-full",
+      "id": "69aac272-a4b5-4f12-ba73-6d422582ccae",
+      "block_type": "row",
       "blocks": [
         {
           "logo_url": "",
@@ -16,7 +18,8 @@
           "link_url": "/",
           "logo_image": "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg",
           "link_url_type": "page",
-          "type": "brand_logo"
+          "id": "4ea26512-4eea-4ede-a0dd-896ea73b499e",
+          "block_type": "brand_logo"
         },
         {
           "items": [
@@ -43,8 +46,27 @@
           ],
           "style": "pills",
           "responsive": "true",
-          "hamburgerDirection": "sidebar",
-          "type": "menu"
+          "hamburgerDirection": "dropdown",
+          "sidebarSide": "right",
+          "alignment": "center",
+          "position": "normal",
+          "sidebarFooterBlocks": [
+            {
+              "id": "2bf83921-39cd-4d49-bff6-b6cad3db60b0",
+              "type": "image",
+              "params": {
+                "src": "/media/uploads/strippin-v2/256826ee-24f2-47e9-a7e6-7ad6a0ed9c77.jpg",
+                "alt": "",
+                "caption": ""
+              },
+              "children": null,
+              "placement_key": "menu_footer_37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
+              "parent_id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
+              "sort_order": 0
+            }
+          ],
+          "id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
+          "block_type": "menu"
         }
       ]
     }
@@ -56,11 +78,13 @@
       "bgImage": "/media/uploads/fa756b53-fb29-42db-87a4-87cb613bd4cf.jpg",
       "cta_text": "View Menu",
       "cta_url": "",
-      "type": "hero"
+      "id": "306818cb-35e0-4fbe-aaca-a0422eb2d67f",
+      "block_type": "hero"
     },
     {
       "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
-      "type": "markdown"
+      "id": "6abc9c3d-f9eb-4ee3-8691-104c2c521277",
+      "block_type": "markdown"
     },
     {
       "items": [
@@ -81,19 +105,23 @@
           "content": "We recommend booking at least 2-3 months in advance."
         }
       ],
-      "type": "accordion"
+      "id": "10ceaf9e-ec62-4fa5-b274-fdeab1f53f0f",
+      "block_type": "accordion"
     },
     {
       "content": "<h2></h2><p></p>",
-      "type": "text"
+      "id": "fb8f112c-4baa-478c-a18a-9ed1560ffecd",
+      "block_type": "text"
     },
     {
       "style": "default",
-      "type": "section",
+      "id": "003f7ae9-5277-439e-9e96-356ed8b0b2a6",
+      "block_type": "section",
       "blocks": [
         {
           "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
-          "type": "markdown"
+          "id": "6abc9c3d-f9eb-4ee3-8691-104c2c521277",
+          "block_type": "markdown"
         },
         {
           "items": [
@@ -114,7 +142,8 @@
             }
           ],
           "columns": 3,
-          "type": "features_grid"
+          "id": "b63dc222-6973-4289-8ee8-4cc87a01e60f",
+          "block_type": "features_grid"
         }
       ]
     },
@@ -137,21 +166,25 @@
         }
       ],
       "columns": 3,
-      "type": "features_grid"
+      "id": "b63dc222-6973-4289-8ee8-4cc87a01e60f",
+      "block_type": "features_grid"
     },
     {
       "text": "Contact Us",
       "url": "/contact",
       "style": "primary",
-      "type": "button"
+      "id": "35c4ca84-9a14-47a0-b5dc-55f9c47d0379",
+      "block_type": "button"
     },
     {
       "style": "alt",
-      "type": "section"
+      "id": "a2780ddc-fbe2-4017-88f7-7e80f1d673d4",
+      "block_type": "section"
     },
     {
       "style": "default",
-      "type": "section",
+      "id": "80d28f8b-b067-4089-a32e-fa46d7f2fa96",
+      "block_type": "section",
       "blocks": [
         {
           "items": [
@@ -172,23 +205,27 @@
               "content": "We recommend booking at least 2-3 months in advance."
             }
           ],
-          "type": "accordion"
+          "id": "10ceaf9e-ec62-4fa5-b274-fdeab1f53f0f",
+          "block_type": "accordion"
         }
       ]
     },
     {
       "style": "cta",
-      "type": "section",
+      "id": "6a0ec59f-d8b2-4ea6-81a3-640251b780a0",
+      "block_type": "section",
       "blocks": [
         {
           "content": "<h2></h2><p></p>",
-          "type": "text"
+          "id": "fb8f112c-4baa-478c-a18a-9ed1560ffecd",
+          "block_type": "text"
         },
         {
           "text": "Contact Us",
           "url": "/contact",
           "style": "primary",
-          "type": "button"
+          "id": "35c4ca84-9a14-47a0-b5dc-55f9c47d0379",
+          "block_type": "button"
         }
       ]
     }
@@ -210,7 +247,8 @@
         }
       ],
       "css_classes": "",
-      "type": "social_links"
+      "id": "ce65d583-8fa0-40a6-8914-be7cf88d32cf",
+      "block_type": "social_links"
     }
   ]
 }
