@@ -322,7 +322,7 @@ theme = []
         
         # --- CONTENT BLOCKS ---
         hero_tpl = """<div class="relative overflow-hidden w-full {{ .css_classes }}">
-    <img src="{{ .bg_image }}" alt="{{ .title }}" class="w-full h-64 md:h-96 object-cover" loading="eager">
+    <img src="{{ .bgImage | default .bg_image }}" alt="{{ .title }}" class="w-full h-64 md:h-96 object-cover" loading="eager">
     <div class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
         <div class="container mx-auto">
             <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">{{ .title }}</h1>
@@ -1209,6 +1209,35 @@ theme = []
                 block_data = block.params.copy() if block.params else {}
                 block_data['type'] = block.definition.id
                 
+                # Helper to fix image paths (uploads/ -> /media/uploads/)
+                def sanitize_url(url):
+                    if not url or not isinstance(url, str): return url
+                    if url.startswith('http') or url.startswith('/') or url.startswith('data:'):
+                        return url
+                    # Assume relative paths meant for media (especially uploads) need prefix
+                    # We specifically target 'uploads/' but can be broader if needed
+                    if url.startswith('uploads/') or '.' in url: # simplistic check for file path
+                         return f"/media/{url}"
+                    return url
+
+                # Sanitize top-level image fields
+                for field in ['image', 'bg_image', 'bgImage', 'logo_image', 'src']:
+                    if field in block_data:
+                        block_data[field] = sanitize_url(block_data[field])
+                
+                # Sanitize lists
+                if 'items' in block_data: # Menu, Features
+                    for item in block_data['items']:
+                        if 'image' in item: item['image'] = sanitize_url(item['image'])
+                
+                if 'images' in block_data: # Gallery
+                    for img in block_data['images']:
+                        if 'src' in img: img['src'] = sanitize_url(img['src'])
+
+                if 'reviews' in block_data: # Google Reviews
+                    for rev in block_data['reviews']:
+                        if 'image' in rev: rev['image'] = sanitize_url(rev['image'])
+
                 # Recurse children
                 children = BlockInstance.objects.filter(parent=block).order_by('sort_order')
                 if children.exists():
