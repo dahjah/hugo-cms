@@ -6,7 +6,7 @@ theme = []
 
 [params]
     description = ''
-    theme_preset = 'light'
+    theme_preset = 'aqua'
     
 [mediaTypes]
 [mediaTypes."text/css"]

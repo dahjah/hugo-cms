@@ -1310,7 +1310,9 @@
                                             <div class="space-y-2">
                                                 <div v-for="(val, prop) in item" :key="prop">
                                                     <template v-if="!prop.endsWith('_type')">
-                                                        <label v-if="!(field.item_schema && field.item_schema[prop] === 'boolean')" class="block text-xs text-slate-500 mb-1">{{ prop
+                                                        <label
+                                                            v-if="!(field.item_schema && field.item_schema[prop] === 'boolean')"
+                                                            class="block text-xs text-slate-500 mb-1">{{ prop
                                                             }}</label>
 
                                                         <!-- URL Type Handler -->
@@ -1352,7 +1354,8 @@
                                                             <label class="flex items-center space-x-2 cursor-pointer">
                                                                 <input type="checkbox" v-model="item[prop]"
                                                                     class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
-                                                                <span class="text-sm text-slate-700">{{ prop === '_isOpen' ? 'Start Open' : prop }}</span>
+                                                                <span class="text-sm text-slate-700">{{ prop ===
+                                                                    '_isOpen' ? 'Start Open' : prop }}</span>
                                                             </label>
                                                         </template>
 
@@ -1367,10 +1370,16 @@
                                                 if (!selectedBlock.params[field.name]) {
                                                     selectedBlock.params[field.name] = [];
                                                 }
-                                                // Create new item with fields from item_schema
+                                                // Create new item with fields from item_schema or schema.properties
                                                 const newItem = {};
                                                 if (field.item_schema) {
+                                                    // Simple format: { key: 'type', ... }
                                                     Object.keys(field.item_schema).forEach(key => {
+                                                        newItem[key] = '';
+                                                    });
+                                                } else if (field.schema && field.schema.items && field.schema.items.properties) {
+                                                    // JSON Schema format: { items: { properties: { key: { type: 'string' }, ... } } }
+                                                    Object.keys(field.schema.items.properties).forEach(key => {
                                                         newItem[key] = '';
                                                     });
                                                 }

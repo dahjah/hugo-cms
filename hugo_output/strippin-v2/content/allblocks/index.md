@@ -208,17 +208,18 @@
       "cards": [
         {
           "front_title": "CARD FRONT",
-          "front_icon": "",
+          "front_icon": "truck",
           "back_description": "KENNYS MOM",
           "back_cta_text": "",
           "back_cta_url": "https://blarg.com"
         },
         {
           "front_title": "CARD FRONT 2",
-          "front_icon": "check",
+          "front_icon": "map-pin",
           "back_description": "KENNYS MOM 2",
-          "back_cta_text": "",
-          "back_cta_url": ""
+          "back_cta_text": "HOME",
+          "back_cta_url": "/",
+          "back_cta_url_type": "page"
         }
       ],
       "columns": 2,
@@ -264,7 +265,8 @@
           "value": "2",
           "suffix": "k+",
           "label": "Happy Clients"
-        }
+        },
+        {}
       ],
       "id": "0ae098be-6672-4a38-a4c5-f94be05a7637",
       "block_type": "stats_counter"
@@ -291,7 +293,8 @@
           "name": "Mambo BBQ Sandwich",
           "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80",
           "description": "Smoky BBQ goodness"
-        }
+        },
+        {}
       ],
       "id": "2db909fa-8b6a-4482-b37f-b58c334e9c7a",
       "block_type": "menu_grid"
