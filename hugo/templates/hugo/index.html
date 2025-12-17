@@ -1359,6 +1359,66 @@
                                                             </label>
                                                         </template>
 
+                                                        <!-- Image Handler -->
+                                                        <template v-else-if="field.item_schema && field.item_schema[prop] === 'image'">
+                                                            <div class="flex space-x-2">
+                                                                <input type="text" v-model="item[prop]"
+                                                                    class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                                    placeholder="Image URL" />
+                                                                <label
+                                                                    class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
+                                                                    title="Upload Image">
+                                                                    <input type="file" class="hidden" accept="image/*" @change="async (e) => {
+                                                                        if (e.target.files.length > 0) {
+                                                                            try {
+                                                                                const result = await uploadFile(e.target.files[0]);
+                                                                                item[prop] = result.file_url;
+                                                                                selectedBlock.params = {...selectedBlock.params};
+                                                                            } catch (err) {
+                                                                                showToast('Upload failed: ' + err.message, 'error');
+                                                                            }
+                                                                            e.target.value = '';
+                                                                        }
+                                                                    }" />
+                                                                    <icon name="upload" :size="16"></icon>
+                                                                </label>
+                                                            </div>
+                                                            <div v-if="item[prop]" class="mt-2">
+                                                                <img :src="item[prop].startsWith('http') || item[prop].startsWith('/') ? item[prop] : '/media/' + item[prop]"
+                                                                    class="max-w-xs h-auto rounded border border-slate-300" />
+                                                            </div>
+                                                        </template>
+
+                                                        <!-- Image Handler -->
+                                                        <template v-else-if="field.item_schema && field.item_schema[prop] === 'image'">
+                                                            <div class="flex space-x-2">
+                                                                <input type="text" v-model="item[prop]"
+                                                                    class="flex-1 text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                                    placeholder="Image URL" />
+                                                                <label
+                                                                    class="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-md px-3 py-2 flex items-center justify-center transition-colors"
+                                                                    title="Upload Image">
+                                                                    <input type="file" class="hidden" accept="image/*" @change="async (e) => {
+                                                                        if (e.target.files.length > 0) {
+                                                                            try {
+                                                                                const result = await uploadFile(e.target.files[0]);
+                                                                                item[prop] = result.file_url;
+                                                                                selectedBlock.params = {...selectedBlock.params};
+                                                                            } catch (err) {
+                                                                                showToast('Upload failed: ' + err.message, 'error');
+                                                                            }
+                                                                            e.target.value = '';
+                                                                        }
+                                                                    }" />
+                                                                    <icon name="upload" :size="16"></icon>
+                                                                </label>
+                                                            </div>
+                                                            <div v-if="item[prop]" class="mt-2">
+                                                                <img :src="item[prop].startsWith('http') || item[prop].startsWith('/') ? item[prop] : '/media/' + item[prop]"
+                                                                    class="max-w-xs h-auto rounded border border-slate-300" />
+                                                            </div>
+                                                        </template>
+
                                                         <!-- Default Input Handler -->
                                                         <input v-else type="text" v-model="item[prop]"
                                                             class="w-full text-sm border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
@@ -4577,7 +4637,7 @@ layout = "${activePage.value.layout}"
         carouselObserver.observe(document.body, {childList: true, subtree: true});
 
         // Initial init
-        setTimeout(initCarouselAutoAdvance, 1000);
+        setTimeout(initCarouselAuvance000);
     </script>
 </body>
 {% endverbatim %}
