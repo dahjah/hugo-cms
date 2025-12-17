@@ -960,20 +960,16 @@ theme = []
             </label>
         </div>
         {{ else if eq $hamburgerDir "dropdown" }}
-        <details class="dropdown {{ if not $isAlwaysHamburger }}lg:hidden{{ end }}">
-            <summary class="btn btn-ghost btn-circle swap swap-rotate">
-                <!-- hamburger icon -->
-                <svg class="swap-off fill-current" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512"><path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z"/></svg>
-                
-                <!-- close icon -->
-                <svg class="swap-on fill-current" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512"><polygon points="400 145.49 366.51 112 256 222.51 145.49 112 112 145.49 222.51 256 112 366.51 145.49 400 256 289.49 366.51 400 400 366.51 289.49 256 400 145.49"/></svg>
-            </summary>
-            <ul class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+        <div class="dropdown {{ if not $isAlwaysHamburger }}lg:hidden{{ end }}">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
+            </div>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[50] p-2 shadow bg-base-100 rounded-box w-52">
                 {{ range .items }}
                 <li><a href="{{ .url }}">{{ .label }}</a></li>
                 {{ end }}
             </ul>
-        </details>
+        </div>
         {{ end }}
     </div>
 
@@ -1035,26 +1031,6 @@ theme = []
 
 <script>
     (function() {
-        // Dropdown Logic
-        const details = document.querySelectorAll('details.dropdown');
-        details.forEach(detail => {
-            detail.addEventListener('toggle', () => {
-                const summary = detail.querySelector('summary');
-                if (summary) {
-                   if (detail.open) summary.classList.add('swap-active');
-                   else summary.classList.remove('swap-active');
-                }
-            });
-        });
-
-        document.addEventListener('click', (e) => {
-            details.forEach(detail => {
-                if (detail.hasAttribute('open') && !detail.contains(e.target)) {
-                    detail.removeAttribute('open');
-                }
-            });
-        });
-
         // Sidebar Logic
         const checkbox = document.getElementById('daisy-sidebar-checkbox');
         const overlay = document.getElementById('daisy-sidebar-overlay');
