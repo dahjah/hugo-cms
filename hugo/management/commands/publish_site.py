@@ -304,7 +304,7 @@ theme = []
     </div>
 </div>"""
 
-        row_tpl = """<div class="flex flex-wrap {{ if .gap }}gap-{{ .gap }}{{ else }}gap-4{{ end }} justify-{{ .justify | default "start" }} items-{{ .align | default "start" }} {{ .css_classes }}">
+        row_tpl = """<div class="w-full flex flex-wrap {{ if .gap }}gap-{{ .gap }}{{ else }}gap-4{{ end }} justify-{{ .justify | default "start" }} items-{{ .align | default "start" }} {{ .css_classes }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
