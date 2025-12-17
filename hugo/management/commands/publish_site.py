@@ -360,9 +360,9 @@ theme = []
     {{ end }}
 </div>"""
 
-        quote_tpl = """<blockquote class="border-l-4 border-indigo-500 pl-4 py-2 mb-8 italic text-slate-700 {{ .css_classes }}">
+        quote_tpl = """<blockquote class="border-l-4 border-primary pl-4 py-2 mb-8 italic text-base-content/80 {{ .css_classes }}">
     <p class="text-lg">"{{ .text }}"</p>
-    {{ if .author }}<cite class="block mt-2 text-sm font-semibold text-slate-900">- {{ .author }}</cite>{{ end }}
+    {{ if .author }}<cite class="block mt-2 text-sm font-semibold text-base-content">- {{ .author }}</cite>{{ end }}
 </blockquote>"""
 
         image_tpl = """<figure class="mb-8 {{ .css_classes }}" style="width: 100%; margin: 0 auto;">
