@@ -948,9 +948,16 @@ theme = []
     <div class="navbar-start">
         {{ if eq $hamburgerDir "sidebar" }}
         <div class="{{ if not $isAlwaysHamburger }}lg:hidden{{ end }}">
-            <button id="daisy-sidebar-toggle" class="btn btn-ghost btn-circle">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
-            </button>
+            <label class="btn btn-ghost btn-circle swap swap-rotate">
+                <!-- this hidden checkbox controls the state -->
+                <input type="checkbox" id="daisy-sidebar-checkbox" class="hidden" style="display:none;" />
+                
+                <!-- hamburger icon -->
+                <svg class="swap-off fill-current" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512"><path d="M64,384H448V341.33H64Zm0-106.67H448V234.67H64ZM64,128v42.67H448V128Z"/></svg>
+                
+                <!-- close icon -->
+                <svg class="swap-on fill-current" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 512 512"><polygon points="400 145.49 366.51 112 256 222.51 145.49 112 112 145.49 222.51 256 112 366.51 145.49 400 256 289.49 366.51 400 400 366.51 289.49 256 400 145.49"/></svg>
+            </label>
         </div>
         {{ else if eq $hamburgerDir "dropdown" }}
         <div class="dropdown {{ if not $isAlwaysHamburger }}lg:hidden{{ end }}">
@@ -1024,7 +1031,7 @@ theme = []
 
 <script>
     (function() {
-        const toggle = document.getElementById('daisy-sidebar-toggle');
+        const checkbox = document.getElementById('daisy-sidebar-checkbox');
         const overlay = document.getElementById('daisy-sidebar-overlay');
         const panel = document.getElementById('daisy-sidebar-panel');
         const close = document.getElementById('daisy-sidebar-close');
@@ -1039,6 +1046,8 @@ theme = []
                 overlay.classList.remove('opacity-0');
                 panel.classList.remove(transClass);
             }, 10);
+            
+            if (checkbox) checkbox.checked = true;
         }
         
         function closeSidebar() {
@@ -1051,9 +1060,17 @@ theme = []
             setTimeout(() => {
                 overlay.classList.add('hidden');
             }, 300);
+            
+            if (checkbox) checkbox.checked = false;
         }
         
-        if(toggle) toggle.addEventListener('click', openSidebar);
+        if(checkbox) {
+            checkbox.addEventListener('change', (e) => {
+                if(e.target.checked) openSidebar();
+                else closeSidebar();
+            });
+        }
+        
         if(close) close.addEventListener('click', closeSidebar);
         if(overlay) overlay.addEventListener('click', closeSidebar);
     })();
