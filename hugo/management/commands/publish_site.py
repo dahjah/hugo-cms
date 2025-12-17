@@ -304,13 +304,13 @@ theme = []
     </div>
 </div>"""
 
-        row_tpl = """<div class="w-full flex flex-wrap {{ if .gap }}gap-{{ .gap }}{{ else }}gap-4{{ end }} justify-{{ .justify | default "start" }} items-{{ .align | default "start" }} {{ .css_classes }}">
+        row_tpl = """<div class="flex flex-wrap md:flex-nowrap justify-{{ .justify | default "start" }} items-{{ .align | default "stretch" }} gap-{{ .gap | default "4" }} {{ .css_classes | default .class }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
 </div>"""
 
-        column_tpl = """<div class="flex-1 {{ .css_classes }}" style="{{ if .width_percent }}flex-basis: {{ .width_percent }}%;{{ end }}">
+        column_tpl = """<div class="{{ if .width_percent }}flex-none w-full{{ else }}flex-initial w-full md:w-auto{{ end }} {{ .css_classes }}" style="{{ if .width_percent }}width: {{ .width_percent }}%; flex-basis: {{ .width_percent }}%;{{ end }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
@@ -343,22 +343,93 @@ theme = []
 </div>"""
 
         button_tpl = """<div class="mb-4 {{ .css_classes }}">
-    <a href="{{ .url }}" class="btn btn-primary btn-lg rounded-lg shadow-md hover:shadow-lg">{{ .text }}</a>
+    <a href="{{ .url }}" class="btn btn-{{ .style | default "primary" }} btn-lg rounded-lg shadow-md hover:shadow-lg">{{ .text }}</a>
 </div>"""
 
-        accordion_tpl = """<div class="space-y-2 {{ .css_classes }}">
+        accordion_tpl = """<div class="join join-vertical w-full {{ .css_classes }}">
+    {{ $id := .id }}
+    {{ $allowMultiple := .allow_multiple }}
     {{ range .items }}
-    <details class="group bg-base-100 rounded-lg shadow-md overflow-hidden border border-base-300">
-        <summary class="cursor-pointer p-6 font-semibold text-base-content hover:bg-base-200 transition-colors flex items-center justify-between list-none">
-            <span>{{ .title }}</span>
-            <svg class="w-5 h-5 opacity-60 transform transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-        </summary>
-        <div class="px-6 pb-6 opacity-80 border-t border-base-300 pt-4">
-            {{ .content | markdownify }}
+    <div class="collapse collapse-arrow join-item border border-base-300">
+        <input type="{{ if $allowMultiple }}checkbox{{ else }}radio{{ end }}" name="accordion-{{ $id }}" /> 
+        <div class="collapse-title text-xl font-medium">
+            {{ .title }}
         </div>
-    </details>
+        <div class="collapse-content"> 
+            <div class="prose max-w-none">
+                {{ .content | safeHTML }}
+            </div>
+        </div>
+    </div>
     {{ end }}
 </div>"""
+
+        youtube_tpl = """<div class="w-full aspect-video rounded-lg overflow-hidden shadow-lg {{ .css_classes }}">
+    <iframe src="https://www.youtube.com/embed/{{ .video_id }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+</div>"""
+
+        alert_tpl = """<div role="alert" class="alert alert-{{ .type | default "info" }} shadow-lg {{ .css_classes }}">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+  <div>
+    <h3 class="font-bold">{{ .title }}</h3>
+    <div class="text-xs">{{ .content }}</div>
+  </div>
+</div>"""
+
+        testimonial_tpl = """<div class="card bg-base-100 shadow-xl border border-base-200 {{ .css_classes }}">
+  <div class="card-body">
+    <div class="flex items-center gap-4 mb-4">
+        {{ if .avatar }}<div class="avatar"><div class="w-12 h-12 rounded-full"><img src="{{ .avatar }}" /></div></div>{{ end }}
+        <div>
+            <h2 class="card-title text-base">{{ .author }}</h2>
+            <p class="text-sm opacity-70">{{ .role }}</p>
+        </div>
+    </div>
+    <p class="italic text-base-content/80">"{{ .quote | default .text }}"</p>
+  </div>
+</div>"""
+
+        html_tpl = """<div class="raw-html {{ .css_classes }}">
+    {{ .content | safeHTML }}
+</div>"""
+
+        process_steps_tpl = """<ul class="steps {{ if eq .layout "vertical" }}steps-vertical{{ end }} w-full {{ .css_classes }}">
+  {{ range .steps }}
+  <li class="step step-primary" data-content="{{ if .icon }}✓{{ else }}●{{ end }}">
+    <div class="text-left ml-2">
+        <h3 class="font-bold">{{ .title }}</h3>
+        <p class="text-sm opacity-70">{{ .description }}</p>
+    </div>
+  </li>
+  {{ end }}
+</ul>"""
+
+        flip_cards_tpl = """<div class="grid grid-cols-1 md:grid-cols-{{ .columns | default 3 }} gap-6 {{ .css_classes }}">
+    {{ range .cards }}
+    <div class="card bg-base-100 shadow-xl group perspective-1000">
+        <div class="relative w-full h-64 transition-all duration-500 preserve-3d group-hover:my-rotate-y-180" style="transform-style: preserve-3d;">
+            <!-- Front -->
+            <div class="absolute inset-0 backface-hidden flex flex-col items-center justify-center p-6 bg-base-100 border border-base-200 rounded-xl">
+                {{ if .front_icon }}<div class="text-4xl mb-4 text-primary">{{ .front_icon }}</div>{{ end }}
+                <h3 class="card-title text-center">{{ .front_title }}</h3>
+            </div>
+            <!-- Back -->
+            <div class="absolute inset-0 backface-hidden my-rotate-y-180 flex flex-col items-center justify-center p-6 bg-primary text-primary-content rounded-xl" style="transform: rotateY(180deg);">
+                <p class="text-center mb-4">{{ .back_description }}</p>
+                {{ if .back_cta_text }}
+                <a href="{{ .back_cta_url }}" class="btn btn-sm btn-outline btn-white bg-base-100 text-base-content hover:bg-base-200 border-none">{{ .back_cta_text }}</a>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+    {{ end }}
+</div>
+<style>
+.perspective-1000 { perspective: 1000px; }
+.preserve-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.my-rotate-y-180 { transform: rotateY(180deg); }
+</style>"""
 
         quote_tpl = """<blockquote class="border-l-4 border-primary pl-4 py-2 mb-8 italic text-base-content/80 {{ .css_classes }}">
     <p class="text-lg">"{{ .text }}"</p>
@@ -494,6 +565,12 @@ theme = []
         with open(blocks / 'quote.html', 'w') as f: f.write(quote_tpl)
         with open(blocks / 'image.html', 'w') as f: f.write(image_tpl)
         with open(blocks / 'carousel.html', 'w') as f: f.write(carousel_tpl)
+        with open(blocks / 'youtube.html', 'w') as f: f.write(youtube_tpl)
+        with open(blocks / 'alert.html', 'w') as f: f.write(alert_tpl)
+        with open(blocks / 'testimonial.html', 'w') as f: f.write(testimonial_tpl)
+        with open(blocks / 'html.html', 'w') as f: f.write(html_tpl)
+        with open(blocks / 'process_steps.html', 'w') as f: f.write(process_steps_tpl)
+        with open(blocks / 'flip_cards.html', 'w') as f: f.write(flip_cards_tpl)
         
 
         gallery_tpl = """<div class="py-12 {{ .css_classes }}">
@@ -1207,6 +1284,7 @@ theme = []
 
                 # Standard Block
                 block_data = block.params.copy() if block.params else {}
+                block_data['id'] = str(block.id) # Inject ID as string for unique element targeting (e.g. accordion groups)
                 block_data['type'] = block.definition.id
                 
                 # Helper to fix image paths (uploads/ -> /media/uploads/)
