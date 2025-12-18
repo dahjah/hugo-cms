@@ -50,7 +50,10 @@ class Command(BaseCommand):
         # 4. Copy Media (The Fix)
         self.copy_media(website, static_dir)
         
-        # 5. Compile and Copy Tailwind CSS (with selected theme)
+        # 5. Run Hugo build to generate hugo_stats.json
+        self.run_hugo_build(output_dir)
+        
+        # 6. Compile and Copy Tailwind CSS (reads hugo_stats.json)
         self.compile_css(static_dir, website)
         
         self.stdout.write(self.style.SUCCESS(f"Site generated in {output_dir}"))
@@ -1478,3 +1481,26 @@ theme = []
         else:
             self.stdout.write(self.style.ERROR(f"Compiled CSS not found at {theme_css}"))
 
+    def run_hugo_build(self, output_dir):
+        """Run Hugo build to generate hugo_stats.json"""
+        import subprocess
+        
+        self.stdout.write("Running Hugo build to generate hugo_stats.json...")
+        
+        result = subprocess.run(
+            ['hugo', '--source', str(output_dir)],
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode != 0:
+            self.stdout.write(self.style.WARNING(f"Hugo build warning: {result.stderr}"))
+        else:
+            self.stdout.write(self.style.SUCCESS("Hugo build completed - hugo_stats.json generated"))
+            
+        # Verify hugo_stats.json was created
+        stats_file = output_dir / 'hugo_stats.json'
+        if stats_file.exists():
+            self.stdout.write(self.style.SUCCESS(f"✓ hugo_stats.json found at {stats_file}"))
+        else:
+            self.stdout.write(self.style.ERROR(f"✗ hugo_stats.json NOT found at {stats_file}"))
