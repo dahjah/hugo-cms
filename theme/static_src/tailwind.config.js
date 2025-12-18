@@ -13,11 +13,9 @@ module.exports = {
         // Hugo generated site templates (most important for production CSS)
         '../../hugo_output/**/layouts/**/*.html',
         '../../hugo_output/**/content/**/*.md',
-    ],
 
-    safelist: [
-        // Safelist all bg-opacity variants for user-entered CSS classes
-        {pattern: /^bg-opacity-/},
+        // Hugo stats file - Tailwind v3 automatically parses this
+        '../../hugo_output/**/hugo_stats.json',
     ],
 
 
