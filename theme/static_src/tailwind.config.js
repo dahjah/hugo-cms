@@ -15,7 +15,26 @@ module.exports = {
         '../../hugo_output/**/content/**/*.md',
 
         // Hugo stats file (tracks all class usage)
-        '../../hugo_output/**/hugo_stats.json',
+        {
+            raw: '../../hugo_output/**/hugo_stats.json',
+            extract: (content) => {
+                try {
+                    const stats = JSON.parse(content);
+                    // Extract all class names from Hugo stats
+                    const classes = [];
+                    if(stats.htmlElements && stats.htmlElements.tags) {
+                        stats.htmlElements.tags.forEach(tag => {
+                            if(tag.attributes && tag.attributes.class) {
+                                tag.attributes.class.forEach(cls => classes.push(cls));
+                            }
+                        });
+                    }
+                    return classes;
+                } catch(e) {
+                    return [];
+                }
+            }
+        },
     ],
 
 
