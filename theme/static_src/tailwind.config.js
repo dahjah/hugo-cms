@@ -13,9 +13,6 @@ module.exports = {
         // Hugo generated site templates (most important for production CSS)
         '../../hugo_output/**/layouts/**/*.html',
         '../../hugo_output/**/content/**/*.md',
-
-        // Hugo stats file (tracks all class usage) - Tailwind automatically extracts classes from JSON
-        '../../hugo_output/**/hugo_stats.json',
     ],
 
     safelist: [
