@@ -455,7 +455,7 @@ theme = []
     <div class="relative" style="display: grid; grid-template-areas: 'stack'; place-items: center; min-height: 300px; overflow: hidden;">
         {{ range $index, $slide := .slides }}
         <div class="carousel-slide" data-slide-index="{{ $index }}" style="grid-area: stack; width: 85%; max-width: 900px; transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out; transform: translateX({{ if eq $index 0 }}0{{ else }}100%{{ end }}); opacity: {{ if eq $index 0 }}1{{ else }}0{{ end }}; pointer-events: {{ if eq $index 0 }}auto{{ else }}none{{ end }};">
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-base-100 rounded-lg shadow-md p-6">
                 {{ range $slide.children }}
                     {{ partial "blocks/render-block.html" . }}
                 {{ end }}
