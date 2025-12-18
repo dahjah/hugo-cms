@@ -327,7 +327,7 @@ theme = []
     {{ end }}
 </div>"""
 
-        column_tpl = """<div class="{{ if .width_percent }}flex-none w-full{{ else }}flex-initial w-full md:w-auto{{ end }} {{ .css_classes }}" style="{{ if .width_percent }}width: {{ .width_percent }}%; flex-basis: {{ .width_percent }}%;{{ end }}">
+        column_tpl = """<div class="{{ if .width_percent }}w-full md:w-[{{ .width_percent }}%]{{ else }}flex-initial w-full md:w-auto{{ end }} {{ .css_classes }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
@@ -483,6 +483,23 @@ theme = []
 .my-rotate-y-180 { transform: rotateY(180deg); }
 </style>"""
 
+        flex_columns_tpl = """{{ $widths := split (.col_widths | default "100") "," }}
+<div class="grid grid-cols-1 md:grid-cols-{{ len $widths }} gap-6 mb-8 {{ .css_classes }}">
+    {{ range $index, $width := $widths }}
+        {{ $colKey := printf "col_%d" $index }}
+        <div class="flex flex-col gap-4">
+            {{/* Access the dynamic column key from the parent context */}}
+            {{ $colData := index $ $colKey }}
+            {{ if $colData }}
+                {{ range $colData }}
+                    {{ partial "blocks/render-block.html" . }}
+                {{ end }}
+            {{ end }}
+        </div>
+    {{ end }}
+</div>"""
+        
+
         quote_tpl = """<blockquote class="border-l-4 border-primary pl-4 py-2 mb-8 italic text-base-content/80 {{ .css_classes }}">
     <p class="text-lg">"{{ .text }}"</p>
     {{ if .author }}<cite class="block mt-2 text-sm font-semibold text-base-content">- {{ .author }}</cite>{{ end }}
@@ -623,7 +640,7 @@ theme = []
         with open(blocks / 'html.html', 'w') as f: f.write(html_tpl)
         with open(blocks / 'process_steps.html', 'w') as f: f.write(process_steps_tpl)
         with open(blocks / 'flip_cards.html', 'w') as f: f.write(flip_cards_tpl)
-        
+                
 
         gallery_tpl = """<div class="py-12 {{ .css_classes }}">
     {{ if .title }}<h2 class="text-3xl font-bold text-center mb-8 text-base-content">{{ .title }}</h2>{{ end }}
@@ -1293,7 +1310,7 @@ theme = []
                     has_legacy_keys = any(child.placement_key and child.placement_key.startswith('col_') for child in fc_children)
                     
                     row_block = {
-                        'type': 'row',
+                        'block_type': 'row',
                         'flex_mode': True,
                         'gap': "2",
                         'blocks': [] # Will hold columns or content
@@ -1322,7 +1339,7 @@ theme = []
                             col_children = children_by_col.get(col_key, [])
                             
                             col_block = {
-                                'type': 'column',
+                                'block_type': 'column',
                                 'width_percent': width,
                                 'blocks': []
                             }
@@ -1403,8 +1420,6 @@ theme = []
 
                     
                 out_blocks.append(block_data)
-                
-            return out_blocks
                 
             return out_blocks
 

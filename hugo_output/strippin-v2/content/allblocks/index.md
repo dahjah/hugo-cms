@@ -4,12 +4,14 @@
   "layout": "single",
   "header_blocks": [
     {
-      "gap": "4",
       "justify": "between",
       "align": "center",
-      "css_classes": "w-full",
-      "id": "69aac272-a4b5-4f12-ba73-6d422582ccae",
-      "block_type": "row",
+      "gap": "0",
+      "position": "sticky",
+      "css_classes": "",
+      "opacity": 60,
+      "id": "70a917c7-8505-490b-9643-810a834a44ed",
+      "block_type": "navbar",
       "blocks": [
         {
           "logo_url": "",
@@ -18,6 +20,7 @@
           "link_url": "/",
           "logo_image": "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg",
           "link_url_type": "page",
+          "css_classes": "btn-neutral",
           "id": "4ea26512-4eea-4ede-a0dd-896ea73b499e",
           "block_type": "brand_logo"
         },
@@ -46,7 +49,7 @@
           ],
           "style": "pills",
           "responsive": "true",
-          "hamburgerDirection": "dropdown",
+          "hamburgerDirection": "sidebar",
           "sidebarSide": "right",
           "alignment": "center",
           "position": "normal",
@@ -65,6 +68,7 @@
               "sort_order": 0
             }
           ],
+          "css_classes": "",
           "id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
           "block_type": "menu"
         }
@@ -79,6 +83,8 @@
       "cta_text": "GET YOUR CHICKEN ON",
       "cta_url": "/",
       "cta_url_type": "page",
+      "parallax": true,
+      "parallax_strength": 5,
       "id": "2a2640e9-360c-47ea-a4ee-d7b6e16e9c61",
       "block_type": "hero"
     },
@@ -86,12 +92,14 @@
       "style": "default",
       "padding": "normal",
       "width": "35.7%",
+      "css_classes": "sticky",
       "id": "29d7203a-ae8e-48fa-8f74-66be44b4469c",
       "block_type": "section",
       "blocks": [
         {
           "type": "info",
           "message": "Important message here.",
+          "css_classes": "sticky",
           "id": "069d7971-4d9d-495d-9ec6-dfed1a05fdb2",
           "block_type": "alert"
         }
@@ -99,6 +107,7 @@
     },
     {
       "content": "KENNYS MOM",
+      "css_classes": "sticky",
       "id": "8bac1658-60e2-4ea5-ab9c-0ccde313d31e",
       "block_type": "text"
     },
@@ -120,13 +129,13 @@
       ]
     },
     {
-      "type": "row",
+      "block_type": "row",
       "flex_mode": true,
       "gap": "2",
       "blocks": [
         {
-          "type": "column",
-          "width_percent": "27.5",
+          "block_type": "column",
+          "width_percent": "35.1",
           "blocks": [
             {
               "content": "KENNYS MOM FLEX LEFT",
@@ -136,8 +145,8 @@
           ]
         },
         {
-          "type": "column",
-          "width_percent": "72.5",
+          "block_type": "column",
+          "width_percent": "64.9",
           "blocks": [
             {
               "src": "/media/uploads/strippin-v2/8f987b59-136a-4d75-ad59-1c57bdaa187c.png",
@@ -361,32 +370,26 @@
           "id": "mja5zt6gzktyw8dvx1c",
           "children": [
             {
-              "id": "f92d83ec-544a-438b-9b9c-f193d7353644",
-              "type": "google_reviews",
-              "params": {
-                "reviews": [
-                  {
-                    "name": "REVIEW 1",
-                    "rating": "5",
-                    "text": "KENNYS MOM",
-                    "date": "",
-                    "image": "KENNYS MOM"
-                  },
-                  {
-                    "name": "REVIEW 2",
-                    "rating": "1",
-                    "text": "KENNYS MOM",
-                    "date": "2025-12-17",
-                    "image": ""
-                  }
-                ],
-                "show_rating": true,
-                "columns": 3
-              },
-              "children": null,
-              "placement_key": "carousel_slide_6b5d1260-556e-4db9-83c4-3a87a41a902d_0",
-              "parent_id": "6b5d1260-556e-4db9-83c4-3a87a41a902d",
-              "sort_order": 0
+              "reviews": [
+                {
+                  "name": "REVIEW 1",
+                  "rating": "5",
+                  "text": "KENNYS MOM",
+                  "date": "",
+                  "image": "KENNYS MOM"
+                },
+                {
+                  "name": "REVIEW 2",
+                  "rating": "1",
+                  "text": "KENNYS MOM",
+                  "date": "2025-12-17",
+                  "image": ""
+                }
+              ],
+              "show_rating": true,
+              "columns": 3,
+              "block_type": "google_reviews",
+              "id": "f92d83ec-544a-438b-9b9c-f193d7353644"
             }
           ]
         },
@@ -394,17 +397,33 @@
           "id": "mja6fayu31kn0bnrdvo",
           "children": [
             {
-              "id": "9fc19b01-9782-444e-9097-7a2a38bea28c",
-              "type": "image",
-              "params": {
-                "src": "/media/uploads/strippin-v2/09abfcff-c43b-4c68-b6c5-8a6b257219e4.png",
-                "alt": "",
-                "caption": ""
-              },
-              "children": null,
-              "placement_key": "carousel_slide_6b5d1260-556e-4db9-83c4-3a87a41a902d_1",
-              "parent_id": "6b5d1260-556e-4db9-83c4-3a87a41a902d",
-              "sort_order": 0
+              "src": "/media/uploads/strippin-v2/09abfcff-c43b-4c68-b6c5-8a6b257219e4.png",
+              "alt": "",
+              "caption": "",
+              "width": "47.5%",
+              "block_type": "image",
+              "id": "9fc19b01-9782-444e-9097-7a2a38bea28c"
+            }
+          ]
+        },
+        {
+          "id": "mjalzfb40d663cifp21k",
+          "children": [
+            {
+              "content": "<p>Your content here...</p>",
+              "block_type": "text",
+              "id": "5b57125b-23ea-40e7-871d-4153cee151f3"
+            }
+          ]
+        },
+        {
+          "id": "mjam8k9vv7yu08t8ivl",
+          "children": [
+            {
+              "type": "info",
+              "message": "Important message here.",
+              "block_type": "alert",
+              "id": "228e7813-f153-4986-97a3-db02ee48e2c2"
             }
           ]
         }
@@ -507,12 +526,12 @@
           "block_type": "text"
         },
         {
-          "type": "row",
+          "block_type": "row",
           "flex_mode": true,
           "gap": "2",
           "blocks": [
             {
-              "type": "column",
+              "block_type": "column",
               "width_percent": "100.0",
               "blocks": [
                 {

@@ -1,4 +1,4 @@
-<div class="{{ if .width_percent }}flex-none w-full{{ else }}flex-initial w-full md:w-auto{{ end }} {{ .css_classes }}" style="{{ if .width_percent }}width: {{ .width_percent }}%; flex-basis: {{ .width_percent }}%;{{ end }}">
+<div class="{{ if .width_percent }}w-full md:w-[{{ .width_percent }}%]{{ else }}flex-initial w-full md:w-auto{{ end }} {{ .css_classes }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
