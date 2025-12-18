@@ -330,7 +330,7 @@ theme = []
         with open(blocks / 'column.html', 'w') as f: f.write(column_tpl)
         
         # Navbar (DaisyUI styled row)
-        navbar_tpl = """<div class="flex flex-wrap md:flex-nowrap navbar bg-base-100 bg-opacity-{{ .opacity | default 100 }} {{ if eq .position \"sticky\" }}sticky top-0 z-50 {{ end }}{{ if eq .position \"overlayed\" }}absolute top-0 left-0 right-0 z-50 {{ end }}justify-{{ .justify | default \"between\" }} items-{{ .align | default \"center\" }} gap-{{ .gap | default \"0\" }} {{ .css_classes }}">
+        navbar_tpl = """<div class="flex flex-wrap md:flex-nowrap navbar bg-base-100 {{ if eq .position \"sticky\" }}sticky top-0 z-50 {{ end }}{{ if eq .position \"overlayed\" }}absolute top-0 left-0 right-0 z-50 {{ end }}justify-{{ .justify | default \"between\" }} items-{{ .align | default \"center\" }} gap-{{ .gap | default \"0\" }} {{ .css_classes }}" style="--tw-bg-opacity: {{ div (default .opacity 100) 100.0 }};">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
