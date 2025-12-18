@@ -323,8 +323,12 @@ theme = []
         with open(blocks / 'column.html', 'w') as f: f.write(column_tpl)
         
         # --- CONTENT BLOCKS ---
-        hero_tpl = """<div class="relative overflow-hidden w-full {{ .css_classes }}">
-    <img src="{{ .bgImage | default .bg_image }}" alt="{{ .title }}" class="w-full h-64 md:h-96 object-cover" loading="eager">
+        hero_tpl = """{{ $heroId := .id | default now.UnixNano }}
+<div class="relative overflow-hidden w-full {{ .css_classes }} hero-section" 
+     id="hero-{{ $heroId }}"
+     data-parallax="{{ .parallax }}" 
+     data-parallax-strength="{{ .parallax_strength | default 5 }}">
+    <img src="{{ .bgImage | default .bg_image }}" alt="{{ .title }}" class="w-full h-64 md:h-96 object-cover transition-transform will-change-transform" style="transform: scale(1.1);" loading="eager">
     <div class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
         <div class="container mx-auto">
             <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">{{ .title }}</h1>
@@ -334,6 +338,39 @@ theme = []
             {{ end }}
         </div>
     </div>
+    {{ if .parallax }}
+    <script>
+    (function() {
+        const hero = document.getElementById('hero-{{ $heroId }}');
+        if (!hero) return;
+        
+        const img = hero.querySelector('img');
+        const strength = parseInt(hero.dataset.parallaxStrength) || 5;
+        // Map 1-10 strength to a usable factor (e.g., 0.1 to 0.5)
+        const factor = strength * 0.05; 
+        
+        function updateParallax() {
+            const rect = hero.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            
+            // Only animate if in view
+            if (rect.bottom > 0 && rect.top < windowHeight) {
+                // Calculate position relative to viewport center
+                const scrollY = window.scrollY;
+                const heroTop = rect.top + scrollY;
+                const offset = (scrollY - heroTop) * factor;
+                
+                // Apply transform
+                img.style.transform = `scale(1.1) translateY(${offset}px)`;
+            }
+        }
+        
+        window.addEventListener('scroll', () => requestAnimationFrame(updateParallax));
+        // Initial call
+        updateParallax();
+    })();
+    </script>
+    {{ end }}
 </div>"""
 
         markdown_tpl = """<div class="prose max-w-none py-6 {{ .css_classes }}">

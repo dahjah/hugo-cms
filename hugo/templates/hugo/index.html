@@ -1282,6 +1282,18 @@
                                             }}</span>
                                     </div>
 
+                                    <!-- Range / Slider -->
+                                    <div v-else-if="field.type === 'range'" class="space-y-1">
+                                        <div class="flex items-center space-x-3">
+                                            <input type="range" :min="field.min || 0" :max="field.max || 100"
+                                                :step="field.step || 1" :value="selectedBlock.params[field.name]"
+                                                @input="updateBlock(selectedBlock.id, field.name, parseFloat($event.target.value))"
+                                                class="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                                            <span class="text-xs font-mono text-slate-500 w-8 text-right">{{
+                                                selectedBlock.params[field.name] }}</span>
+                                        </div>
+                                    </div>
+
                                     <!-- Number -->
                                     <input v-else-if="field.type === 'number'" type="number"
                                         :value="selectedBlock.params[field.name]"
@@ -4047,6 +4059,8 @@ layout = "${activePage.value.layout}"
                     if(type === 'menu' && key === 'items') return false;
                     // Hide cta_hero parameters that have custom editors
                     if(type === 'cta_hero' && ['background_image', 'headline', 'subheadline', 'cta_text'].includes(key)) return false;
+                    // Hero Parallax Dependency
+                    if(type === 'hero' && key === 'parallax_strength' && !selectedBlock.value.params.parallax) return false;
                     // Allow all other fields to show in schema-driven editor
                     return true;
                 };
