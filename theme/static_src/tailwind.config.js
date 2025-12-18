@@ -21,15 +21,7 @@ module.exports = {
                 try {
                     const stats = JSON.parse(content);
                     // Extract all class names from Hugo stats
-                    const classes = [];
-                    if(stats.htmlElements && stats.htmlElements.tags) {
-                        stats.htmlElements.tags.forEach(tag => {
-                            if(tag.attributes && tag.attributes.class) {
-                                tag.attributes.class.forEach(cls => classes.push(cls));
-                            }
-                        });
-                    }
-                    return classes;
+                    return stats?.htmlElements?.classes || [];
                 } catch(e) {
                     return [];
                 }
