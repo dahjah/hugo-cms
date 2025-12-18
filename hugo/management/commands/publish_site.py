@@ -126,12 +126,10 @@ theme = []
         single = """{{ define "main" }}
 <div class="flex flex-col min-h-screen">
     {{ if .Params.header_blocks }}
-    <header class="w-full border-b bg-base-100 border-base-300 relative z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <header style="display: contents">
         {{ range .Params.header_blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
-        </div>
     </header>
     {{ end }}
     <main class="flex-1 w-full">
