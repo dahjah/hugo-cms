@@ -10,15 +10,17 @@ module.exports = {
         // Hugo app templates
         '../../hugo/templates/**/*.html',
 
-        // Hugo generated site templates (most important for production CSS)
+        // Hugo generated HTML (MOST IMPORTANT - this is what actually gets served!)
+        // This is where all the classes from hugo_stats.json are rendered into actual HTML
+        '../../hugo_output/*/public/**/*.html',
+        '../../hugo_output/strippin-v2/public/test_scan.html',
+
+        // Keep layouts and content as backup
         '../../hugo_output/**/layouts/**/*.html',
         '../../hugo_output/**/content/**/*.md',
-
-        // Hugo stats file - Tailwind v3 automatically parses this
-        '../../hugo_output/**/hugo_stats.json',
     ],
 
-
+    important: true,
 
     theme: {
         extend: {},

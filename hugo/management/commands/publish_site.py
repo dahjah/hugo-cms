@@ -76,8 +76,8 @@ theme = []
     writeStats = true
 
 [[build.cachebusters]]
-    source = "hugo_stats\\.json"
-    target = "styles\\.css"
+    source = "hugo_stats.json"
+    target = "styles.css"
     
 [mediaTypes]
 [mediaTypes."text/css"]
@@ -198,7 +198,7 @@ theme = []
     {{ end }}
     <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {{ range .items }}
-        <div class="group bg-base-100 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-base-300 flex flex-col h-full">
+        <div class="group rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-base-300 flex flex-col h-full">
             {{ if .image }}
             <div class="relative h-48 overflow-hidden bg-base-200">
                 <img src="{{ .image }}?v=2" alt="{{ .name }}" 
@@ -255,7 +255,7 @@ theme = []
     {{ end }}
     <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {{ range .items }}
-        <div class="card card-compact bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
+        <div class="card card-compact shadow-xl hover:shadow-2xl transition-all duration-300">
             {{ if .image }}
             <figure class="h-48 overflow-hidden">
                 <img src="{{ .image }}?v=2" alt="{{ .name }}" 
@@ -1067,11 +1067,11 @@ theme = []
     {{ $navbarEndClass = "flex-none" }}
 {{ end }}
 
-{{ $classes := "navbar bg-base-100 shadow-sm z-40 w-auto" }}
+{{ $classes := "navbar shadow-sm z-40 w-auto" }}
 {{ if eq $position "overlay" }}
     {{ $classes = "navbar absolute top-0 left-0 right-0 z-40 bg-base-100/90 backdrop-blur-sm shadow-md w-full" }}
 {{ else if eq $position "fixed" }}
-    {{ $classes = "navbar fixed top-0 left-0 right-0 z-40 bg-base-100 shadow-md w-full" }}
+    {{ $classes = "navbar fixed top-0 left-0 right-0 z-40 shadow-md w-full" }}
 {{ end }}
 
 <div class="{{ $classes }} {{ .css_classes }}">
@@ -1453,23 +1453,22 @@ theme = []
     
     def compile_css(self, static_dir, website):
         """Compile Tailwind CSS - theme will be auto-detected from HTML"""
-        import subprocess
+        from django.core.management import call_command
         
         theme = website.theme_preset
-        self.stdout.write(f"Compiling Tailwind CSS (theme '{theme}' will be auto-detected from HTML)...")
+        # Print to server logs
+        print(f"DEBUG: Compiling Tailwind CSS (theme '{theme}' will be auto-detected from HTML)...")
         
-        # Run tailwind build command - it will scan the Hugo output and detect the theme
-        result = subprocess.run(
-            ['./venv/bin/python', 'manage.py', 'tailwind', 'build'],
-            cwd=settings.BASE_DIR,
-            capture_output=True,
-            text=True
-        )
-        
-        if result.returncode != 0:
-            self.stdout.write(self.style.WARNING(f"Tailwind build warning: {result.stderr}"))
-        else:
+        try:
+            # Run tailwind build command directly in-process
+            # This avoids spawning a new python process and issues with paths/envs
+            call_command('tailwind', 'build')
+            
+            print("DEBUG: CSS compiled successfully")
             self.stdout.write(self.style.SUCCESS(f"CSS compiled successfully"))
+        except Exception as e:
+            print(f"ERROR: Tailwind build failed: {str(e)}")
+            self.stdout.write(self.style.WARNING(f"Tailwind build warning: {str(e)}"))
         
         # Copy compiled CSS to Hugo static directory
         theme_css = Path(settings.BASE_DIR) / 'theme' / 'static' / 'css' / 'dist' / 'styles.css'
@@ -1487,8 +1486,13 @@ theme = []
         
         self.stdout.write("Running Hugo build to generate hugo_stats.json...")
         
+        hugo_bin = Path(settings.BASE_DIR) / 'bin' / 'hugo'
+        if not hugo_bin.exists():
+            self.stdout.write(self.style.ERROR(f"Hugo binary not found at {hugo_bin}"))
+            return
+
         result = subprocess.run(
-            ['hugo', '--source', str(output_dir)],
+            [str(hugo_bin), '--source', str(output_dir)],
             capture_output=True,
             text=True
         )
