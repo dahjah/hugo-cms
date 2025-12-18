@@ -115,6 +115,7 @@ theme = []
         # Single/List
         single = """{{ define "main" }}
 <div class="flex flex-col min-h-screen">
+    {{ if .Params.header_blocks }}
     <header class="w-full border-b bg-base-100 border-base-300 relative z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {{ range .Params.header_blocks }}
@@ -122,6 +123,7 @@ theme = []
         {{ end }}
         </div>
     </header>
+    {{ end }}
     <main class="flex-1 w-full">
         {{ range .Params.main_blocks }}
             {{ partial "blocks/render-block.html" . }}
@@ -328,7 +330,7 @@ theme = []
         with open(blocks / 'column.html', 'w') as f: f.write(column_tpl)
         
         # Navbar (DaisyUI styled row)
-        navbar_tpl = """<div class="flex flex-wrap md:flex-nowrap navbar bg-base-100 {{ if eq .position \"sticky\" }}sticky top-0 z-50 {{ end }}{{ if eq .position \"overlayed\" }}absolute top-0 left-0 right-0 z-50 {{ end }}justify-{{ .justify | default \"between\" }} items-{{ .align | default \"center\" }} gap-{{ .gap | default \"0\" }} {{ .css_classes }}" style="opacity: {{ div (default .opacity 100) 100.0 }};">
+        navbar_tpl = """<div class="flex flex-wrap md:flex-nowrap navbar bg-base-100 bg-opacity-{{ .opacity | default 100 }} {{ if eq .position \"sticky\" }}sticky top-0 z-50 {{ end }}{{ if eq .position \"overlayed\" }}absolute top-0 left-0 right-0 z-50 {{ end }}justify-{{ .justify | default \"between\" }} items-{{ .align | default \"center\" }} gap-{{ .gap | default \"0\" }} {{ .css_classes }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
