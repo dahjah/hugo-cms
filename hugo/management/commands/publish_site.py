@@ -328,7 +328,7 @@ theme = []
      id="hero-{{ $heroId }}"
      data-parallax="{{ .parallax }}" 
      data-parallax-strength="{{ .parallax_strength | default 5 }}">
-    <img src="{{ .bgImage | default .bg_image }}" alt="{{ .title }}" class="w-full h-64 md:h-96 object-cover transition-transform will-change-transform" style="transform: scale(1.1);" loading="eager">
+    <img src="{{ .bgImage | default .bg_image }}" alt="{{ .title }}" class="w-full h-64 md:h-96 object-cover will-change-transform" style="transform: scale(1.3);" loading="eager">
     <div class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
         <div class="container mx-auto">
             <h1 class="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">{{ .title }}</h1>
@@ -346,28 +346,15 @@ theme = []
         
         const img = hero.querySelector('img');
         const strength = parseInt(hero.dataset.parallaxStrength) || 5;
-        // Map 1-10 strength to a usable factor (e.g., 0.1 to 0.5)
-        const factor = strength * 0.05; 
         
-        function updateParallax() {
-            const rect = hero.getBoundingClientRect();
-            const windowHeight = window.innerHeight;
-            
-            // Only animate if in view
-            if (rect.bottom > 0 && rect.top < windowHeight) {
-                // Calculate position relative to viewport center
-                const scrollY = window.scrollY;
-                const heroTop = rect.top + scrollY;
-                const offset = (scrollY - heroTop) * factor;
-                
-                // Apply transform
-                img.style.transform = `scale(1.1) translateY(${offset}px)`;
-            }
+        function parallax() {
+            const y = window.scrollY;
+            // Use strength slider value in the multiplier (1-10 -> -0.025 to -0.25)
+            // Negative = reverse scrolling (background moves opposite direction)
+            img.style.transform = `scale(1.3) translateY(${-strength * 0.025 * y}px)`;
         }
         
-        window.addEventListener('scroll', () => requestAnimationFrame(updateParallax));
-        // Initial call
-        updateParallax();
+        window.addEventListener('scroll', parallax, false);
     })();
     </script>
     {{ end }}
