@@ -96,16 +96,29 @@ class YelpScraper(BaseScraper):
         Execute Yelp scrape using Playwright with stealth.
         Falls back to Crawlee with anti-fingerprinting if DataDome blocks.
         """
-        from playwright.sync_api import sync_playwright
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            print("[YelpScraper] Playwright not installed. Skipping Yelp scraping.")
+            return profile
+
         
         profile = BusinessProfile()
         profile.slug = context.normalized_id
+
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            print("[YelpScraper] Playwright not installed. Skipping Yelp scraping.")
+            return profile
+
         
         url = context.metadata.get('url', f"https://www.yelp.com/biz/{context.normalized_id}")
         menu_url = context.metadata.get('menu_url', f"https://www.yelp.com/menu/{context.normalized_id}")
         
         enc_biz_id = None
         
+        # Use Crawlee to bypass DataDome and get initial page content
         # Use Crawlee to bypass DataDome and get initial page content
         if CRAWLEE_AVAILABLE:
             print(f"[YelpScraper] Fetching {url} with Crawlee (bypassing DataDome)...")
@@ -127,6 +140,42 @@ class YelpScraper(BaseScraper):
                     cls._fetch_menu_standalone(menu_url, profile)
             except Exception as e:
                 print(f"[YelpScraper] Crawlee Error: {e}")
+        else:
+             # Fallback: Direct Playwright (Standard)
+             print(f"[YelpScraper] Fetching {url} with Playwright (Direct)...")
+             try:
+                 with sync_playwright() as p:
+                     browser = p.chromium.launch(headless=True)
+                     page = browser.new_page()
+                     
+                     # Stealth-ish headers
+                     page.set_extra_http_headers({
+                         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                         "Accept-Language": "en-US,en;q=0.9"
+                     })
+                     
+                     page.goto(url, timeout=15000)
+                     time.sleep(2) # Wait for hydration
+                     content = page.content()
+                     
+                     # Extract cookies
+                     cookies = {c['name']: c['value'] for c in page.context.cookies()}
+                     
+                     enc_biz_id = cls._parse_hydration(content, profile)
+                     if enc_biz_id:
+                         print(f"[YelpScraper] Hydration successful. EncBizId: {enc_biz_id}")
+                         cls._fetch_all_gql_data(enc_biz_id, url, cookies, profile)
+                     else:
+                         print("[YelpScraper] Failed to extract EncBizId from hydration.")
+                         
+                     browser.close()
+                     
+                 # Fetch menu (reuse standalone)
+                 cls._fetch_menu_standalone(menu_url, profile)
+                 
+             except Exception as e:
+                 print(f"[YelpScraper] Playwright Direct Error: {e}")
+
         
         # Add social link
         profile.social_links.append(SocialLink(

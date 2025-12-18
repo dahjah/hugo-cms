@@ -5,7 +5,7 @@ Detects URL types and runs appropriate scrapers, merging results into a Business
 Uses the unified BaseScraper interface with connect/scrape pattern.
 """
 import re
-from typing import List, Dict, Type
+from typing import List, Dict, Type, Tuple
 from hugo.schemas import BusinessProfile
 from hugo.scrapers import get_scraper_for_url, SCRAPERS, BaseScraper, ScraperContext
 
@@ -82,7 +82,7 @@ def orchestrate(inputs: List[str]) -> BusinessProfile:
 
 
 def orchestrate_with_scrapers(
-    scraper_inputs: List[tuple[Type[BaseScraper], str]]
+    scraper_inputs: List[Tuple[Type[BaseScraper], str]]
 ) -> BusinessProfile:
     """
     Explicit orchestration where caller specifies which scraper to use for each input.
