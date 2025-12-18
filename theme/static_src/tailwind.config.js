@@ -14,19 +14,13 @@ module.exports = {
         '../../hugo_output/**/layouts/**/*.html',
         '../../hugo_output/**/content/**/*.md',
 
-        // Hugo stats file (tracks all class usage)
-        {
-            raw: '../../hugo_output/**/hugo_stats.json',
-            extract: (content) => {
-                try {
-                    const stats = JSON.parse(content);
-                    // Extract all class names from Hugo stats
-                    return stats?.htmlElements?.classes || [];
-                } catch(e) {
-                    return [];
-                }
-            }
-        },
+        // Hugo stats file (tracks all class usage) - Tailwind automatically extracts classes from JSON
+        '../../hugo_output/**/hugo_stats.json',
+    ],
+
+    safelist: [
+        // Safelist all bg-opacity variants for user-entered CSS classes
+        {pattern: /^bg-opacity-/},
     ],
 
 
