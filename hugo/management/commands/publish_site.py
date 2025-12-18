@@ -69,6 +69,9 @@ theme = []
     description = '{getattr(website, "description", "")}'
     theme_preset = '{getattr(website, "theme_preset", "default")}'
     
+[build]
+    writeStats = true
+    
 [mediaTypes]
 [mediaTypes."text/css"]
     suffixes = ["css"]
