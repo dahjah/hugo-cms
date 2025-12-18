@@ -71,6 +71,10 @@ theme = []
     
 [build]
     writeStats = true
+
+[[build.cachebusters]]
+    source = "hugo_stats\\.json"
+    target = "styles\\.css"
     
 [mediaTypes]
 [mediaTypes."text/css"]
