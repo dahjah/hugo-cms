@@ -98,10 +98,15 @@ theme = []
     <link rel="stylesheet" href="/css/custom.css">
 </head>
 <body class="bg-base-200 text-base-content font-sans min-h-screen flex flex-col" data-theme="{{{{ .Site.Params.theme_preset }}}}">
-    <div data-theme="{theme}" style="background: #333; color: #fff; padding: 10px; font-family: monospace; z-index: 9999; position: relative;">
+    <div id="debug-info" data-theme="{theme}" style="background: #333; color: #fff; padding: 10px; font-family: monospace; z-index: 9999; position: relative; display: none;">
         <strong>DEBUG INFO:</strong> <span class="badge badge-primary">Theme: {theme}</span><br>
         Theme Preset: [{{{{ site.Params.theme_preset }}}}]<br>
     </div>
+    <script>
+        if (new URLSearchParams(window.location.search).get('debug') === 'true') {{
+            document.getElementById('debug-info').style.display = 'block';
+        }}
+    </script>
     {{{{ block "main" . }}}}{{{{ end }}}}
 </body>
 </html>"""
@@ -110,7 +115,7 @@ theme = []
         # Single/List
         single = """{{ define "main" }}
 <div class="flex flex-col min-h-screen">
-    <header class="w-full border-b bg-base-100 border-base-300">
+    <header class="w-full border-b bg-base-100 border-base-300 relative z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {{ range .Params.header_blocks }}
             {{ partial "blocks/render-block.html" . }}
