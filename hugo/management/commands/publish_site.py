@@ -6,6 +6,8 @@ from pathlib import Path
 import shutil
 import os
 import json
+import uuid
+
 
 class Command(BaseCommand):
     help = 'Generate Hugo site files (Restored Logic + Media Fix)'
@@ -1325,7 +1327,37 @@ theme = []
                 if children.exists():
                     block_data['blocks'] = build_blocks(children)
                     
+                if block.definition.id == 'carousel':
+                    # Process JSON slides from params
+                    raw_slides = block_data.get('slides', [])
+                    processed_slides = []
+                    
+                    for slide in raw_slides:
+                        processed_children = []
+                        for child in slide.get('children', []):
+                            # Child is a dict {type: '...', params: {...}}
+                            child_data = child.get('params', {}).copy()
+                            child_data['block_type'] = child.get('type')
+                            child_data['id'] = child.get('id', str(uuid.uuid4()))
+                            
+                            # Sanitize child params
+                            for field in ['image', 'bg_image', 'bgImage', 'logo_image', 'src']:
+                                if field in child_data:
+                                    child_data[field] = sanitize_url(child_data[field])
+                            
+                            processed_children.append(child_data)
+                            
+                        processed_slides.append({
+                            'id': slide.get('id'),
+                            'children': processed_children
+                        })
+                    
+                    block_data['slides'] = processed_slides
+
+                    
                 out_blocks.append(block_data)
+                
+            return out_blocks
                 
             return out_blocks
 
