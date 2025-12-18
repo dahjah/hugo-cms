@@ -322,6 +322,14 @@ theme = []
         with open(blocks / 'row.html', 'w') as f: f.write(row_tpl)
         with open(blocks / 'column.html', 'w') as f: f.write(column_tpl)
         
+        # Navbar (DaisyUI styled row)
+        navbar_tpl = """<div class="navbar bg-base-100 justify-{{ .justify | default \"between\" }} items-{{ .align | default \"center\" }} gap-{{ .gap | default \"0\" }} {{ .css_classes }}">
+    {{ range .blocks }}
+        {{ partial "blocks/render-block.html" . }}
+    {{ end }}
+</div>"""
+        with open(blocks / 'navbar.html', 'w') as f: f.write(navbar_tpl)
+        
         # --- CONTENT BLOCKS ---
         hero_tpl = """{{ $heroId := .id | default now.UnixNano }}
 <div class="relative overflow-hidden w-full {{ .css_classes }} hero-section" 
