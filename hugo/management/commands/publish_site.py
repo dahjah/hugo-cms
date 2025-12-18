@@ -111,7 +111,7 @@ theme = []
         single = """{{ define "main" }}
 <div class="flex flex-col min-h-screen">
     <header class="w-full border-b bg-base-100 border-base-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {{ range .Params.header_blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}
@@ -323,7 +323,7 @@ theme = []
         with open(blocks / 'column.html', 'w') as f: f.write(column_tpl)
         
         # Navbar (DaisyUI styled row)
-        navbar_tpl = """<div class="navbar bg-base-100 justify-{{ .justify | default \"between\" }} items-{{ .align | default \"center\" }} gap-{{ .gap | default \"0\" }} {{ .css_classes }}">
+        navbar_tpl = """<div class="flex flex-wrap md:flex-nowrap navbar bg-base-100 {{ if eq .position \"sticky\" }}sticky top-0 z-50 {{ end }}{{ if eq .position \"overlayed\" }}absolute top-0 left-0 right-0 z-50 {{ end }}justify-{{ .justify | default \"between\" }} items-{{ .align | default \"center\" }} gap-{{ .gap | default \"0\" }} {{ .css_classes }}" style="opacity: {{ div (default .opacity 100) 100.0 }};">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
