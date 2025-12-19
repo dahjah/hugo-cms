@@ -82,6 +82,7 @@ class Page(models.Model):
     slug = models.CharField(max_length=200, help_text="URL path (e.g., '/about')")
     layout = models.CharField(max_length=100, default='single', help_text="Hugo layout template name")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    sort_order = models.IntegerField(default=0, help_text="Order in the sidebar")
     
     # Hugo Metadata
     date = models.DateField(blank=True, null=True) 

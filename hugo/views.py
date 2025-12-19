@@ -1039,10 +1039,10 @@ class CmsInitViewSet(viewsets.ViewSet):
                     )
 
 class PageViewSet(viewsets.ModelViewSet):
-    queryset = Page.objects.all().order_by('-updated_at')
+    queryset = Page.objects.all().order_by('sort_order', '-updated_at')
     
     def get_queryset(self):
-        queryset = Page.objects.all().order_by('-updated_at')
+        queryset = Page.objects.all().order_by('sort_order', '-updated_at')
         website_id = self.request.query_params.get('website_id')
         
         if website_id:
@@ -1070,6 +1070,26 @@ class PageViewSet(viewsets.ModelViewSet):
                 'website': 'Website is required when creating a page'
             })
         serializer.save()
+
+    @action(detail=False, methods=['post'])
+    def reorder(self, request):
+        """
+        Reorder pages based on a list of {id, sort_order}.
+        """
+        page_orders = request.data.get('pages', [])
+        if not page_orders:
+            return Response({'error': 'No pages provided'}, status=400)
+            
+        try:
+            with transaction.atomic():
+                for item in page_orders:
+                    page_id = item.get('id')
+                    sort_order = item.get('sort_order')
+                    if page_id is not None and sort_order is not None:
+                        Page.objects.filter(id=page_id).update(sort_order=sort_order)
+            return Response({'status': 'success'})
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
     @action(detail=True, methods=['get'])
     def content(self, request, pk=None):
