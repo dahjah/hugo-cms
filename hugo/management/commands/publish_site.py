@@ -234,12 +234,13 @@ theme = []
         with open(defaults / 'single.html', 'w') as f: f.write(single)
         with open(defaults / 'list.html', 'w') as f: f.write(single)
         
-        # Render Block Partial
         with open(blocks / 'render-block.html', 'w') as f:
              f.write("""{{ if .block_type }}
     {{ $partialPath := printf "blocks/%s.html" .block_type }}
     {{ if templates.Exists (printf "partials/%s" $partialPath) }}
-        {{ partial $partialPath . }}
+        <div class="cms-block-wrapper" data-block-id="{{ .id }}" style="display: contents;">
+            {{ partial $partialPath . }}
+        </div>
     {{ else }}
         <div class="p-4 border border-red-200 bg-red-50 text-red-700 rounded my-4">
             <strong>Missing Block Template:</strong> {{ .block_type }}

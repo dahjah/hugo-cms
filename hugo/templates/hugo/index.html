@@ -560,49 +560,21 @@
                 </button>
             </div>
             <div class="space-y-1">
-                <template v-for="page in pages" :key="page.id">
-                    <!-- Drop Placeholder (Before) -->
-                    <div v-if="dragOverPageId === page.id && dragDropPosition === 'before'"
-                        class="h-1 bg-indigo-500 rounded my-1 transition-all duration-200"
-                        style="box-shadow: 0 0 4px rgba(99, 102, 241, 0.4);">
+                <div v-for="page in pages" :key="page.id" @click="setActivePage(page.id)"
+                    class="group flex items-center justify-between px-3 py-2 rounded-md cursor-pointer text-sm transition-all"
+                    :class="activePageId === page.id ? 'bg-indigo-50 text-indigo-700 font-medium border border-indigo-100' : 'hover:bg-slate-50 text-slate-600 border border-transparent'">
+                    <div class="flex items-center space-x-3 truncate">
+                        <icon name="file-text" :size="16"
+                            :class="activePageId === page.id ? 'text-indigo-500' : 'text-slate-400'"></icon>
+                        <span class="truncate">{{ page.title }}</span>
                     </div>
-
-                    <div @click="setActivePage(page.id)" draggable="true"
-                        @dragstart="handlePageDragStart($event, page.id)" @dragend="handlePageDragEnd($event)"
-                        @dragover="handlePageDragOver($event, page.id)" @dragleave="handlePageDragLeave($event)"
-                        @drop="handlePageDrop($event, page.id)"
-                        class="group flex items-center justify-between px-3 py-2 rounded-md cursor-pointer text-sm transition-all"
-                        :class="[
-                            activePageId === page.id ? 'bg-indigo-50 text-indigo-700 font-medium border border-indigo-100' : 'hover:bg-slate-50 text-slate-600 border border-transparent',
-                            dragOverPageId === page.id ? 'bg-slate-50' : ''
-                        ]">
-                        <div class="flex items-center space-x-3 truncate">
-                            <div class="cursor-move text-slate-300 hover:text-slate-500 transition-colors"
-                                title="Drag to reorder">
-                                <icon name="move" :size="14"></icon>
-                            </div>
-                            <icon name="file-text" :size="16"
-                                :class="activePageId === page.id ? 'text-indigo-500' : 'text-slate-400'"></icon>
-                            <span class="truncate">{{ page.title }}</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="w-2 h-2 rounded-full" :class="[
-                                    (activePageId === page.id && hasUnsavedChanges) ? 'bg-pink-500' : 
-                                    (page.status === 'published' && page.last_published_at && new Date(page.updated_at) <= new Date(page.last_published_at)) ? 'bg-emerald-400' : 
-                                    'bg-amber-400'
-                                ]"></span>
-                            <icon name="more-vertical" :size="14"
-                                class="opacity-0 group-hover:opacity-100 text-slate-400">
-                            </icon>
-                        </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full"
+                            :class="page.last_published_at && new Date(page.updated_at) <= new Date(page.last_published_at) ? 'bg-emerald-400' : 'bg-amber-400'"></span>
+                        <icon name="more-vertical" :size="14" class="opacity-0 group-hover:opacity-100 text-slate-400">
+                        </icon>
                     </div>
-
-                    <!-- Drop Placeholder (After) -->
-                    <div v-if="dragOverPageId === page.id && dragDropPosition === 'after'"
-                        class="h-1 bg-indigo-500 rounded my-1 transition-all duration-200"
-                        style="box-shadow: 0 0 4px rgba(99, 102, 241, 0.4);">
-                    </div>
-                </template>
+                </div>
             </div>
 
             <button @click="createNewPage" v-if="currentWebsite"
@@ -764,7 +736,7 @@
 
         <!-- Top Bar -->
         <header
-            class="relative h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm z-40">
+            class="relative h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm z-10">
             <!-- LEFT SECTION -->
             <div v-if="activePage" class="flex items-center space-x-4 z-20">
                 <div class="flex flex-col">
@@ -839,7 +811,7 @@
 
                     <!-- Dropdown Menu -->
                     <div v-if="showPublishDropdown"
-                        class="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-md shadow-lg z-[100]">
+                        class="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-md shadow-lg z-50">
                         <button @click="publishSite(); showPublishDropdown = false"
                             class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center space-x-2">
                             <icon name="send" :size="14"></icon>
@@ -888,10 +860,54 @@
                     <div class="p-6 whitespace-pre overflow-x-auto">{{ generateConfig }}</div>
                 </div>
 
-                <!-- Editor/Preview View -->
-                <div v-else
-                    class="max-w-5xl mx-auto min-h-[800px] bg-white shadow-xl rounded-lg border border-slate-200 flex flex-col transition-all duration-300"
-                    :class="viewMode === 'preview' ? 'scale-[1.02]' : ''">
+                <!-- Preview View -->
+                <div v-else-if="viewMode === 'preview'" class="w-full h-full bg-slate-100 overflow-y-auto p-8">
+                    <div v-if="isPreviewLoading"
+                        class="fixed inset-0 flex items-center justify-center bg-white/50 z-50">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+                    </div>
+
+                    <div class="max-w-6xl mx-auto bg-white shadow-xl min-h-screen flex flex-col">
+                        <!-- Header Zone (Global) -->
+                        <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
+                            :style="{ order: getZoneConfig('header')?.order || 0 }">
+                            <block-renderer v-for="block in activeContent.header" :key="block.id" :block="block"
+                                :is-selected="false" :is-editable="false">
+                            </block-renderer>
+                        </div>
+
+                        <!-- Main Content Canvas -->
+                        <div class="flex flex-1" style="display: flex;">
+                            <!-- Sidebar Zone -->
+                            <div v-if="getZoneConfig('sidebar')"
+                                :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
+                                :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
+                                <block-renderer v-for="block in activeContent.sidebar" :key="block.id" :block="block"
+                                    :is-selected="false" :is-editable="false">
+                                </block-renderer>
+                            </div>
+
+                            <!-- Page Content Zone -->
+                            <div class="flex-1" :style="{ order: getZoneConfig('main')?.order || 2 }">
+                                <block-renderer v-for="block in activeContent.main" :key="block.id" :block="block"
+                                    :is-selected="false" :is-editable="false">
+                                </block-renderer>
+                            </div>
+                        </div>
+
+                        <!-- Footer Zone (Global) -->
+                        <div v-if="getZoneConfig('footer')" :class="getZoneConfig('footer')?.cssClasses || ''"
+                            :style="{ order: getZoneConfig('footer')?.order || 0 }">
+                            <block-renderer v-for="block in activeContent.footer" :key="block.id" :block="block"
+                                :is-selected="false" :is-editable="false">
+                            </block-renderer>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Editor View -->
+                <div v-else-if="viewMode === 'editor'"
+                    class="max-w-5xl mx-auto min-h-[800px] bg-white shadow-xl rounded-lg border border-slate-200 flex flex-col transition-all duration-300">
 
                     <!-- Header Zone (Global) - Render if layout allows -->
                     <drop-zone v-if="getZoneConfig('header')" :title="'Site Header (Global)'" zone="header"
@@ -2020,7 +2036,7 @@
                                 </div>
 
                                 <!-- Sidebar Menu (from side, full height) -->
-                                <div v-else v-show="block._menuOpen"
+                                <div v-else-if="block._menuOpen"
                                     :class="[
                                         'fixed top-0 h-screen w-64 bg-white shadow-2xl z-50 flex flex-col',
                                         (block.params.sidebarSide === 'right' || (!block.params.sidebarSide && block.params.alignment === 'right')) ? 'right-0 border-l' : 'left-0 border-r',
@@ -3740,9 +3756,6 @@ layout = "${activePage.value.layout}"
                     }
                 };
 
-                const dragOverPageId = Vue.ref(null);
-                const dragDropPosition = Vue.ref(null); // 'before' or 'after'
-
                 const fetchPages = async () => {
                     try {
                         let url = `${API_BASE_URL}pages/`;
@@ -3754,101 +3767,6 @@ layout = "${activePage.value.layout}"
                     } catch(error) {
                         console.error('Error fetching pages:', error);
                     }
-                };
-
-                const reorderPages = async (newPagesList) => {
-                    try {
-                        // Optimistic update
-                        pages.value = newPagesList;
-
-                        // Prepare payload
-                        const mapping = newPagesList.map((p, index) => ({
-                            id: p.id,
-                            sort_order: index
-                        }));
-
-                        await fetchApi(`${API_BASE_URL}pages/reorder/`, 'POST', {pages: mapping});
-
-                        // Force refresh from server to ensure compliance
-                        await fetchPages();
-                    } catch(error) {
-                        console.error('Reorder error:', error);
-                        showToast('Failed to reorder pages', 'error');
-                        // Re-fetch to restore state on error
-                        fetchPages();
-                    }
-                };
-
-
-                // Page Drag & Drop Helpers
-                const handlePageDragStart = (evt, pageId) => {
-                    evt.dataTransfer.dropEffect = 'move';
-                    evt.dataTransfer.effectAllowed = 'move';
-                    evt.dataTransfer.setData('pageId', pageId);
-                    evt.target.classList.add('opacity-50');
-                };
-
-                const handlePageDragEnd = (evt) => {
-                    evt.target.classList.remove('opacity-50');
-                    dragOverPageId.value = null;
-                    dragDropPosition.value = null;
-                };
-
-                const handlePageDragOver = (evt, pageId) => {
-                    evt.preventDefault(); // Necessary to allow dropping
-                    dragOverPageId.value = pageId;
-
-                    // Calculate if we are in the top or bottom half
-                    const rect = evt.currentTarget.getBoundingClientRect();
-                    const midY = rect.top + rect.height / 2;
-                    if(evt.clientY < midY) {
-                        dragDropPosition.value = 'before';
-                    } else {
-                        dragDropPosition.value = 'after';
-                    }
-                };
-
-                const handlePageDragLeave = (evt) => {
-                    // Optional: Clear state if leaving the list entirely? 
-                    // Often better to leave it to DragEnd or when entering another item to flicker less.
-                };
-
-                const handlePageDrop = (evt, targetPageId) => {
-                    evt.preventDefault();
-                    dragOverPageId.value = null;
-                    dragDropPosition.value = null;
-
-                    const draggedId = evt.dataTransfer.getData('pageId');
-                    if(!draggedId || draggedId === targetPageId) return;
-
-                    const draggedIndex = pages.value.findIndex(p => p.id === draggedId);
-                    const targetIndex = pages.value.findIndex(p => p.id === targetPageId);
-
-                    if(draggedIndex === -1 || targetIndex === -1) return;
-
-                    const newPages = [...pages.value];
-                    const [draggedPage] = newPages.splice(draggedIndex, 1);
-
-                    // Logic to insert before or after based on drop position
-                    let finalIndex = targetIndex;
-                    if(dragDropPosition.value === 'after') {
-                        finalIndex = targetIndex + 1;
-                    }
-
-                    // Adjustment for removal if the dragged item was essentially "above" the insertion point in the array
-                    // But here we are dealing with indices.
-                    // If draggedIndex < finalIndex, then removing the item shifts everything down by 1.
-                    // So we must subtract 1 from finalIndex.
-                    if(draggedIndex < finalIndex) {
-                        finalIndex -= 1;
-                    }
-
-                    // Clamp index
-                    if(finalIndex < 0) finalIndex = 0;
-                    if(finalIndex > newPages.length) finalIndex = newPages.length;
-
-                    newPages.splice(finalIndex, 0, draggedPage);
-                    reorderPages(newPages);
                 };
 
                 const fetchTemplates = async () => {
@@ -3945,23 +3863,7 @@ layout = "${activePage.value.layout}"
                         };
 
                         // 1. Save Page Metadata (PUT)
-                        const metadataResponse = await fetchApi(`${API_BASE_URL}pages/${pageId}/`, 'PUT', metadataPayload);
-
-                        // Update local pages list with new data (specifically updated_at) to refresh status dots
-                        const pageIndex = pages.value.findIndex(p => p.id === pageId);
-                        if(pageIndex !== -1 && metadataResponse) {
-                            // Update the specific fields that might have changed
-                            pages.value[pageIndex] = {
-                                ...pages.value[pageIndex],
-                                ...metadataResponse, // success response returns the updated page object
-                            };
-
-                            // Also update activePage if it matches to ensure consistency
-                            if(activePage.value && activePage.value.id === pageId) {
-                                activePage.value.updated_at = metadataResponse.updated_at;
-                                activePage.value.last_published_at = metadataResponse.last_published_at;
-                            }
-                        }
+                        await fetchApi(`${API_BASE_URL}pages/${pageId}/`, 'PUT', metadataPayload);
 
 
                         // 2. Save Block Content (POST to custom action)
@@ -4392,13 +4294,148 @@ layout = "${activePage.value.layout}"
                     setCarouselSlide(block.id, (current + 1) % total);
                 };
 
+                // --- PREVIEW LOGIC ---
+                const previewUrl = ref('');
+                const isPreviewLoading = ref(false);
+
+                const refreshPreview = async () => {
+                    if(!activePage.value) return;
+
+                    // isPreviewLoading.value = true;
+                    try {
+                        const transformBlock = (block) => {
+                            const transformed = {...block};
+                            if(block.type === 'flex_columns' && block.children && Array.isArray(block.children)) {
+                                const columnMap = {};
+                                block.children.forEach(child => {
+                                    const colKey = child.placement_key || 'col_0';
+                                    if(!columnMap[colKey]) {
+                                        columnMap[colKey] = [];
+                                    }
+                                    columnMap[colKey].push(transformBlock(child));
+                                });
+                                transformed.children = Object.keys(columnMap)
+                                    .sort() // Ensure col_0, col_1 order
+                                    .map(key => ({blocks: columnMap[key]}));
+                            } else if(block.children && Array.isArray(block.children)) {
+                                transformed.children = block.children.map(transformBlock);
+                            }
+                            return transformed;
+                        };
+
+                        const allPageBlocks = [
+                            ...contentZones.value.main.map(b => transformBlock({...b, placement_key: 'main'})),
+                            ...contentZones.value.sidebar.map(b => transformBlock({...b, placement_key: 'sidebar'}))
+                        ];
+
+                        const allBlocks = [
+                            ...contentZones.value.header.map(b => transformBlock({...b, placement_key: 'header'})),
+                            ...allPageBlocks,
+                            ...contentZones.value.footer.map(b => transformBlock({...b, placement_key: 'footer'}))
+                        ];
+
+                        const payload = {
+                            website_id: currentWebsite.value.id,
+                            page_id: activePage.value.id,
+                            page: {
+                                ...activePage.value
+                            },
+                            blocks: allBlocks
+                        };
+
+                        const csrfToken = getCsrfToken();
+                        const response = await fetch(`${API_BASE_URL}websites/render_canvas/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken,
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if(!response.ok) {
+                            throw new Error(`Preview Error: ${response.statusText}`);
+                        }
+
+                        const data = await response.json();
+
+                        console.log("Preview Built Successfully.");
+
+                        // Construct Preview URL
+                        // trigger reload with timestamp
+                        const ts = new Date().getTime();
+                        let slug = activePage.value.slug || '';
+                        if(slug.startsWith('/')) slug = slug.substring(1);
+
+                        const websiteId = currentWebsite.value.id;
+                        previewUrl.value = `${API_BASE_URL}sites/${websiteId}/preview/${slug}?t=${ts}`;
+
+                    } catch(e) {
+                        console.error("Preview failed", e);
+                        showToast("Preview failed: " + e.message, 'error');
+                    } finally {
+                        // isPreviewLoading.value = false;
+                    }
+                };
+
+                // Watch viewMode to refresh preview
+                watch(viewMode, (newMode) => {
+                    if(newMode === 'preview') {
+                        // Reset all menu states before showing preview
+                        const resetMenuStates = (blocks) => {
+                            if(!blocks || !Array.isArray(blocks)) return;
+                            blocks.forEach(block => {
+                                if(block.type === 'menu') {
+                                    block._menuOpen = false;
+                                }
+                                if(block.children && Array.isArray(block.children)) {
+                                    resetMenuStates(block.children);
+                                }
+                            });
+                        };
+
+                        // Reset menu states in all zones
+                        resetMenuStates(contentZones.value.header);
+                        resetMenuStates(contentZones.value.main);
+                        resetMenuStates(contentZones.value.sidebar);
+                        resetMenuStates(contentZones.value.footer);
+
+                        refreshPreview();
+                    }
+                });
+
+
                 // Provide helpers to child components
                 provide('getCarouselSlide', getCarouselSlide);
                 provide('setCarouselSlide', setCarouselSlide);
                 provide('prevCarouselSlide', prevCarouselSlide);
                 provide('nextCarouselSlide', nextCarouselSlide);
 
+                // --- STYLE INJECTION ---
+                const injectSiteStyles = (websiteId) => {
+                    const cssUrl = `${API_BASE_URL}sites/${websiteId}/preview/css/styles.css`;
+                    // Check if already injected
+                    const existingLink = document.querySelector(`link[href="${cssUrl}"]`);
+                    if(!existingLink) {
+                        const link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                        link.href = cssUrl;
+                        document.head.appendChild(link);
+                        console.log("Injected site styles:", cssUrl);
+                    }
+                };
+
+                // Watch for website load
+                watch(currentWebsite, (newSite) => {
+                    if(newSite && newSite.id) {
+                        injectSiteStyles(newSite.id);
+                    }
+                });
+
                 return {
+                    previewUrl,
+                    refreshPreview,
+                    isPreviewLoading,
                     isLoaded,
                     pages,
                     activePageId,
@@ -4439,6 +4476,7 @@ layout = "${activePage.value.layout}"
                     },
                     createWebsite: async () => {
                         if(!newWebsiteName.value || !newWebsiteSlug.value) {
+
                             showToast('Please fill in all fields', 'error');
                             return;
                         }
@@ -4788,18 +4826,11 @@ layout = "${activePage.value.layout}"
                     themePreset,
                     siteTemplates,
                     selectedTemplateId,
+                    // Carousel slide helpers
                     getCarouselSlide,
                     setCarouselSlide,
                     prevCarouselSlide,
-                    nextCarouselSlide,
-                    // Page Reordering
-                    handlePageDragStart,
-                    handlePageDragEnd,
-                    handlePageDrop,
-                    handlePageDragOver,
-                    handlePageDragLeave,
-                    dragOverPageId,
-                    dragDropPosition
+                    nextCarouselSlide
                 };
 
 

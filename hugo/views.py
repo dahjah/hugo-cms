@@ -24,6 +24,181 @@ from .serializers import (
 )
 from .importer import import_hugo_theme_structure
 
+from django.views.decorators.clickjacking import xframe_options_sameorigin
+
+@xframe_options_sameorigin
+def serve_preview_asset(request, website_id, path):
+    """
+    Serves static assets and HTML for preview.
+    For HTML files, injects the CMS editor script.
+    """
+    from django.http import FileResponse, Http404, HttpResponse
+    import mimetypes
+    
+    try:
+        website = Website.objects.get(id=website_id)
+        base_output_dir = Path(settings.BASE_DIR) / 'hugo_output' / website.slug / 'public'
+        
+        # 1. Resolve Path
+        # Handle root or directory requests
+        if not path or path.endswith('/'):
+            target_path = path + 'index.html'
+        else:
+            target_path = path
+
+        # Safe path joining
+        # Remove leading slashes to prevent join from resetting root
+        safe_target_path = target_path.lstrip('/')
+        file_path = (base_output_dir / safe_target_path).resolve()
+        
+        # Security check: Ensure we are still inside base_output_dir
+        if not str(file_path).startswith(str(base_output_dir.resolve())):
+             # Additional check: prevent '..' fallback triggers if resolve is tricky
+             raise Http404("Invalid path security")
+
+        # Fallback: If path didn't end in slash but is a directory, try adding index.html
+        if file_path.is_dir():
+             file_path = file_path / 'index.html'
+             
+        if not file_path.exists() or not file_path.is_file():
+             raise Http404(f"File not found: {path}")
+             
+        # Detect content type
+        content_type, encoding = mimetypes.guess_type(file_path)
+        content_type = content_type or 'application/octet-stream'
+        
+        # 2. HTML Injection (if applicable)
+        if content_type == 'text/html':
+            with open(file_path, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+
+            # Inject Editor Helper Script
+            # We inject a script that enables the "Click to Edit" postMessage bridge
+            editor_script = """
+            <script>
+            (function() {
+                // Editor Helper - Injected by CMS
+                console.log("CMS Editor Connected");
+
+                // Inject Styles for highlighting
+                const style = document.createElement('style');
+                style.textContent = `
+                    [data-block-id] {
+                        cursor: pointer;
+                        transition: outline 0.1s;
+                    }
+                    [data-block-id]:hover {
+                        outline: 2px solid rgba(99, 102, 241, 0.5) !important; 
+                    }
+                    .cms-selected-block {
+                        outline: 3px solid #6366f1 !important;
+                        position: relative;
+                        z-index: 10;
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                document.body.addEventListener('click', function(e) {
+                    // Find closest block
+                    const block = e.target.closest('[data-block-id]');
+                    if (block) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const blockId = block.getAttribute('data-block-id');
+                        console.log("Block Selected:", blockId);
+                        
+                        // Send message to parent
+                        window.parent.postMessage({
+                            type: 'block-selected',
+                            blockId: blockId
+                        }, '*');
+                        
+                        // Update visual selection
+                        document.querySelectorAll('.cms-selected-block').forEach(el => el.classList.remove('cms-selected-block'));
+                        block.classList.add('cms-selected-block');
+                    }
+                }, true);
+
+                // Listen for messages from parent (e.g. to highlight block from sidebar)
+                window.addEventListener('message', function(e) {
+                     if (e.data && e.data.type === 'select-block') {
+                         const blockId = e.data.blockId;
+                         const block = document.querySelector(`[data-block-id="${blockId}"]`);
+                         if (block) {
+                             document.querySelectorAll('.cms-selected-block').forEach(el => el.classList.remove('cms-selected-block'));
+                             block.classList.add('cms-selected-block');
+                             block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                         }
+                     }
+                });
+            })();
+            </script>
+            """
+            
+            # Helper injection
+            if '</body>' in html_content:
+                html_content = html_content.replace('</body>', f'{editor_script}</body>')
+            else:
+                html_content += editor_script
+                
+            # Base Tag Injection?
+            # Ideally not needed if using iframe src, but if assets are relative, they should resolve relative to current URL.
+            # Example: src="/api/sites/1/preview/about/" -> loads "about/index.html"
+            # <link href="/css/style.css"> -> resolves to domain root /css/style.css which is wrong.
+            # We need <base href="/api/sites/1/preview/">
+            
+            base_href = f"/api/sites/{website_id}/preview/"
+            
+            # Robust replacement using regex to handle single/double quotes
+            import re
+            
+            # Force replace paths starting with /css, /js, /images/ /media
+            # This handles root-relative paths that <base> doesn't catch
+            # Matches src="/css/..." or href='/js/...'
+            # We want to replace valid asset starts
+            
+            def replace_asset_link(match):
+                attr = match.group(1) # href or src
+                quote = match.group(2) # " or '
+                path = match.group(3) # /css/ or /js/
+                rest = match.group(4)
+                return f'{attr}={quote}{base_href}{path.lstrip("/")}{rest}'
+
+            # Regex Explanation:
+            # (href|src)\s*=\s*  -> Attribute name
+            # (["\'])            -> Quote char
+            # (/((?:css|js|images|media)/.*?)) -> Path starting with / followed by standard asset folders
+            # \2                 -> Matching closing quote
+            
+            # Simplified: Just look for usages of /css, /js, /media, /images inside href/src
+            # And prepend base_href (without the double slash issue)
+            
+            # Pattern: (href|src)=["']/(css|js|images|media)/
+            
+            html_content = re.sub(
+                r'(href|src)\s*=\s*(["\'])/(css|js|images|media)(.*?)["\']', 
+                lambda m: f'{m.group(1)}={m.group(2)}{base_href}{m.group(3)}{m.group(4)}{m.group(2)}', 
+                html_content
+            )
+
+            # Simple heuristic: inject base tag if one doesn't exist
+            if '<base' not in html_content:
+                if '<head>' in html_content:
+                    html_content = html_content.replace('<head>', f'<head><base href="{base_href}">', 1)
+                else:
+                    html_content = f'<base href="{base_href}">' + html_content
+
+            return HttpResponse(html_content, content_type=content_type)
+
+        # 3. Serve Assets
+        return FileResponse(open(file_path, 'rb'), content_type=content_type)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise Http404(str(e))
+
 def editor_view(request, website_id=None):
     """Serves the Vue.js frontend application."""
     if website_id:
@@ -167,7 +342,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             base_url = request.build_absolute_uri('/')
             
             # Generate markdown for this page
-            page_content = self._generate_page_markdown(page, base_url)
+            page_content = self._generate_page_markdown(page, base_url=base_url)
             
             # Write to appropriate location
             if page.slug == '/':
@@ -228,12 +403,221 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             })
             
         except Exception as e:
+            import traceback
+            print(traceback.format_exc())
             return Response({
                 'success': False,
-                'error': str(e)
+                'error': str(e),
+                'traceback': traceback.format_exc()
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
     
-    def _generate_layout_templates(self, layouts_dir, default_dir):
+    @action(detail=False, methods=['post'])
+    def render_canvas(self, request):
+        """
+        Renders the true HTML for a page (preview) based on the request payload.
+        Payload can include unsaved modifications to blocks and page metadata.
+        """
+        import json
+        import subprocess
+        from pathlib import Path
+        from django.conf import settings
+        
+        try:
+            data = request.data
+            website_id = data.get('website_id')
+            page_id = data.get('page_id')
+            
+            if not website_id:
+                return Response({'error': 'website_id is required'}, status=400)
+
+            website = Website.objects.get(id=website_id)
+            
+            # --- 1. Construct Mock Objects from Payload ---
+            # We mimic the Django models structure so the existing generator works
+            
+            # Mock Page
+            page_data = data.get('page', {})
+            
+            # If we have a real page ID, get it for base values, then override
+            real_page = None
+            if page_id:
+                try:
+                    real_page = Page.objects.get(id=page_id)
+                except Page.DoesNotExist:
+                    pass
+            
+            class MockPage:
+                def __init__(self, **kwargs):
+                    self.__dict__.update(kwargs)
+            
+            mock_page = MockPage(
+                title=page_data.get('title', real_page.title if real_page else 'Untitled'),
+                slug=page_data.get('slug', real_page.slug if real_page else '/temp-preview'),
+                layout=page_data.get('layout', real_page.layout if real_page else 'single'),
+                description=page_data.get('description', real_page.description if real_page else ''),
+                date=page_data.get('date', real_page.date if real_page else ''),
+                tags=page_data.get('tags', real_page.tags if real_page else []),
+                website=website
+            )
+
+            # Mock Blocks
+            # The payload 'blocks' should be a hierarchical list of blocks
+            # We need to flatten them into a list of BlockInstance-like objects with 'parent' pointers if the generator expects that
+            # BUT: _generate_page_markdown just iterates root blocks and calls render_blocks recursive.
+            # render_blocks expects 'BlockInstance' objects with .params and .definition_id
+            
+            blocks_payload = data.get('blocks', [])
+            
+            class MockBlock:
+                def __init__(self, data):
+                    self.id = data.get('id') or str(uuid.uuid4())
+                    self.definition_id = data.get('type')
+                    self.params = data.get('params', {})
+                    self.placement_key = data.get('zone', 'main') # 'main', 'header', etc.
+                    self.children_data = data.get('children', [])
+                    # We don't strictly need .parent relation if we handle recursion manually, 
+                    # but the generator uses BlockInstance.objects.filter(parent=block)
+                    # We need to adapt the generator or the mock.
+                    
+                    # Optimization: The generator's `render_blocks` recursively fetches children via DB.
+                    # We must intercept that.
+            
+            # PROBLEM: The existing `render_blocks` function inside `_generate_page_markdown` 
+            # does: children = BlockInstance.objects.filter(parent=block)
+            # This is hard-coded DB access.
+            # We need to fix `_generate_page_markdown` recursively first.
+            
+            # For now, let's assume I fix `_generate_page_markdown` in the same edit 
+            # to look at `block.cached_children` if available.
+            
+            def build_mock_block_tree(block_data_list):
+                mocks = []
+                for b_data in block_data_list:
+                    mb = MockBlock(b_data)
+                    # Recursively build children
+                    if mb.children_data:
+                        mb.cached_children = build_mock_block_tree(mb.children_data)
+                    else:
+                        mb.cached_children = []
+                    mocks.append(mb)
+                return mocks
+            
+            mock_blocks_tree = build_mock_block_tree(blocks_payload)
+            
+            # Filter for specific zones since `page_blocks` expected by generator is a QuerySet-like iterable
+            # The generator filters by placement_key manually for zones.
+            
+            # We need a list that behaves sufficiently like the QuerySet for the initial loop
+            # The initial loop in `_generate_page_markdown` does:
+            # zone_blocks = page_blocks.filter(placement_key=zone_name)
+            
+            class MockQuerySet(list):
+                def filter(self, **kwargs):
+                    filtered = []
+                    for item in self:
+                        match = True
+                        for k, v in kwargs.items():
+                            if getattr(item, k, None) != v:
+                                match = False
+                                break
+                        if match:
+                            filtered.append(item)
+                    return MockQuerySet(filtered)
+                
+                def order_by(self, *args):
+                    return self # Assume already ordered from frontend
+                
+                def exists(self):
+                    return len(self) > 0
+
+            mock_page_blocks = MockQuerySet(mock_blocks_tree)
+            
+            # Get Global Blocks (Header/Footer) - Use Real DB blocks for now to save payload size
+            # OR if payload includes them, use them.
+            global_blocks_payload = data.get('global_blocks', [])
+            if global_blocks_payload:
+                 mock_global_blocks = MockQuerySet(build_mock_block_tree(global_blocks_payload))
+            else:
+                 mock_global_blocks = BlockInstance.objects.filter(page=None, parent=None, website=website).order_by('sort_order')
+
+            
+            # --- 2. Generate Markdown ---
+            # Determine output path
+            output_dir = Path(settings.BASE_DIR) / 'hugo_output' / website.slug
+            content_dir = output_dir / 'content'
+            content_dir.mkdir(parents=True, exist_ok=True)
+            
+            # We use a special filename for preview to minimize collision
+            preview_filename = 'preview_canvas.md'
+            # But wait, Hugo generates URLs based on filename/folder.
+            # If we want the CSS paths to be correct, we should ideally use the real path?
+            # Or content/_index.md for home.
+            
+            is_homepage = (mock_page.slug == '/' or mock_page.slug == '')
+            if is_homepage:
+                 page_file = content_dir / '_index.md'
+            else:
+                 # Clean slug
+                 clean_slug = mock_page.slug.strip('/')
+                 page_dir = content_dir / clean_slug
+                 page_dir.mkdir(parents=True, exist_ok=True)
+                 page_file = page_dir / 'index.md'
+
+            # Generate URL base for assets
+            # We want assets to point to /api/sites/{id}/preview/assets/...
+            # helper string
+            base_url = f"/api/sites/{website_id}/preview/" 
+
+            markdown_content = self._generate_page_markdown(
+                mock_page, 
+                page_blocks=mock_page_blocks, 
+                global_blocks=mock_global_blocks, 
+                base_url=base_url
+            )
+            
+            # Write to disk
+            with open(page_file, 'w') as f:
+                f.write(markdown_content)
+                
+            # --- 3. Run Hugo ---
+            # Only build, don't deploy
+            # We can use subprocess to run hugo in that dir
+            
+            # Use local hugo binary if available (same logic as HugoBuilder)
+            hugo_binary = settings.BASE_DIR / 'bin' / 'hugo'
+            if not hugo_binary.exists():
+                hugo_binary = 'hugo' # Fallback to system path
+            
+            cmd = [str(hugo_binary), '-b', base_url]
+            # Minify to ensure it's close to prod? Or maybe not, for debug. 
+            # Let's keep it simple.
+            
+            result = subprocess.run(
+                cmd, 
+                cwd=output_dir, 
+                capture_output=True, 
+                text=True
+            )
+            
+            if result.returncode != 0:
+                print("Hugo Build Failed STDERR:", result.stderr)
+                print("Hugo Build Failed STDOUT:", result.stdout)
+                return Response({'error': 'Hugo build failed', 'details': result.stderr + "\n" + result.stdout}, status=500)
+                
+            # --- 4. Success ---
+            # We no longer read HTML here. The client will fetch it via the src URL.
+            
+            return Response({
+                'success': True,
+                'logs': result.stdout
+            })
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=500)
+
         """
         Generate Hugo layout templates for each LayoutTemplate in the database.
         Each template respects the zones configuration (order, width, cssClasses).
@@ -359,9 +743,24 @@ class WebsiteViewSet(viewsets.ModelViewSet):
         page_blocks = BlockInstance.objects.filter(page=page, parent=None).order_by('sort_order')
         
         # Get global blocks (header/footer blocks with page=None)
-        global_blocks = BlockInstance.objects.filter(page=None, parent=None, website=page.website).order_by('sort_order')
+        if hasattr(page, 'website'):
+            global_blocks = BlockInstance.objects.filter(page=None, parent=None, website=page.website).order_by('sort_order')
+        else:
+            # Mock page might not have website relation set up for DB query
+            global_blocks = [] # Should be passed in if needed, but for now fallback
+
+    def _generate_page_markdown(self, page, page_blocks=None, global_blocks=None, base_url=""):
+        """
+        Generate markdown file content for a page including frontmatter and blocks.
+        If page_blocks/global_blocks are provided, uses those instead of DB queries.
+        """
+        # Get blocks for this page (page-specific blocks in main/sidebar zones)
+        if page_blocks is None:
+            page_blocks = BlockInstance.objects.filter(page=page, parent=None).order_by('sort_order')
         
-        # Build frontmatter
+        # Get global blocks (header/footer blocks with page=None)
+        if global_blocks is None:
+            global_blocks = BlockInstance.objects.filter(page=None, parent=None, website=page.website).order_by('sort_order')
         # For homepage (kind: home), Hugo prioritizes home.html over layout parameter
         # Use 'type' to override template lookup directory for homepage
         is_homepage = (page.slug == '/' or page.slug == '')
@@ -404,7 +803,35 @@ draft = false
                     col_widths = [w.strip() for w in col_widths_str.split(',')]
                     
                     # Get children grouped by placement_key
-                    fc_children = BlockInstance.objects.filter(parent=block).order_by('sort_order')
+                    # Get children grouped by placement_key
+                    if hasattr(block, 'cached_children'):
+                        # Support for mock blocks that pre-fetch children
+                        qs = block.cached_children
+                        if isinstance(qs, list):
+                             class MockQS(list):
+                                 def order_by(self, *args): return self
+                                 def filter(self, **kwargs):
+                                      res = []
+                                      for item in self:
+                                          match = True
+                                          for k, v in kwargs.items():
+                                              val = getattr(item, k, None)
+                                              if val != v:
+                                                  match = False
+                                                  # Handle simple startswith logic if needed, but strict eq is usually enough for mock
+                                                  if k == 'placement_key__startswith' and val and val.startswith(v):
+                                                      match = True # crude fix for complex lookups if they appear
+                                                  else:
+                                                      break
+                                          if match:
+                                              res.append(item)
+                                      return MockQS(res)
+                                 def exists(self): return len(self) > 0
+                             fc_children = MockQS(qs)
+                        else:
+                             fc_children = qs
+                    else:
+                        fc_children = BlockInstance.objects.filter(parent=block).order_by('sort_order')
                     
                     # Check if children use legacy col_N keys
                     has_legacy_keys = any(child.placement_key and child.placement_key.startswith('col_') for child in fc_children)
@@ -708,6 +1135,8 @@ draft = false
                                 
                                 # Serialize child params
                                 for k, v in child_params.items():
+                                    if k == 'type':
+                                        continue
                                     if isinstance(v, bool):
                                         v_toml = "true" if v else "false"
                                         output += f'{indent}    {k} = {v_toml}\n'
@@ -738,8 +1167,15 @@ draft = false
                 
                 # --- Recursive Child Rendering ---
                 # Check for children (nested blocks)
-                children = BlockInstance.objects.filter(parent=block).order_by('sort_order')
-                if children.exists():
+                # MOD: Support cached_children (from mock) or DB query
+                if hasattr(block, 'cached_children'):
+                    children = block.cached_children
+                    start_children = True # It's a list, effectively exists if not empty
+                else:
+                    children = BlockInstance.objects.filter(parent=block).order_by('sort_order')
+                    start_children = children.exists()
+
+                if start_children:
                     # Render children into a 'blocks' array of the current block
                     # In TOML, [[parent.blocks]] appends to the 'blocks' array of the most recently defined 'parent'
                     output += render_blocks(children, f"{zone_name}.blocks", depth + 1)
@@ -785,7 +1221,9 @@ draft = false
                     content += render_blocks(zone_blocks, f'{zone}_blocks')
         
         # Close frontmatter
-        return frontmatter + content + "+++\n"
+        full_markdown = frontmatter + content + "+++\n"
+        print("DEBUG: Generated Markdown:\n" + full_markdown[:2000] + "...") # Log first 2000 chars
+        return full_markdown
     
     def _generate_site_config(self, website):
         """
