@@ -4401,26 +4401,6 @@ layout = "${activePage.value.layout}"
                 provide('prevCarouselSlide', prevCarouselSlide);
                 provide('nextCarouselSlide', nextCarouselSlide);
 
-                // --- STYLE INJECTION ---
-                const injectSiteStyles = (websiteId) => {
-                    const cssUrl = `${API_BASE_URL}sites/${websiteId}/preview/css/styles.css`;
-                    // Check if already injected
-                    const existingLink = document.querySelector(`link[href="${cssUrl}"]`);
-                    if(!existingLink) {
-                        const link = document.createElement('link');
-                        link.rel = 'stylesheet';
-                        link.href = cssUrl;
-                        document.head.appendChild(link);
-                        console.log("Injected site styles:", cssUrl);
-                    }
-                };
-
-                // Watch for website load
-                watch(currentWebsite, (newSite) => {
-                    if(newSite && newSite.id) {
-                        injectSiteStyles(newSite.id);
-                    }
-                });
 
                 return {
                     previewUrl,
