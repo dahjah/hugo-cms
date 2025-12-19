@@ -861,13 +861,21 @@
                 </div>
 
                 <!-- Preview View -->
-                <div v-else-if="viewMode === 'preview'" class="w-full h-full bg-slate-100 overflow-y-auto p-8">
+                <div v-else-if="viewMode === 'preview'"
+                    class="w-full h-full flex items-center justify-center p-8 bg-slate-100">
                     <div v-if="isPreviewLoading"
                         class="fixed inset-0 flex items-center justify-center bg-white/50 z-50">
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
                     </div>
 
-                    <div class="max-w-6xl mx-auto bg-white shadow-xl min-h-screen flex flex-col">
+                    <!-- Preview Viewport Container (scoped for sticky/fixed positioning) -->
+                    <div data-preview-scope class="w-full max-w-6xl bg-white shadow-xl overflow-y-auto"
+                        style="height: calc(100vh - 200px); position: relative;">
+
+                        <!-- Inject site styles within this scope -->
+                        <link v-if="currentWebsite && currentWebsite.id"
+                            :href="`${API_BASE_URL}sites/${currentWebsite.id}/preview/css/styles.css`" rel="stylesheet">
+
                         <!-- Header Zone (Global) -->
                         <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
                             :style="{ order: getZoneConfig('header')?.order || 0 }">
@@ -877,8 +885,8 @@
                         </div>
 
                         <!-- Main Content Canvas -->
-                        <div class="flex flex-1" style="display: flex;">
-                            <!-- Sidebar Zone -->
+                        <div class="flex flex-1" style="display: flex; min-height: 100%;">
+                            <!--Sidebar Zone -->
                             <div v-if="getZoneConfig('sidebar')"
                                 :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
                                 :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
