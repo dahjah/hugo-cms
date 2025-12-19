@@ -1263,6 +1263,9 @@ theme = []
 
     def generate_pages_original(self, website, content_dir):
         import json
+        from django.utils import timezone
+        now = timezone.now()
+
         for page in website.pages.all():
             page_data = self._build_page_dict(page)
             
@@ -1278,6 +1281,11 @@ theme = []
                  path.parent.mkdir(parents=True, exist_ok=True)
             
             with open(path, 'w') as f: f.write(content)
+
+            # Update page status to published
+            page.last_published_at = now
+            page.status = 'published'
+            page.save(update_fields=['last_published_at', 'status'])
 
     def _build_page_dict(self, page):
         # Build dictionary structure for the page

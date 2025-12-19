@@ -177,7 +177,8 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             # Update last_published_at timestamp
             from django.utils import timezone
             page.last_published_at = timezone.now()
-            page.save(update_fields=['last_published_at'])
+            page.status = 'published'
+            page.save(update_fields=['last_published_at', 'status'])
             
             return Response({
                 'success': True,
