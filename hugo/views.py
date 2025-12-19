@@ -95,6 +95,11 @@ class WebsiteViewSet(viewsets.ModelViewSet):
                 if deployment.status == 'success':
                     deployed_url = deployment.deployment_url
                     deploy_log.append(f"Deployment successful: {deployed_url}")
+                    
+                    # Update status for ALL pages
+                    from django.utils import timezone
+                    now = timezone.now()
+                    website.pages.update(status='published', last_published_at=now)
                 else:
                     deploy_log.append(f"Deployment failed: {deployment.error_message}")
                     if deployment.build_output:
