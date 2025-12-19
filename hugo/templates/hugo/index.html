@@ -3778,1035 +3778,1029 @@ layout = "${activePage.value.layout}"
                         fetchPages();
                     }
                 };
-                console.error('Reorder error:', error);
-                showToast('Failed to reorder pages', 'error');
-                // Re-fetch to restore state on error
-                fetchPages();
-            }
-        };
 
 
-        // Page Drag & Drop Helpers
-        const handlePageDragStart = (evt, pageId) => {
-            evt.dataTransfer.dropEffect = 'move';
-            evt.dataTransfer.effectAllowed = 'move';
-            evt.dataTransfer.setData('pageId', pageId);
-            evt.target.classList.add('opacity-50');
-        };
-
-        const handlePageDragEnd = (evt) => {
-            evt.target.classList.remove('opacity-50');
-            dragOverPageId.value = null;
-            dragDropPosition.value = null;
-        };
-
-        const handlePageDragOver = (evt, pageId) => {
-            evt.preventDefault(); // Necessary to allow dropping
-            dragOverPageId.value = pageId;
-
-            // Calculate if we are in the top or bottom half
-            const rect = evt.currentTarget.getBoundingClientRect();
-            const midY = rect.top + rect.height / 2;
-            if(evt.clientY < midY) {
-                dragDropPosition.value = 'before';
-            } else {
-                dragDropPosition.value = 'after';
-            }
-        };
-
-        const handlePageDragLeave = (evt) => {
-            // Optional: Clear state if leaving the list entirely? 
-            // Often better to leave it to DragEnd or when entering another item to flicker less.
-        };
-
-        const handlePageDrop = (evt, targetPageId) => {
-            evt.preventDefault();
-            dragOverPageId.value = null;
-            dragDropPosition.value = null;
-
-            const draggedId = evt.dataTransfer.getData('pageId');
-            if(!draggedId || draggedId === targetPageId) return;
-
-            const draggedIndex = pages.value.findIndex(p => p.id === draggedId);
-            const targetIndex = pages.value.findIndex(p => p.id === targetPageId);
-
-            if(draggedIndex === -1 || targetIndex === -1) return;
-
-            const newPages = [...pages.value];
-            const [draggedPage] = newPages.splice(draggedIndex, 1);
-
-            // Logic to insert before or after based on drop position
-            let finalIndex = targetIndex;
-            if(dragDropPosition.value === 'after') {
-                finalIndex = targetIndex + 1;
-            }
-
-            // Adjustment for removal if the dragged item was essentially "above" the insertion point in the array
-            // But here we are dealing with indices.
-            // If draggedIndex < finalIndex, then removing the item shifts everything down by 1.
-            // So we must subtract 1 from finalIndex.
-            if(draggedIndex < finalIndex) {
-                finalIndex -= 1;
-            }
-
-            // Clamp index
-            if(finalIndex < 0) finalIndex = 0;
-            if(finalIndex > newPages.length) finalIndex = newPages.length;
-
-            newPages.splice(finalIndex, 0, draggedPage);
-            reorderPages(newPages);
-        };
-
-        const fetchTemplates = async () => {
-            try {
-                isLoadingTemplates.value = true;
-                const response = await fetch(`${API_BASE_URL}templates/`);
-                if(response.ok) {
-                    siteTemplates.value = await response.json();
-                }
-            } catch(error) {
-                console.error('Error fetching templates:', error);
-            } finally {
-                isLoadingTemplates.value = false;
-            }
-        };
-
-        const initialLoad = async () => {
-            try {
-                // Fetch templates in parallel with config
-                fetchTemplates();
-                await fetchConfig(WEBSITE_ID || null);
-                await fetchPages();
-
-                if(pages.value.length > 0) {
-                    activePageId.value = pages.value[0].id;
-                    await fetchContent(activePageId.value);
-                }
-            } catch(error) {
-                console.error('Failed to load CMS data:', error);
-            } finally {
-                isLoaded.value = true;
-            }
-        };
-
-        // --- LIFECYCLE ---
-        onMounted(() => {
-            initialLoad();
-        });
-
-        // Watch activePageId to load new main content
-        watch(activePageId, async (newId) => {
-            if(newId) {
-                await fetchContent(newId);
-            }
-        });
-
-        // Watch for content changes
-        watch(contentZones, () => {
-            if(!isFetchingContent.value) {
-                hasUnsavedChanges.value = true;
-            }
-        }, {deep: true});
-
-        // --- ACTIONS ---
-        const setActivePage = (id) => {
-            activePageId.value = id;
-            selectedBlockId.value = null;
-        };
-
-        const createNewPage = async () => {
-            try {
-                const newPage = {
-                    title: 'New Page',
-                    slug: 'new-page-' + Date.now(),
-                    layout: 'single',
-                    status: 'draft',
-                    date: new Date().toISOString().split('T')[0],
-                    description: '',
-                    tags: [],
-                    website: currentWebsite.value?.id  // Add current website
+                // Page Drag & Drop Helpers
+                const handlePageDragStart = (evt, pageId) => {
+                    evt.dataTransfer.dropEffect = 'move';
+                    evt.dataTransfer.effectAllowed = 'move';
+                    evt.dataTransfer.setData('pageId', pageId);
+                    evt.target.classList.add('opacity-50');
                 };
 
-                const response = await fetchApi(`${API_BASE_URL}pages/`, 'POST', newPage);
-                pages.value.push(response);
-                activePageId.value = response.id;
-            } catch(error) {
-                console.error('Error creating page:', error);
-                alert('Failed to create new page. Please try again.');
-            }
-        };
-        const savePageContent = async () => {
-            if(!activePage.value) return;
-
-            try {
-                const pageId = activePage.value.id;
-                const metadataPayload = {
-                    title: activePage.value.title,
-                    slug: activePage.value.slug,
-                    layout: activePage.value.layout,
-                    status: activePage.value.status,
-                    date: activePage.value.date,
-                    description: activePage.value.description,
-                    tags: activePage.value.tags,
+                const handlePageDragEnd = (evt) => {
+                    evt.target.classList.remove('opacity-50');
+                    dragOverPageId.value = null;
+                    dragDropPosition.value = null;
                 };
 
-                // 1. Save Page Metadata (PUT)
-                const metadataResponse = await fetchApi(`${API_BASE_URL}pages/${pageId}/`, 'PUT', metadataPayload);
+                const handlePageDragOver = (evt, pageId) => {
+                    evt.preventDefault(); // Necessary to allow dropping
+                    dragOverPageId.value = pageId;
 
-                // Update local pages list with new data (specifically updated_at) to refresh status dots
-                const pageIndex = pages.value.findIndex(p => p.id === pageId);
-                if(pageIndex !== -1 && metadataResponse) {
-                    // Update the specific fields that might have changed
-                    pages.value[pageIndex] = {
-                        ...pages.value[pageIndex],
-                        ...metadataResponse, // success response returns the updated page object
-                    };
-
-                    // Also update activePage if it matches to ensure consistency
-                    if(activePage.value && activePage.value.id === pageId) {
-                        activePage.value.updated_at = metadataResponse.updated_at;
-                        activePage.value.last_published_at = metadataResponse.last_published_at;
+                    // Calculate if we are in the top or bottom half
+                    const rect = evt.currentTarget.getBoundingClientRect();
+                    const midY = rect.top + rect.height / 2;
+                    if(evt.clientY < midY) {
+                        dragDropPosition.value = 'before';
+                    } else {
+                        dragDropPosition.value = 'after';
                     }
-                }
+                };
 
+                const handlePageDragLeave = (evt) => {
+                    // Optional: Clear state if leaving the list entirely? 
+                    // Often better to leave it to DragEnd or when entering another item to flicker less.
+                };
 
-                // 2. Save Block Content (POST to custom action)
-                // Collect page-specific blocks from contentZones
-                const transformBlock = (block) => {
-                    const transformed = {...block};
+                const handlePageDrop = (evt, targetPageId) => {
+                    evt.preventDefault();
+                    dragOverPageId.value = null;
+                    dragDropPosition.value = null;
 
-                    // Transform flex_columns children structure
-                    if(block.type === 'flex_columns' && block.children && Array.isArray(block.children)) {
-                        // Group children by col_0, col_1, etc.
-                        const columnMap = {};
-                        block.children.forEach(child => {
-                            const colKey = child.placement_key || 'col_0';
-                            if(!columnMap[colKey]) {
-                                columnMap[colKey] = [];
-                            }
-                            columnMap[colKey].push(transformBlock(child));
-                        });
+                    const draggedId = evt.dataTransfer.getData('pageId');
+                    if(!draggedId || draggedId === targetPageId) return;
 
-                        // Convert to array format expected by backend: [{blocks: [...]}, {blocks: [...]}]
-                        transformed.children = Object.keys(columnMap)
-                            .sort() // Ensure col_0, col_1, col_2 order
-                            .map(key => ({blocks: columnMap[key]}));
-                    } else if(block.children && Array.isArray(block.children)) {
-                        // Recursively transform any other children
-                        transformed.children = block.children.map(transformBlock);
+                    const draggedIndex = pages.value.findIndex(p => p.id === draggedId);
+                    const targetIndex = pages.value.findIndex(p => p.id === targetPageId);
+
+                    if(draggedIndex === -1 || targetIndex === -1) return;
+
+                    const newPages = [...pages.value];
+                    const [draggedPage] = newPages.splice(draggedIndex, 1);
+
+                    // Logic to insert before or after based on drop position
+                    let finalIndex = targetIndex;
+                    if(dragDropPosition.value === 'after') {
+                        finalIndex = targetIndex + 1;
                     }
 
-                    return transformed;
+                    // Adjustment for removal if the dragged item was essentially "above" the insertion point in the array
+                    // But here we are dealing with indices.
+                    // If draggedIndex < finalIndex, then removing the item shifts everything down by 1.
+                    // So we must subtract 1 from finalIndex.
+                    if(draggedIndex < finalIndex) {
+                        finalIndex -= 1;
+                    }
+
+                    // Clamp index
+                    if(finalIndex < 0) finalIndex = 0;
+                    if(finalIndex > newPages.length) finalIndex = newPages.length;
+
+                    newPages.splice(finalIndex, 0, draggedPage);
+                    reorderPages(newPages);
                 };
 
-                const allPageBlocks = [
-                    ...contentZones.value.main.map(b => transformBlock({...b, placement_key: 'main'})),
-                    ...contentZones.value.sidebar.map(b => transformBlock({...b, placement_key: 'sidebar'}))
-                ];
-                const contentPayload = {blocks: allPageBlocks};
-                await fetchApi(`${API_BASE_URL}pages/${pageId}/save_content/`, 'POST', contentPayload);
-
-                // 3. Save Global Content (POST to init action)
-                const saveGlobals = async () => {
+                const fetchTemplates = async () => {
                     try {
-                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+                        isLoadingTemplates.value = true;
+                        const response = await fetch(`${API_BASE_URL}templates/`);
+                        if(response.ok) {
+                            siteTemplates.value = await response.json();
+                        }
+                    } catch(error) {
+                        console.error('Error fetching templates:', error);
+                    } finally {
+                        isLoadingTemplates.value = false;
+                    }
+                };
 
-                        // Prepare payload with only IDs and structure for diffing
-                        const payload = {
-                            header: contentZones.value.header,
-                            footer: contentZones.value.footer,
-                            website_id: currentWebsite.value?.id
+                const initialLoad = async () => {
+                    try {
+                        // Fetch templates in parallel with config
+                        fetchTemplates();
+                        await fetchConfig(WEBSITE_ID || null);
+                        await fetchPages();
+
+                        if(pages.value.length > 0) {
+                            activePageId.value = pages.value[0].id;
+                            await fetchContent(activePageId.value);
+                        }
+                    } catch(error) {
+                        console.error('Failed to load CMS data:', error);
+                    } finally {
+                        isLoaded.value = true;
+                    }
+                };
+
+                // --- LIFECYCLE ---
+                onMounted(() => {
+                    initialLoad();
+                });
+
+                // Watch activePageId to load new main content
+                watch(activePageId, async (newId) => {
+                    if(newId) {
+                        await fetchContent(newId);
+                    }
+                });
+
+                // Watch for content changes
+                watch(contentZones, () => {
+                    if(!isFetchingContent.value) {
+                        hasUnsavedChanges.value = true;
+                    }
+                }, {deep: true});
+
+                // --- ACTIONS ---
+                const setActivePage = (id) => {
+                    activePageId.value = id;
+                    selectedBlockId.value = null;
+                };
+
+                const createNewPage = async () => {
+                    try {
+                        const newPage = {
+                            title: 'New Page',
+                            slug: 'new-page-' + Date.now(),
+                            layout: 'single',
+                            status: 'draft',
+                            date: new Date().toISOString().split('T')[0],
+                            description: '',
+                            tags: [],
+                            website: currentWebsite.value?.id  // Add current website
                         };
 
-                        const response = await fetch(`${API_BASE_URL}init/save_globals/`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': csrfToken,
-                            },
-                            body: JSON.stringify(payload),
-                        });
-
-                        if(!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        showToast('Global content saved successfully', 'success');
+                        const response = await fetchApi(`${API_BASE_URL}pages/`, 'POST', newPage);
+                        pages.value.push(response);
+                        activePageId.value = response.id;
                     } catch(error) {
-                        console.error('Error saving global content:', error);
-                        showToast('Failed to save global content', 'error', error.message);
+                        console.error('Error creating page:', error);
+                        alert('Failed to create new page. Please try again.');
                     }
                 };
-                await saveGlobals();
+                const savePageContent = async () => {
+                    if(!activePage.value) return;
 
-                showToast('Content saved successfully', 'success');
-                hasUnsavedChanges.value = false; // Reset unsaved changes flag
-            } catch(error) {
-                console.error("Save Error:", error);
-                showToast('Failed to save content', 'error', error.message);
-            }
-        };
+                    try {
+                        const pageId = activePage.value.id;
+                        const metadataPayload = {
+                            title: activePage.value.title,
+                            slug: activePage.value.slug,
+                            layout: activePage.value.layout,
+                            status: activePage.value.status,
+                            date: activePage.value.date,
+                            description: activePage.value.description,
+                            tags: activePage.value.tags,
+                        };
 
-        // Helper to generate UUIDs
-        const generateId = () => uuid.v4();
+                        // 1. Save Page Metadata (PUT)
+                        const metadataResponse = await fetchApi(`${API_BASE_URL}pages/${pageId}/`, 'PUT', metadataPayload);
 
-        // --- DRAG & DROP HANDLERS ---
+                        // Update local pages list with new data (specifically updated_at) to refresh status dots
+                        const pageIndex = pages.value.findIndex(p => p.id === pageId);
+                        if(pageIndex !== -1 && metadataResponse) {
+                            // Update the specific fields that might have changed
+                            pages.value[pageIndex] = {
+                                ...pages.value[pageIndex],
+                                ...metadataResponse, // success response returns the updated page object
+                            };
 
-        // Helper to insert a block into the correct position within a zone or column
-        const insertIntoCorrectPosition = (list, newBlock, targetZone, targetIndex) => {
-            if(!targetZone.startsWith('col_')) {
-                // Top-level insertion (Header, Footer, Main, Sidebar)
-                newBlock.placement_key = targetZone;
+                            // Also update activePage if it matches to ensure consistency
+                            if(activePage.value && activePage.value.id === pageId) {
+                                activePage.value.updated_at = metadataResponse.updated_at;
+                                activePage.value.last_published_at = metadataResponse.last_published_at;
+                            }
+                        }
 
-                if(targetIndex < list.length) {
-                    list.splice(targetIndex, 0, newBlock);
-                } else {
-                    list.push(newBlock);
-                }
 
-                // Update sort_order for all blocks in this zone
-                list.forEach((b, index) => {
-                    b.sort_order = index;
-                });
+                        // 2. Save Block Content (POST to custom action)
+                        // Collect page-specific blocks from contentZones
+                        const transformBlock = (block) => {
+                            const transformed = {...block};
 
-            } else {
-                // Nested insertion into flex column
-                const currentColBlocks = list.filter(b => b.placement_key === targetZone)
-                    .sort((a, b) => a.sort_order - b.sort_order);
+                            // Transform flex_columns children structure
+                            if(block.type === 'flex_columns' && block.children && Array.isArray(block.children)) {
+                                // Group children by col_0, col_1, etc.
+                                const columnMap = {};
+                                block.children.forEach(child => {
+                                    const colKey = child.placement_key || 'col_0';
+                                    if(!columnMap[colKey]) {
+                                        columnMap[colKey] = [];
+                                    }
+                                    columnMap[colKey].push(transformBlock(child));
+                                });
 
-                if(currentColBlocks.length === 0) {
-                    list.push(newBlock);
-                } else if(targetIndex < currentColBlocks.length) {
-                    const blockToInsertBefore = currentColBlocks[targetIndex];
-                    const actualIndex = list.findIndex(b => b.id === blockToInsertBefore.id);
-                    list.splice(actualIndex, 0, newBlock);
-                } else {
-                    list.push(newBlock);
-                }
+                                // Convert to array format expected by backend: [{blocks: [...]}, {blocks: [...]}]
+                                transformed.children = Object.keys(columnMap)
+                                    .sort() // Ensure col_0, col_1, col_2 order
+                                    .map(key => ({blocks: columnMap[key]}));
+                            } else if(block.children && Array.isArray(block.children)) {
+                                // Recursively transform any other children
+                                transformed.children = block.children.map(transformBlock);
+                            }
 
-                // Update sort_order for nested blocks
-                let currentSortOrder = 0;
-                list.forEach(b => {
-                    if(b.placement_key === targetZone) {
-                        b.sort_order = currentSortOrder++;
+                            return transformed;
+                        };
+
+                        const allPageBlocks = [
+                            ...contentZones.value.main.map(b => transformBlock({...b, placement_key: 'main'})),
+                            ...contentZones.value.sidebar.map(b => transformBlock({...b, placement_key: 'sidebar'}))
+                        ];
+                        const contentPayload = {blocks: allPageBlocks};
+                        await fetchApi(`${API_BASE_URL}pages/${pageId}/save_content/`, 'POST', contentPayload);
+
+                        // 3. Save Global Content (POST to init action)
+                        const saveGlobals = async () => {
+                            try {
+                                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                                // Prepare payload with only IDs and structure for diffing
+                                const payload = {
+                                    header: contentZones.value.header,
+                                    footer: contentZones.value.footer,
+                                    website_id: currentWebsite.value?.id
+                                };
+
+                                const response = await fetch(`${API_BASE_URL}init/save_globals/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken,
+                                    },
+                                    body: JSON.stringify(payload),
+                                });
+
+                                if(!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                                showToast('Global content saved successfully', 'success');
+                            } catch(error) {
+                                console.error('Error saving global content:', error);
+                                showToast('Failed to save global content', 'error', error.message);
+                            }
+                        };
+                        await saveGlobals();
+
+                        showToast('Content saved successfully', 'success');
+                        hasUnsavedChanges.value = false; // Reset unsaved changes flag
+                    } catch(error) {
+                        console.error("Save Error:", error);
+                        showToast('Failed to save content', 'error', error.message);
                     }
-                });
-            }
-        };
-
-        // Helper to find the mutable array reference for blocks within a zone/column
-        function findMutableBlockArray(zone, parentBlockId) {
-            // Handle menu footer zones (nested within menu block)
-            if(zone.startsWith('menu_footer_')) {
-                const menuBlockId = zone.replace('menu_footer_', '');
-                const result = findBlockAndParent(menuBlockId);
-                if(result && result.block) {
-                    if(!result.block.params.sidebarFooterBlocks) {
-                        result.block.params.sidebarFooterBlocks = [];
-                    }
-                    return result.block.params.sidebarFooterBlocks;
-                }
-                console.error('Menu block not found for footer zone:', zone);
-                return null;
-            }
-
-            // Handle carousel slide zones (nested within carousel block)
-            if(zone.startsWith('carousel_slide_')) {
-                // Zone format: carousel_slide_{blockId}_{slideIndex}
-                const parts = zone.replace('carousel_slide_', '').split('_');
-                const slideIndex = parseInt(parts.pop());
-                const carouselBlockId = parts.join('_');
-                const result = findBlockAndParent(carouselBlockId);
-                if(result && result.block && result.block.type === 'carousel') {
-                    if(!result.block.params.slides) {
-                        result.block.params.slides = [];
-                    }
-                    if(!result.block.params.slides[slideIndex]) {
-                        result.block.params.slides[slideIndex] = {id: generateId(), children: []};
-                    }
-                    if(!result.block.params.slides[slideIndex].children) {
-                        result.block.params.slides[slideIndex].children = [];
-                    }
-                    return result.block.params.slides[slideIndex].children;
-                }
-                console.error('Carousel block not found for slide zone:', zone);
-                return null;
-            }
-
-            // Handle column zones (nested within columns block)
-            if(zone.startsWith('col_') && parentBlockId) {
-                const result = findBlockAndParent(parentBlockId);
-                if(result && result.block && result.block.type === 'flex_columns') {
-                    const colIndex = parseInt(zone.split('_')[1]);
-                    if(!result.block.children) {
-                        result.block.children = [];
-                    }
-                    return result.block.children;
-                }
-                return null;
-            }
-
-            // Handle generic nested children
-            if(zone === 'children' && parentBlockId) {
-                const result = findBlockAndParent(parentBlockId);
-                if(result && result.block) {
-                    if(!result.block.children) {
-                        result.block.children = [];
-                    }
-                    return result.block.children;
-                }
-                return null;
-            }
-
-            // Handle top-level zones
-            if(contentZones.value[zone]) {
-                return contentZones.value[zone];
-            }
-
-            console.error('No mutation list found for zone:', zone);
-            return null;
-        }
-
-        const handleDragStartNew = (e, type) => {
-            e.dataTransfer.setData('type', type);
-            e.dataTransfer.setData('source', 'sidebar');
-        };
-
-        const handleDragStartExisting = (e, blockId, zone, parentBlockId) => {
-            e.dataTransfer.setData('blockId', blockId);
-            e.dataTransfer.setData('zone', zone);
-            e.dataTransfer.setData('parentBlockId', parentBlockId || '');
-            e.dataTransfer.setData('source', 'canvas');
-        };
-
-        const handleDrop = (e, targetZone, targetIndex, parentBlockId) => {
-            e.preventDefault();
-            const source = e.dataTransfer.getData('source');
-            const mutationList = findMutableBlockArray(targetZone, parentBlockId);
-
-            if(!mutationList) {
-                console.error('No mutation list found for zone:', targetZone);
-                return;
-            }
-
-            if(source === 'sidebar') {
-                // New block from component library
-                const type = e.dataTransfer.getData('type');
-                const definition = componentLibrary.value.find(c => c.id === type);
-
-                const newBlock = {
-                    id: generateId(),
-                    type: type,
-                    params: {...definition.default_params},
-                    children: type === 'flex_columns' ? [] : null,
-                    placement_key: targetZone,
-                    parent_id: parentBlockId || null,
                 };
 
-                if(type === 'flex_columns') {
-                    newBlock.params.col_widths = newBlock.params.col_widths || '50.0, 50.0';
-                }
+                // Helper to generate UUIDs
+                const generateId = () => uuid.v4();
 
-                insertIntoCorrectPosition(mutationList, newBlock, targetZone, targetIndex);
-                selectedBlockId.value = newBlock.id;
-            }
-            else if(source === 'canvas') {
-                // Move existing block
-                const blockId = e.dataTransfer.getData('blockId');
-                const sourceResult = findBlockAndParent(blockId);
+                // --- DRAG & DROP HANDLERS ---
 
-                if(!sourceResult) {
-                    console.error('Source block not found:', blockId);
-                    return;
-                }
+                // Helper to insert a block into the correct position within a zone or column
+                const insertIntoCorrectPosition = (list, newBlock, targetZone, targetIndex) => {
+                    if(!targetZone.startsWith('col_')) {
+                        // Top-level insertion (Header, Footer, Main, Sidebar)
+                        newBlock.placement_key = targetZone;
 
-                const sourceList = sourceResult.list;
-                const blockIndex = sourceResult.index;
-                const [movedBlock] = sourceList.splice(blockIndex, 1);
+                        if(targetIndex < list.length) {
+                            list.splice(targetIndex, 0, newBlock);
+                        } else {
+                            list.push(newBlock);
+                        }
 
-                movedBlock.placement_key = targetZone;
-                movedBlock.parent_id = parentBlockId || null;
-
-                insertIntoCorrectPosition(mutationList, movedBlock, targetZone, targetIndex);
-            }
-        };
-
-        const closeInspector = () => {
-            const currentId = selectedBlockId.value;
-            if(!currentId) return;
-
-            const result = findBlockAndParent(currentId);
-            if(result && result.parent) {
-                selectedBlockId.value = result.parent.id;
-            } else {
-                selectedBlockId.value = null;
-            }
-        };
-
-        const deleteBlock = (blockId) => {
-            const result = findBlockAndParent(blockId);
-            const parentId = result && result.parent ? result.parent.id : null;
-
-            if(result && result.list) {
-                result.list.splice(result.index, 1);
-            }
-
-            if(parentId) {
-                selectedBlockId.value = parentId;
-            } else {
-                selectedBlockId.value = null;
-            }
-        };
-
-        // --- UTILITIES ---
-        const formatKey = (key) => key.replace(/([A-Z])/g, ' $1').trim();
-
-        const shouldShowParam = (type, key) => {
-            if(type === 'menu' && ['orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection', 'sidebarSide', 'sidebarFooterBlocks', 'position', 'sticky'].includes(key)) return false;
-            // Keep menu with custom editor
-            if(type === 'menu' && key === 'items') return false;
-            // Hide cta_hero parameters that have custom editors
-            if(type === 'cta_hero' && ['background_image', 'headline', 'subheadline', 'cta_text'].includes(key)) return false;
-            // Hero Parallax Dependency
-            if(type === 'hero' && key === 'parallax_strength' && !selectedBlock.value.params.parallax) return false;
-            // Allow all other fields to show in schema-driven editor
-            return true;
-        };
-
-
-        const addGenericItem = (block) => {
-            if(!block.params.items) {
-                block.params.items = [];
-            }
-
-            // Try to infer the structure from existing items
-            if(block.params.items.length > 0) {
-                const template = {...block.params.items[0]};
-                // Clear values but keep structure
-                Object.keys(template).forEach(key => {
-                    template[key] = '';
-                });
-                block.params.items.push(template);
-            } else {
-                // Default structure for common item types
-                if(block.type === 'theme_features') {
-                    block.params.items.push({icon: 'box', text: 'New Feature'});
-                } else {
-                    // Generic default
-                    block.params.items.push({text: 'New Item'});
-                }
-            }
-        };
-
-        // Provide helper to global scope for debugging/reuse
-        if(typeof window !== 'undefined') {
-            window.findBlock = findBlockAndParent;
-        }
-
-        // Publish functions
-        const publishSite = async () => {
-            isPublishing.value = true;
-            try {
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
-                    getCookie('csrftoken');
-
-                const response = await fetch('/api/websites/publish/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({
-                        website_id: currentWebsite.value.id
-                    })
-                });
-
-                const data = await response.json();
-
-                if(data.success) {
-                    showToast('Site published successfully!', 'success');
-                    // Refresh pages to update status indicators
-                    await fetchPages();
-                } else {
-                    showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
-                }
-            } catch(error) {
-                console.error('Publish error:', error);
-                showToast('Publish failed: ' + error.message, 'error');
-            } finally {
-                isPublishing.value = false;
-            }
-        };
-
-        const publishCurrentPage = async () => {
-            if(!activePage.value) {
-                showToast('No page selected', 'error');
-                return;
-            }
-            isPublishing.value = true;
-
-            try {
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
-                    getCookie('csrftoken');
-
-                const response = await fetch('/api/websites/publish_page/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({
-                        website_id: currentWebsite.value.id,
-                        page_id: activePage.value.id
-                    })
-                });
-
-                const data = await response.json();
-
-                if(data.success) {
-                    showToast('Page published successfully!', 'success');
-                    // Refresh pages to update status indicators
-                    await fetchPages();
-                } else {
-                    showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
-                }
-            } catch(error) {
-                console.error('Publish error:', error);
-                showToast('Publish failed: ' + error.message, 'error');
-            } finally {
-                isPublishing.value = false;
-            }
-        };
-
-        // --- Carousel Slide Index Helpers (tracked outside contentZones to avoid triggering unsaved changes) ---
-        const getCarouselSlide = (blockId) => {
-            return carouselSlideIndexes.value[blockId] || 0;
-        };
-
-        const setCarouselSlide = (blockId, index) => {
-            carouselSlideIndexes.value[blockId] = index;
-        };
-
-        const prevCarouselSlide = (block) => {
-            const current = getCarouselSlide(block.id);
-            const total = block.params.slides?.length || 1;
-            setCarouselSlide(block.id, (current - 1 + total) % total);
-        };
-
-        const nextCarouselSlide = (block) => {
-            const current = getCarouselSlide(block.id);
-            const total = block.params.slides?.length || 1;
-            setCarouselSlide(block.id, (current + 1) % total);
-        };
-
-        // Provide helpers to child components
-        provide('getCarouselSlide', getCarouselSlide);
-        provide('setCarouselSlide', setCarouselSlide);
-        provide('prevCarouselSlide', prevCarouselSlide);
-        provide('nextCarouselSlide', nextCarouselSlide);
-
-        return {
-            isLoaded,
-            pages,
-            activePageId,
-            viewMode,
-            activePage,
-            activeContent,
-            selectedBlockId,
-            selectedBlock,
-            componentLibrary,
-            searchQuery,
-            filteredComponentLibrary,
-            websiteName,
-            websiteSlug,
-            generateConfig,
-            setActivePage,
-            createNewPage,
-            savePageContent,
-            publishSite,
-            publishCurrentPage,
-            onSlugInput,
-            changeWebsite: async (websiteId) => {
-                if(currentWebsite.value && currentWebsite.value.id === websiteId) return;
-
-                // Update URL
-                const newUrl = websiteId ? `/site/${websiteId}/` : '/';
-                // Use history API to change URL without reload
-                window.history.pushState({}, '', newUrl);
-
-                await fetchConfig(websiteId);
-                // Refresh pages list for the new website
-                await fetchPages();
-
-                // Select first page
-                if(pages.value.length > 0) {
-                    activePageId.value = pages.value[0].id;
-                    await fetchContent(pages.value[0].id);
-                }
-            },
-            createWebsite: async () => {
-                if(!newWebsiteName.value || !newWebsiteSlug.value) {
-                    showToast('Please fill in all fields', 'error');
-                    return;
-                }
-                try {
-                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-                    let response;
-
-                    if(selectedTemplateId.value) {
-                        // Create from template
-                        response = await fetch(`${API_BASE_URL}templates/${selectedTemplateId.value}/create_website/`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': csrfToken
-                            },
-                            body: JSON.stringify({
-                                website_name: newWebsiteName.value,
-                                website_slug: newWebsiteSlug.value
-                            })
+                        // Update sort_order for all blocks in this zone
+                        list.forEach((b, index) => {
+                            b.sort_order = index;
                         });
+
                     } else {
-                        // Create blank site
-                        response = await fetch(`${API_BASE_URL}websites/`, {
+                        // Nested insertion into flex column
+                        const currentColBlocks = list.filter(b => b.placement_key === targetZone)
+                            .sort((a, b) => a.sort_order - b.sort_order);
+
+                        if(currentColBlocks.length === 0) {
+                            list.push(newBlock);
+                        } else if(targetIndex < currentColBlocks.length) {
+                            const blockToInsertBefore = currentColBlocks[targetIndex];
+                            const actualIndex = list.findIndex(b => b.id === blockToInsertBefore.id);
+                            list.splice(actualIndex, 0, newBlock);
+                        } else {
+                            list.push(newBlock);
+                        }
+
+                        // Update sort_order for nested blocks
+                        let currentSortOrder = 0;
+                        list.forEach(b => {
+                            if(b.placement_key === targetZone) {
+                                b.sort_order = currentSortOrder++;
+                            }
+                        });
+                    }
+                };
+
+                // Helper to find the mutable array reference for blocks within a zone/column
+                function findMutableBlockArray(zone, parentBlockId) {
+                    // Handle menu footer zones (nested within menu block)
+                    if(zone.startsWith('menu_footer_')) {
+                        const menuBlockId = zone.replace('menu_footer_', '');
+                        const result = findBlockAndParent(menuBlockId);
+                        if(result && result.block) {
+                            if(!result.block.params.sidebarFooterBlocks) {
+                                result.block.params.sidebarFooterBlocks = [];
+                            }
+                            return result.block.params.sidebarFooterBlocks;
+                        }
+                        console.error('Menu block not found for footer zone:', zone);
+                        return null;
+                    }
+
+                    // Handle carousel slide zones (nested within carousel block)
+                    if(zone.startsWith('carousel_slide_')) {
+                        // Zone format: carousel_slide_{blockId}_{slideIndex}
+                        const parts = zone.replace('carousel_slide_', '').split('_');
+                        const slideIndex = parseInt(parts.pop());
+                        const carouselBlockId = parts.join('_');
+                        const result = findBlockAndParent(carouselBlockId);
+                        if(result && result.block && result.block.type === 'carousel') {
+                            if(!result.block.params.slides) {
+                                result.block.params.slides = [];
+                            }
+                            if(!result.block.params.slides[slideIndex]) {
+                                result.block.params.slides[slideIndex] = {id: generateId(), children: []};
+                            }
+                            if(!result.block.params.slides[slideIndex].children) {
+                                result.block.params.slides[slideIndex].children = [];
+                            }
+                            return result.block.params.slides[slideIndex].children;
+                        }
+                        console.error('Carousel block not found for slide zone:', zone);
+                        return null;
+                    }
+
+                    // Handle column zones (nested within columns block)
+                    if(zone.startsWith('col_') && parentBlockId) {
+                        const result = findBlockAndParent(parentBlockId);
+                        if(result && result.block && result.block.type === 'flex_columns') {
+                            const colIndex = parseInt(zone.split('_')[1]);
+                            if(!result.block.children) {
+                                result.block.children = [];
+                            }
+                            return result.block.children;
+                        }
+                        return null;
+                    }
+
+                    // Handle generic nested children
+                    if(zone === 'children' && parentBlockId) {
+                        const result = findBlockAndParent(parentBlockId);
+                        if(result && result.block) {
+                            if(!result.block.children) {
+                                result.block.children = [];
+                            }
+                            return result.block.children;
+                        }
+                        return null;
+                    }
+
+                    // Handle top-level zones
+                    if(contentZones.value[zone]) {
+                        return contentZones.value[zone];
+                    }
+
+                    console.error('No mutation list found for zone:', zone);
+                    return null;
+                }
+
+                const handleDragStartNew = (e, type) => {
+                    e.dataTransfer.setData('type', type);
+                    e.dataTransfer.setData('source', 'sidebar');
+                };
+
+                const handleDragStartExisting = (e, blockId, zone, parentBlockId) => {
+                    e.dataTransfer.setData('blockId', blockId);
+                    e.dataTransfer.setData('zone', zone);
+                    e.dataTransfer.setData('parentBlockId', parentBlockId || '');
+                    e.dataTransfer.setData('source', 'canvas');
+                };
+
+                const handleDrop = (e, targetZone, targetIndex, parentBlockId) => {
+                    e.preventDefault();
+                    const source = e.dataTransfer.getData('source');
+                    const mutationList = findMutableBlockArray(targetZone, parentBlockId);
+
+                    if(!mutationList) {
+                        console.error('No mutation list found for zone:', targetZone);
+                        return;
+                    }
+
+                    if(source === 'sidebar') {
+                        // New block from component library
+                        const type = e.dataTransfer.getData('type');
+                        const definition = componentLibrary.value.find(c => c.id === type);
+
+                        const newBlock = {
+                            id: generateId(),
+                            type: type,
+                            params: {...definition.default_params},
+                            children: type === 'flex_columns' ? [] : null,
+                            placement_key: targetZone,
+                            parent_id: parentBlockId || null,
+                        };
+
+                        if(type === 'flex_columns') {
+                            newBlock.params.col_widths = newBlock.params.col_widths || '50.0, 50.0';
+                        }
+
+                        insertIntoCorrectPosition(mutationList, newBlock, targetZone, targetIndex);
+                        selectedBlockId.value = newBlock.id;
+                    }
+                    else if(source === 'canvas') {
+                        // Move existing block
+                        const blockId = e.dataTransfer.getData('blockId');
+                        const sourceResult = findBlockAndParent(blockId);
+
+                        if(!sourceResult) {
+                            console.error('Source block not found:', blockId);
+                            return;
+                        }
+
+                        const sourceList = sourceResult.list;
+                        const blockIndex = sourceResult.index;
+                        const [movedBlock] = sourceList.splice(blockIndex, 1);
+
+                        movedBlock.placement_key = targetZone;
+                        movedBlock.parent_id = parentBlockId || null;
+
+                        insertIntoCorrectPosition(mutationList, movedBlock, targetZone, targetIndex);
+                    }
+                };
+
+                const closeInspector = () => {
+                    const currentId = selectedBlockId.value;
+                    if(!currentId) return;
+
+                    const result = findBlockAndParent(currentId);
+                    if(result && result.parent) {
+                        selectedBlockId.value = result.parent.id;
+                    } else {
+                        selectedBlockId.value = null;
+                    }
+                };
+
+                const deleteBlock = (blockId) => {
+                    const result = findBlockAndParent(blockId);
+                    const parentId = result && result.parent ? result.parent.id : null;
+
+                    if(result && result.list) {
+                        result.list.splice(result.index, 1);
+                    }
+
+                    if(parentId) {
+                        selectedBlockId.value = parentId;
+                    } else {
+                        selectedBlockId.value = null;
+                    }
+                };
+
+                // --- UTILITIES ---
+                const formatKey = (key) => key.replace(/([A-Z])/g, ' $1').trim();
+
+                const shouldShowParam = (type, key) => {
+                    if(type === 'menu' && ['orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection', 'sidebarSide', 'sidebarFooterBlocks', 'position', 'sticky'].includes(key)) return false;
+                    // Keep menu with custom editor
+                    if(type === 'menu' && key === 'items') return false;
+                    // Hide cta_hero parameters that have custom editors
+                    if(type === 'cta_hero' && ['background_image', 'headline', 'subheadline', 'cta_text'].includes(key)) return false;
+                    // Hero Parallax Dependency
+                    if(type === 'hero' && key === 'parallax_strength' && !selectedBlock.value.params.parallax) return false;
+                    // Allow all other fields to show in schema-driven editor
+                    return true;
+                };
+
+
+                const addGenericItem = (block) => {
+                    if(!block.params.items) {
+                        block.params.items = [];
+                    }
+
+                    // Try to infer the structure from existing items
+                    if(block.params.items.length > 0) {
+                        const template = {...block.params.items[0]};
+                        // Clear values but keep structure
+                        Object.keys(template).forEach(key => {
+                            template[key] = '';
+                        });
+                        block.params.items.push(template);
+                    } else {
+                        // Default structure for common item types
+                        if(block.type === 'theme_features') {
+                            block.params.items.push({icon: 'box', text: 'New Feature'});
+                        } else {
+                            // Generic default
+                            block.params.items.push({text: 'New Item'});
+                        }
+                    }
+                };
+
+                // Provide helper to global scope for debugging/reuse
+                if(typeof window !== 'undefined') {
+                    window.findBlock = findBlockAndParent;
+                }
+
+                // Publish functions
+                const publishSite = async () => {
+                    isPublishing.value = true;
+                    try {
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                            getCookie('csrftoken');
+
+                        const response = await fetch('/api/websites/publish/', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRFToken': csrfToken
                             },
                             body: JSON.stringify({
-                                name: newWebsiteName.value,
-                                slug: newWebsiteSlug.value
+                                website_id: currentWebsite.value.id
                             })
                         });
-                    }
 
-                    if(response.ok) {
                         const data = await response.json();
-                        const newSite = selectedTemplateId.value ? data.website : data;
-                        showCreateWebsiteModal.value = false;
-                        newWebsiteName.value = '';
-                        newWebsiteSlug.value = '';
-                        selectedTemplateId.value = '';
-                        showToast(selectedTemplateId.value ? 'Website created from template!' : 'Website created successfully', 'success');
-                        // Switch to new website
-                        await fetchConfig(newSite.id);
+
+                        if(data.success) {
+                            showToast('Site published successfully!', 'success');
+                            // Refresh pages to update status indicators
+                            await fetchPages();
+                        } else {
+                            showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
+                        }
+                    } catch(error) {
+                        console.error('Publish error:', error);
+                        showToast('Publish failed: ' + error.message, 'error');
+                    } finally {
+                        isPublishing.value = false;
+                    }
+                };
+
+                const publishCurrentPage = async () => {
+                    if(!activePage.value) {
+                        showToast('No page selected', 'error');
+                        return;
+                    }
+                    isPublishing.value = true;
+
+                    try {
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                            getCookie('csrftoken');
+
+                        const response = await fetch('/api/websites/publish_page/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: JSON.stringify({
+                                website_id: currentWebsite.value.id,
+                                page_id: activePage.value.id
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if(data.success) {
+                            showToast('Page published successfully!', 'success');
+                            // Refresh pages to update status indicators
+                            await fetchPages();
+                        } else {
+                            showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
+                        }
+                    } catch(error) {
+                        console.error('Publish error:', error);
+                        showToast('Publish failed: ' + error.message, 'error');
+                    } finally {
+                        isPublishing.value = false;
+                    }
+                };
+
+                // --- Carousel Slide Index Helpers (tracked outside contentZones to avoid triggering unsaved changes) ---
+                const getCarouselSlide = (blockId) => {
+                    return carouselSlideIndexes.value[blockId] || 0;
+                };
+
+                const setCarouselSlide = (blockId, index) => {
+                    carouselSlideIndexes.value[blockId] = index;
+                };
+
+                const prevCarouselSlide = (block) => {
+                    const current = getCarouselSlide(block.id);
+                    const total = block.params.slides?.length || 1;
+                    setCarouselSlide(block.id, (current - 1 + total) % total);
+                };
+
+                const nextCarouselSlide = (block) => {
+                    const current = getCarouselSlide(block.id);
+                    const total = block.params.slides?.length || 1;
+                    setCarouselSlide(block.id, (current + 1) % total);
+                };
+
+                // Provide helpers to child components
+                provide('getCarouselSlide', getCarouselSlide);
+                provide('setCarouselSlide', setCarouselSlide);
+                provide('prevCarouselSlide', prevCarouselSlide);
+                provide('nextCarouselSlide', nextCarouselSlide);
+
+                return {
+                    isLoaded,
+                    pages,
+                    activePageId,
+                    viewMode,
+                    activePage,
+                    activeContent,
+                    selectedBlockId,
+                    selectedBlock,
+                    componentLibrary,
+                    searchQuery,
+                    filteredComponentLibrary,
+                    websiteName,
+                    websiteSlug,
+                    generateConfig,
+                    setActivePage,
+                    createNewPage,
+                    savePageContent,
+                    publishSite,
+                    publishCurrentPage,
+                    onSlugInput,
+                    changeWebsite: async (websiteId) => {
+                        if(currentWebsite.value && currentWebsite.value.id === websiteId) return;
+
+                        // Update URL
+                        const newUrl = websiteId ? `/site/${websiteId}/` : '/';
+                        // Use history API to change URL without reload
+                        window.history.pushState({}, '', newUrl);
+
+                        await fetchConfig(websiteId);
+                        // Refresh pages list for the new website
                         await fetchPages();
-                        // Select first page if available
+
+                        // Select first page
                         if(pages.value.length > 0) {
                             activePageId.value = pages.value[0].id;
                             await fetchContent(pages.value[0].id);
                         }
-                    } else {
-                        const data = await response.json();
-                        showToast('Failed to create website', 'error', data.error || JSON.stringify(data));
-                    }
-                } catch(error) {
-                    console.error('Create website error:', error);
-                    showToast('Failed to create website', 'error', error.message);
-                }
-            },
-
-            openSettingsModal: async () => {
-                if(!currentWebsite.value) return;
-                showSettingsModal.value = true;
-
-                // Initialize locally from currentWebsite to avoid flashing empty
-                websiteName.value = currentWebsite.value.name || '';
-                websiteSlug.value = currentWebsite.value.slug || '';
-
-                try {
-                    // Fetch storage settings
-                    const response = await fetch(`/api/storage-settings/?website_id=${currentWebsite.value.id}`);
-                    if(response.ok) {
-                        const data = await response.json();
-                        if(data.length > 0) {
-                            storageSettings.value = {...storageSettings.value, ...data[0]};
+                    },
+                    createWebsite: async () => {
+                        if(!newWebsiteName.value || !newWebsiteSlug.value) {
+                            showToast('Please fill in all fields', 'error');
+                            return;
                         }
-                    }
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+                            let response;
 
-                    // Fetch website details (for custom_css)
-                    const websiteResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`);
-                    if(websiteResponse.ok) {
-                        const websiteData = await websiteResponse.json();
-                        customCss.value = websiteData.custom_css || '';
-                        websiteSlug.value = websiteData.slug || '';
-                        websiteName.value = websiteData.name || '';
-                        themePreset.value = websiteData.theme_preset || 'default';
-                    }
-                } catch(error) {
-                    console.error('Error fetching settings:', error);
-                    showToast('Failed to load settings', 'error');
-                }
-            },
+                            if(selectedTemplateId.value) {
+                                // Create from template
+                                response = await fetch(`${API_BASE_URL}templates/${selectedTemplateId.value}/create_website/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken
+                                    },
+                                    body: JSON.stringify({
+                                        website_name: newWebsiteName.value,
+                                        website_slug: newWebsiteSlug.value
+                                    })
+                                });
+                            } else {
+                                // Create blank site
+                                response = await fetch(`${API_BASE_URL}websites/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken
+                                    },
+                                    body: JSON.stringify({
+                                        name: newWebsiteName.value,
+                                        slug: newWebsiteSlug.value
+                                    })
+                                });
+                            }
 
-            saveSettings: async () => {
-                if(!currentWebsite.value) return;
-                isSavingSettings.value = true;
-
-                try {
-                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-
-                    // Save Storage Settings
-                    const storagePayload = {
-                        ...storageSettings.value,
-                        website_id: currentWebsite.value.id
-                    };
-
-                    let url = '/api/storage-settings/';
-                    let method = 'POST';
-
-                    if(storageSettings.value.id) {
-                        url += `${storageSettings.value.id}/`;
-                        method = 'PUT';
-                    }
-
-                    const response = await fetch(url, {
-                        method: method,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify(storagePayload)
-                    });
-
-                    if(!response.ok) {
-                        throw new Error('Failed to save storage settings');
-                    }
-
-                    // Save Website Settings (Custom CSS & Slug)
-                    const websitePayload = {
-                        custom_css: customCss.value,
-                        slug: websiteSlug.value,
-                        name: websiteName.value,
-                        theme_preset: themePreset.value
-                    };
-
-                    const websiteResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify(websitePayload)
-                    });
-
-                    if(!websiteResponse.ok) {
-                        throw new Error('Failed to save website settings');
-                    }
-
-                    // Update local state to reflect changes immediately
-                    if(currentWebsite.value) {
-                        currentWebsite.value.name = websiteName.value;
-                        currentWebsite.value.slug = websiteSlug.value;
-                    }
-
-                    // Save Deployment Settings
-
-                    // 1. If editing a provider, save it first
-                    if(isEditingProvider.value) {
-                        const providerPayload = {...editingProvider.value};
-                        let providerUrl = '/api/deployment-providers/';
-                        let providerMethod = 'POST';
-
-                        if(providerPayload.id) {
-                            providerUrl += `${providerPayload.id}/`;
-                            providerMethod = 'PUT';
+                            if(response.ok) {
+                                const data = await response.json();
+                                const newSite = selectedTemplateId.value ? data.website : data;
+                                showCreateWebsiteModal.value = false;
+                                newWebsiteName.value = '';
+                                newWebsiteSlug.value = '';
+                                selectedTemplateId.value = '';
+                                showToast(selectedTemplateId.value ? 'Website created from template!' : 'Website created successfully', 'success');
+                                // Switch to new website
+                                await fetchConfig(newSite.id);
+                                await fetchPages();
+                                // Select first page if available
+                                if(pages.value.length > 0) {
+                                    activePageId.value = pages.value[0].id;
+                                    await fetchContent(pages.value[0].id);
+                                }
+                            } else {
+                                const data = await response.json();
+                                showToast('Failed to create website', 'error', data.error || JSON.stringify(data));
+                            }
+                        } catch(error) {
+                            console.error('Create website error:', error);
+                            showToast('Failed to create website', 'error', error.message);
                         }
+                    },
 
-                        const providerResponse = await fetch(providerUrl, {
-                            method: providerMethod,
+                    openSettingsModal: async () => {
+                        if(!currentWebsite.value) return;
+                        showSettingsModal.value = true;
+
+                        // Initialize locally from currentWebsite to avoid flashing empty
+                        websiteName.value = currentWebsite.value.name || '';
+                        websiteSlug.value = currentWebsite.value.slug || '';
+
+                        try {
+                            // Fetch storage settings
+                            const response = await fetch(`/api/storage-settings/?website_id=${currentWebsite.value.id}`);
+                            if(response.ok) {
+                                const data = await response.json();
+                                if(data.length > 0) {
+                                    storageSettings.value = {...storageSettings.value, ...data[0]};
+                                }
+                            }
+
+                            // Fetch website details (for custom_css)
+                            const websiteResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`);
+                            if(websiteResponse.ok) {
+                                const websiteData = await websiteResponse.json();
+                                customCss.value = websiteData.custom_css || '';
+                                websiteSlug.value = websiteData.slug || '';
+                                websiteName.value = websiteData.name || '';
+                                themePreset.value = websiteData.theme_preset || 'default';
+                            }
+                        } catch(error) {
+                            console.error('Error fetching settings:', error);
+                            showToast('Failed to load settings', 'error');
+                        }
+                    },
+
+                    saveSettings: async () => {
+                        if(!currentWebsite.value) return;
+                        isSavingSettings.value = true;
+
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                            // Save Storage Settings
+                            const storagePayload = {
+                                ...storageSettings.value,
+                                website_id: currentWebsite.value.id
+                            };
+
+                            let url = '/api/storage-settings/';
+                            let method = 'POST';
+
+                            if(storageSettings.value.id) {
+                                url += `${storageSettings.value.id}/`;
+                                method = 'PUT';
+                            }
+
+                            const response = await fetch(url, {
+                                method: method,
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify(storagePayload)
+                            });
+
+                            if(!response.ok) {
+                                throw new Error('Failed to save storage settings');
+                            }
+
+                            // Save Website Settings (Custom CSS & Slug)
+                            const websitePayload = {
+                                custom_css: customCss.value,
+                                slug: websiteSlug.value,
+                                name: websiteName.value,
+                                theme_preset: themePreset.value
+                            };
+
+                            const websiteResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify(websitePayload)
+                            });
+
+                            if(!websiteResponse.ok) {
+                                throw new Error('Failed to save website settings');
+                            }
+
+                            // Update local state to reflect changes immediately
+                            if(currentWebsite.value) {
+                                currentWebsite.value.name = websiteName.value;
+                                currentWebsite.value.slug = websiteSlug.value;
+                            }
+
+                            // Save Deployment Settings
+
+                            // 1. If editing a provider, save it first
+                            if(isEditingProvider.value) {
+                                const providerPayload = {...editingProvider.value};
+                                let providerUrl = '/api/deployment-providers/';
+                                let providerMethod = 'POST';
+
+                                if(providerPayload.id) {
+                                    providerUrl += `${providerPayload.id}/`;
+                                    providerMethod = 'PUT';
+                                }
+
+                                const providerResponse = await fetch(providerUrl, {
+                                    method: providerMethod,
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken
+                                    },
+                                    body: JSON.stringify(providerPayload)
+                                });
+
+                                if(!providerResponse.ok) {
+                                    throw new Error('Failed to save provider settings');
+                                }
+
+                                const savedProvider = await providerResponse.json();
+
+                                // Update available providers list
+                                if(providerMethod === 'POST') {
+                                    availableProviders.value.push(savedProvider);
+                                    selectedProviderId.value = savedProvider.id; // Auto-select new provider
+                                } else {
+                                    const index = availableProviders.value.findIndex(p => p.id === savedProvider.id);
+                                    if(index !== -1) {
+                                        availableProviders.value[index] = savedProvider;
+                                    }
+                                }
+                                isEditingProvider.value = false;
+                            }
+
+                            // 2. Link Selected Provider to Website
+                            // We need to update the website record with the selected deployment_provider
+                            const websiteLinkPayload = {
+                                deployment_provider: selectedProviderId.value || null
+                            };
+
+                            const linkResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify(websiteLinkPayload)
+                            });
+
+                            if(!linkResponse.ok) {
+                                throw new Error('Failed to link deployment provider');
+                            }
+
+                            showToast('Settings saved successfully', 'success');
+                            showSettingsModal.value = false;
+
+                            // Refresh storage settings ID if it was a new creation
+                            if(method === 'POST') {
+                                const data = await response.json();
+                                storageSettings.value.id = data.id;
+                            }
+                        } catch(error) {
+                            console.error('Error saving settings:', error);
+                            showToast('Error saving settings', 'error');
+                        } finally {
+                            isSavingSettings.value = false;
+                        }
+                    },
+
+                    confirmDeleteWebsite: async () => {
+                        if(!currentWebsite.value) return;
+
+                        const websiteName = currentWebsite.value.name;
+                        const confirmation = confirm(
+                            `Are you sure you want to delete "${websiteName}"?\n\n` +
+                            `This will permanently delete:\n` +
+                            `• All pages and content\n` +
+                            `• All blocks and settings\n` +
+                            `• All media files\n\n` +
+                            `This action cannot be undone!`
+                        );
+
+                        if(!confirmation) return;
+
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                            const response = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': csrfToken
+                                }
+                            });
+
+                            if(!response.ok) {
+                                throw new Error('Failed to delete website');
+                            }
+
+                            showToast(`Website "${websiteName}" deleted successfully`, 'success');
+                            showSettingsModal.value = false;
+
+                            // Remove from websites list
+                            websites.value = websites.value.filter(w => w.id !== currentWebsite.value.id);
+
+                            // Reload the page to switch to another website or show empty state
+                            // This is simpler than manually updating all state
+                            setTimeout(() => {
+                                window.location.href = '/';
+                            }, 500);
+                        } catch(error) {
+                            console.error('Error deleting website:', error);
+                            showToast('Error deleting website', 'error');
+                        }
+                    },
+
+                    uploadFile: async (file) => {
+                        if(!currentWebsite.value) throw new Error("No website selected");
+
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('website_id', currentWebsite.value.id);
+
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                        const response = await fetch('/api/files/upload/', {
+                            method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json',
                                 'X-CSRFToken': csrfToken
                             },
-                            body: JSON.stringify(providerPayload)
+                            body: formData
                         });
 
-                        if(!providerResponse.ok) {
-                            throw new Error('Failed to save provider settings');
+                        if(!response.ok) {
+                            const data = await response.json();
+                            throw new Error(data.error || 'Upload failed');
                         }
 
-                        const savedProvider = await providerResponse.json();
-
-                        // Update available providers list
-                        if(providerMethod === 'POST') {
-                            availableProviders.value.push(savedProvider);
-                            selectedProviderId.value = savedProvider.id; // Auto-select new provider
-                        } else {
-                            const index = availableProviders.value.findIndex(p => p.id === savedProvider.id);
-                            if(index !== -1) {
-                                availableProviders.value[index] = savedProvider;
-                            }
-                        }
-                        isEditingProvider.value = false;
-                    }
-
-                    // 2. Link Selected Provider to Website
-                    // We need to update the website record with the selected deployment_provider
-                    const websiteLinkPayload = {
-                        deployment_provider: selectedProviderId.value || null
-                    };
-
-                    const linkResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify(websiteLinkPayload)
-                    });
-
-                    if(!linkResponse.ok) {
-                        throw new Error('Failed to link deployment provider');
-                    }
-
-                    showToast('Settings saved successfully', 'success');
-                    showSettingsModal.value = false;
-
-                    // Refresh storage settings ID if it was a new creation
-                    if(method === 'POST') {
-                        const data = await response.json();
-                        storageSettings.value.id = data.id;
-                    }
-                } catch(error) {
-                    console.error('Error saving settings:', error);
-                    showToast('Error saving settings', 'error');
-                } finally {
-                    isSavingSettings.value = false;
-                }
-            },
-
-            confirmDeleteWebsite: async () => {
-                if(!currentWebsite.value) return;
-
-                const websiteName = currentWebsite.value.name;
-                const confirmation = confirm(
-                    `Are you sure you want to delete "${websiteName}"?\n\n` +
-                    `This will permanently delete:\n` +
-                    `• All pages and content\n` +
-                    `• All blocks and settings\n` +
-                    `• All media files\n\n` +
-                    `This action cannot be undone!`
-                );
-
-                if(!confirmation) return;
-
-                try {
-                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-
-                    const response = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRFToken': csrfToken
-                        }
-                    });
-
-                    if(!response.ok) {
-                        throw new Error('Failed to delete website');
-                    }
-
-                    showToast(`Website "${websiteName}" deleted successfully`, 'success');
-                    showSettingsModal.value = false;
-
-                    // Remove from websites list
-                    websites.value = websites.value.filter(w => w.id !== currentWebsite.value.id);
-
-                    // Reload the page to switch to another website or show empty state
-                    // This is simpler than manually updating all state
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 500);
-                } catch(error) {
-                    console.error('Error deleting website:', error);
-                    showToast('Error deleting website', 'error');
-                }
-            },
-
-            uploadFile: async (file) => {
-                if(!currentWebsite.value) throw new Error("No website selected");
-
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('website_id', currentWebsite.value.id);
-
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-
-                const response = await fetch('/api/files/upload/', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrfToken
+                        return await response.json();
                     },
-                    body: formData
-                });
-
-                if(!response.ok) {
-                    const data = await response.json();
-                    throw new Error(data.error || 'Upload failed');
-                }
-
-                return await response.json();
-            },
-            toasts,
-            showToast,
-            removeToast,
-            richTextEditors,
-            handleDragStartNew,
-            handleDragStartExisting,
-            showSettingsModal,
-            customCss,
-            websiteSlug,
-            cssEditorRef,
-            storageSettings,
-            availableProviders,
-            selectedProviderId,
-            isEditingProvider,
-            editingProvider,
-            handleDrop,
-            updateBlock,
-            updateBlockParams: updateBlock,
-            deleteBlock,
-            closeInspector,
-            formatKey,
-            shouldShowParam,
-            addGenericItem,
-            setSelectedBlockId: (id) => selectedBlockId.value = id,
-            selectedBlockDefinition,
-            getColWidths,
-            updateColWidths: updateBlock,
-            updateColCount,
-            updateSingleWidth,
-            sidebarTab,
-            currentLayout,
-            layoutTemplates,
-            getZoneConfig,
-            websites,
-            currentWebsite,
-            showCreateWebsiteModal,
-            showPublishDropdown,
-            isPublishing,
-            isSavingSettings,
-            hasUnsavedChanges,
-            publishCurrentPage,
-            showWebsiteDropdown,
-            newWebsiteName,
-            newWebsiteSlug,
-            websiteName,
-            themePreset,
-            siteTemplates,
-            selectedTemplateId,
-            getCarouselSlide,
-            setCarouselSlide,
-            prevCarouselSlide,
-            nextCarouselSlide,
-            // Page Reordering
-            handlePageDragStart,
-            handlePageDragEnd,
-            handlePageDrop,
-            handlePageDragOver,
-            handlePageDragLeave,
-            dragOverPageId,
-            dragDropPosition
-        };
+                    toasts,
+                    showToast,
+                    removeToast,
+                    richTextEditors,
+                    handleDragStartNew,
+                    handleDragStartExisting,
+                    showSettingsModal,
+                    customCss,
+                    websiteSlug,
+                    cssEditorRef,
+                    storageSettings,
+                    availableProviders,
+                    selectedProviderId,
+                    isEditingProvider,
+                    editingProvider,
+                    handleDrop,
+                    updateBlock,
+                    updateBlockParams: updateBlock,
+                    deleteBlock,
+                    closeInspector,
+                    formatKey,
+                    shouldShowParam,
+                    addGenericItem,
+                    setSelectedBlockId: (id) => selectedBlockId.value = id,
+                    selectedBlockDefinition,
+                    getColWidths,
+                    updateColWidths: updateBlock,
+                    updateColCount,
+                    updateSingleWidth,
+                    sidebarTab,
+                    currentLayout,
+                    layoutTemplates,
+                    getZoneConfig,
+                    websites,
+                    currentWebsite,
+                    showCreateWebsiteModal,
+                    showPublishDropdown,
+                    isPublishing,
+                    isSavingSettings,
+                    hasUnsavedChanges,
+                    publishCurrentPage,
+                    showWebsiteDropdown,
+                    newWebsiteName,
+                    newWebsiteSlug,
+                    websiteName,
+                    themePreset,
+                    siteTemplates,
+                    selectedTemplateId,
+                    getCarouselSlide,
+                    setCarouselSlide,
+                    prevCarouselSlide,
+                    nextCarouselSlide,
+                    // Page Reordering
+                    handlePageDragStart,
+                    handlePageDragEnd,
+                    handlePageDrop,
+                    handlePageDragOver,
+                    handlePageDragLeave,
+                    dragOverPageId,
+                    dragDropPosition
+                };
 
 
             }
