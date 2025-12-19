@@ -3822,7 +3822,23 @@ layout = "${activePage.value.layout}"
                         };
 
                         // 1. Save Page Metadata (PUT)
-                        await fetchApi(`${API_BASE_URL}pages/${pageId}/`, 'PUT', metadataPayload);
+                        const metadataResponse = await fetchApi(`${API_BASE_URL}pages/${pageId}/`, 'PUT', metadataPayload);
+
+                        // Update local pages list with new data (specifically updated_at) to refresh status dots
+                        const pageIndex = pages.value.findIndex(p => p.id === pageId);
+                        if(pageIndex !== -1 && metadataResponse) {
+                            // Update the specific fields that might have changed
+                            pages.value[pageIndex] = {
+                                ...pages.value[pageIndex],
+                                ...metadataResponse, // success response returns the updated page object
+                            };
+
+                            // Also update activePage if it matches to ensure consistency
+                            if(activePage.value && activePage.value.id === pageId) {
+                                activePage.value.updated_at = metadataResponse.updated_at;
+                                activePage.value.last_published_at = metadataResponse.last_published_at;
+                            }
+                        }
 
 
                         // 2. Save Block Content (POST to custom action)
