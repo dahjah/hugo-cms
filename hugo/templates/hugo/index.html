@@ -4381,24 +4381,6 @@ layout = "${activePage.value.layout}"
                 // Watch viewMode to refresh preview
                 watch(viewMode, (newMode) => {
                     if(newMode === 'preview') {
-                        // Reset all menu states before showing preview
-                        const resetMenuStates = (blocks) => {
-                            if(!blocks || !Array.isArray(blocks)) return;
-                            blocks.forEach(block => {
-                                if(block.type === 'menu') {
-                                    block._menuOpen = false;
-                                }
-                                if(block.children && Array.isArray(block.children)) {
-                                    resetMenuStates(block.children);
-                                }
-                            });
-                        };
-
-                        // Reset menu states in all zones
-                        resetMenuStates(contentZones.value.header);
-                        resetMenuStates(contentZones.value.main);
-                        resetMenuStates(contentZones.value.sidebar);
-                        resetMenuStates(contentZones.value.footer);
 
                         refreshPreview();
                     }
