@@ -14,9 +14,14 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('slug', type=str, help='Website slug')
+        parser.add_argument('--keep-existing', action='store_true', help='Skip cleaning the output directory and use incremental build')
+        parser.add_argument('--page-id', type=str, help='Specific Page ID to publish (incremental)')
 
     def handle(self, *args, **options):
         slug = options['slug']
+        keep_existing = options.get('keep_existing')
+        page_id = options.get('page_id')
+
         try:
             website = Website.objects.get(slug=slug)
         except Website.DoesNotExist:
@@ -30,25 +35,31 @@ class Command(BaseCommand):
         content_dir = output_dir / 'content'
         static_dir = output_dir / 'static'
         
-        # Clean
-        if output_dir.exists():
-            shutil.rmtree(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        content_dir.mkdir(parents=True, exist_ok=True)
-        static_dir.mkdir(parents=True, exist_ok=True)
+        # Clean (Unless incremental)
+        if not keep_existing:
+             if output_dir.exists():
+                 shutil.rmtree(output_dir)
+             output_dir.mkdir(parents=True, exist_ok=True)
+             content_dir.mkdir(parents=True, exist_ok=True)
+             static_dir.mkdir(parents=True, exist_ok=True)
+        else:
+             # Ensure they exist anyway
+             output_dir.mkdir(parents=True, exist_ok=True)
+             content_dir.mkdir(parents=True, exist_ok=True)
+             static_dir.mkdir(parents=True, exist_ok=True)
         
         # 1. Generate Site Config (hugo.toml)
         self.generate_config(output_dir, website)
 
         # 2. Generate Layouts (Templates)
         self.generate_layouts(output_dir, website)
-        self.generate_fixed_templates(output_dir) # Overwrite with fixed ones if needed
+        self.generate_fixed_templates(output_dir)
 
-        # 3. Generate Pages (Using ORIGINAL views.py logic)
-        self.generate_pages_original(website, content_dir)
+        # 3. Generate Pages
+        self.generate_pages_original(website, content_dir, page_id=page_id)
         
-        # 4. Copy Media (The Fix)
-        self.copy_media(website, static_dir)
+        # 4. Copy Media (Incremental-aware)
+        self.copy_media(website, static_dir, incremental=keep_existing)
         
         # 5. Run Hugo build to generate hugo_stats.json
         self.run_hugo_build(output_dir)
@@ -57,6 +68,80 @@ class Command(BaseCommand):
         self.compile_css(static_dir, website)
         
         self.stdout.write(self.style.SUCCESS(f"Site generated in {output_dir}"))
+
+    # ... generate_config, generate_layouts ...
+
+    def generate_pages_original(self, website, content_dir, page_id=None):
+        import json
+        from django.utils import timezone
+        now = timezone.now()
+        
+        pages = website.pages.all()
+        if page_id:
+            pages = pages.filter(id=page_id)
+        
+        for page in pages:
+            page_data = self._build_page_dict(page)
+            
+            # Serialize to JSON (valid YAML) wrapped in ---
+            frontmatter = json.dumps(page_data, indent=2)
+            content = f"---\n{frontmatter}\n---\n"
+            
+            if page.slug == '/' or page.slug == '':
+                path = content_dir / '_index.md'
+            else:
+                 path = content_dir / page.slug.strip('/') / 'index.md'
+                 path.parent.mkdir(parents=True, exist_ok=True)
+            
+            with open(path, 'w') as f: f.write(content)
+
+    def _build_page_dict(self, page):
+        # Build dictionary structure for the page
+        data = {
+            'title': page.title,
+            'draft': page.status != 'published'
+        }
+        
+        if page.description:
+            data['description'] = page.description
+            
+        is_homepage = (page.slug == '/' or page.slug == '')
+        if is_homepage:
+            data['type'] = page.layout
+        else:
+            data['layout'] = page.layout
+
+    # ... other methods ...
+
+    def copy_media(self, website, static_dir, incremental=False):
+        media_root = Path(settings.MEDIA_ROOT)
+        static_media = static_dir / 'media'
+        static_media.mkdir(parents=True, exist_ok=True)
+        
+        count = 0
+        skipped = 0
+        for uf in website.files.all():
+             src = media_root / uf.file_path
+             if src.exists():
+                 dest = static_media / uf.file_path
+                 dest.parent.mkdir(parents=True, exist_ok=True)
+                 
+                 should_copy = True
+                 if incremental and dest.exists():
+                     # Only copy if source is newer or different size
+                     if src.stat().st_mtime <= dest.stat().st_mtime and src.stat().st_size == dest.stat().st_size:
+                         should_copy = False
+                 
+                 if should_copy:
+                     shutil.copy2(src, dest)
+                     count += 1
+                 else:
+                     skipped += 1
+                     
+        msg = f"Copied {count} media files."
+        if incremental:
+            msg += f" (Skipped {skipped} unchanged)"
+        self.stdout.write(msg)
 
     def generate_config(self, output_dir, website):
         # Basic config generation
@@ -1261,37 +1346,13 @@ theme = []
                  with open(blocks / f'{name}.html', 'w') as f: f.write(f'<div class="{name}">{{{{ . | jsonify }}}}</div>')
 
 
-    def generate_pages_original(self, website, content_dir):
-        import json
-        from django.utils import timezone
-        now = timezone.now()
 
-        for page in website.pages.all():
-            page_data = self._build_page_dict(page)
-            
-            # Serialize to JSON (valid YAML) wrapped in ---
-            # This is the safest way to handle complex nested content without syntax errors
-            frontmatter = json.dumps(page_data, indent=2)
-            content = f"---\n{frontmatter}\n---\n"
-            
-            if page.slug == '/' or page.slug == '':
-                path = content_dir / '_index.md'
-            else:
-                 path = content_dir / page.slug.strip('/') / 'index.md'
-                 path.parent.mkdir(parents=True, exist_ok=True)
-            
-            with open(path, 'w') as f: f.write(content)
-
-            # Update page status to published
-            page.last_published_at = now
-            page.status = 'published'
-            page.save(update_fields=['last_published_at', 'status'])
 
     def _build_page_dict(self, page):
         # Build dictionary structure for the page
         data = {
             'title': page.title,
-            # 'params': {} # Flattened now
+            'draft': page.status != 'published'
         }
         
         if page.description:
@@ -1456,21 +1517,7 @@ theme = []
         
         return data
         
-    def copy_media(self, website, static_dir):
-        media_root = Path(settings.MEDIA_ROOT)
-        static_media = static_dir / 'media'
-        static_media.mkdir(parents=True, exist_ok=True)
-        
-        count = 0
-        for uf in website.files.all():
-             src = media_root / uf.file_path
-             if src.exists():
-                 # Destination: static/media/uploads/filename.ext
-                 dst = static_media / uf.file_path
-                 dst.parent.mkdir(parents=True, exist_ok=True)
-                 shutil.copy2(src, dst)
-                 count += 1
-        self.stdout.write(f"Copied {count} media files.")
+
     
     def compile_css(self, static_dir, website):
         """Compile Tailwind CSS - theme will be auto-detected from HTML"""
@@ -1513,7 +1560,7 @@ theme = []
             return
 
         result = subprocess.run(
-            [str(hugo_bin), '--source', str(output_dir)],
+            [str(hugo_bin), '--source', str(output_dir), '--cleanDestinationDir'],
             capture_output=True,
             text=True
         )

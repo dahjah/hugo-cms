@@ -64,6 +64,9 @@ class HugoBuilder:
         
         if output_dir != source_path / 'public':
             cmd.extend(['--destination', str(output_dir)])
+            
+        # Ensure we clean the destination to remove stale files (e.g. un-published drafts)
+        cmd.append('--cleanDestinationDir')
         
         try:
             logger.info(f"Running Hugo build: {' '.join(cmd)}")

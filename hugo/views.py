@@ -125,6 +125,7 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             'deploy_log': "\n".join(deploy_log),
             'deployed_url': deployed_url
         })
+    @action(detail=False, methods=['post'])
     def publish_page(self, request):
         """
         Publish a single page to Hugo output directory.
@@ -179,10 +180,45 @@ class WebsiteViewSet(viewsets.ModelViewSet):
             page.last_published_at = timezone.now()
             page.status = 'published'
             page.save(update_fields=['last_published_at', 'status'])
+
+            # 2. Trigger Site Build (Incremental)
+            # Pass website slug to command w/ keep_existing=True and page_id
+            from django.core.management import call_command
+            import io
+            out = io.StringIO()
             
+            # Use incremental build: 
+            # - keep_existing=True: Don't wipe output dir.
+            # - page_id: ONLY regenerate this page's MD. Preserve others as they were (Live state).
+            call_command('publish_site', 
+                website.slug, 
+                keep_existing=True, 
+                page_id=str(page.id),
+                stdout=out
+            )
+            
+            # 3. Deploy
+            deploy_result = "Deployment skipped (no provider)"
+            deployed_url = None
+            
+            if website.deployment_provider:
+                from hugo.deployment_service import DeploymentOrchestrator
+                orchestrator = DeploymentOrchestrator(website.deployment_provider, website)
+                output_dir = Path(settings.BASE_DIR) / 'hugo_output' / website.slug
+                
+                deployment = orchestrator.deploy(output_dir)
+                if deployment.status == 'success':
+                    deployed_url = deployment.deployment_url
+                    deploy_result = f"Deployed to: {deployed_url}"
+                else:
+                    return Response({
+                        'success': False, 
+                        'error': f"Deployment failed: {deployment.error_message}"
+                    }, status=500)
+
             return Response({
                 'success': True,
-                'message': f'Successfully published page: {page.title}',
+                'message': f'Published page: {page.title}. {deploy_result}',
                 'file': str(page_file)
             })
             
