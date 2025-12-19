@@ -6,7 +6,14 @@ theme = []
 
 [params]
     description = ''
-    theme_preset = 'aqua'
+    theme_preset = 'light'
+    
+[build]
+    writeStats = true
+
+[[build.cachebusters]]
+    source = "hugo_stats.json"
+    target = "styles.css"
     
 [mediaTypes]
 [mediaTypes."text/css"]

@@ -1,15 +1,18 @@
 ---
 {
   "title": "Contact",
+  "draft": false,
   "layout": "contact",
   "header_blocks": [
     {
-      "gap": "4",
       "justify": "between",
       "align": "center",
-      "css_classes": "w-full",
-      "id": "69aac272-a4b5-4f12-ba73-6d422582ccae",
-      "block_type": "row",
+      "gap": "0",
+      "position": "sticky",
+      "css_classes": "",
+      "opacity": 60,
+      "id": "70a917c7-8505-490b-9643-810a834a44ed",
+      "block_type": "navbar",
       "blocks": [
         {
           "logo_url": "",
@@ -18,6 +21,7 @@
           "link_url": "/",
           "logo_image": "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg",
           "link_url_type": "page",
+          "css_classes": "btn-neutral",
           "id": "4ea26512-4eea-4ede-a0dd-896ea73b499e",
           "block_type": "brand_logo"
         },
@@ -42,11 +46,16 @@
               "label": "Contact",
               "url": "/contact",
               "type": "page"
+            },
+            {
+              "label": "KENNYS MOM",
+              "url": "/",
+              "type": "page"
             }
           ],
           "style": "pills",
           "responsive": "true",
-          "hamburgerDirection": "dropdown",
+          "hamburgerDirection": "sidebar",
           "sidebarSide": "right",
           "alignment": "center",
           "position": "normal",
@@ -65,6 +74,7 @@
               "sort_order": 0
             }
           ],
+          "css_classes": "",
           "id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
           "block_type": "menu"
         }
@@ -83,12 +93,12 @@
           "block_type": "text"
         },
         {
-          "type": "row",
+          "block_type": "row",
           "flex_mode": true,
           "gap": "2",
           "blocks": [
             {
-              "type": "column",
+              "block_type": "column",
               "width_percent": "60",
               "blocks": [
                 {
@@ -99,7 +109,7 @@
               ]
             },
             {
-              "type": "column",
+              "block_type": "column",
               "width_percent": "40",
               "blocks": [
                 {

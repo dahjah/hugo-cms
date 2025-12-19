@@ -1,6 +1,7 @@
 ---
 {
   "title": "All blocks",
+  "draft": false,
   "layout": "single",
   "header_blocks": [
     {
@@ -44,6 +45,11 @@
             {
               "label": "Contact",
               "url": "/contact",
+              "type": "page"
+            },
+            {
+              "label": "KENNYS MOM",
+              "url": "/",
               "type": "page"
             }
           ],
@@ -91,7 +97,7 @@
     {
       "style": "default",
       "padding": "normal",
-      "width": "35.7%",
+      "width": "98.2%",
       "css_classes": "sticky",
       "id": "29d7203a-ae8e-48fa-8f74-66be44b4469c",
       "block_type": "section",
@@ -106,7 +112,7 @@
       ]
     },
     {
-      "content": "KENNYS MOM",
+      "content": "KENNYS MOM!!!!!!!!!!!!",
       "css_classes": "sticky",
       "id": "8bac1658-60e2-4ea5-ab9c-0ccde313d31e",
       "block_type": "text"
@@ -122,7 +128,7 @@
           "src": "/media/uploads/strippin-v2/6dc0a0fc-29cb-423b-86a5-a6ce4032f75a.png",
           "alt": "",
           "caption": "",
-          "width": "10%",
+          "width": "58.3%",
           "id": "296eb54e-aff1-402a-bc37-fd8d9f74f761",
           "block_type": "image"
         }
