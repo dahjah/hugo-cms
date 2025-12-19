@@ -2240,7 +2240,7 @@
                     </div>
 
                     <div v-else-if="block.type === 'column'" class="h-full">
-                        <div class="h-full border border-dashed border-slate-200 rounded-lg hover:border-indigo-300 transition-colors p-2">
+                        <div :class="isEditable ? 'h-full border border-dashed border-slate-200 rounded-lg hover:border-indigo-300 transition-colors p-2' : ''">
                             <drop-zone 
                                 zone="children" 
                                 :blocks="block.children || []" 
@@ -2255,13 +2255,13 @@
                         </div>
                     </div>
 
-                    <div v-else-if="getDefinition(block.type).is_container && block.type !== 'carousel' && block.type !== 'flex_columns'" class="p-4 border border-slate-100 rounded-lg">
-                        <div class="text-xs font-bold text-slate-400 uppercase mb-2">{{ getDefinition(block.type).label || block.type }}</div>
+                    <div v-else-if="getDefinition(block.type).is_container && block.type !== 'carousel' && block.type !== 'flex_columns'" :class="isEditable ? 'p-4 border border-slate-100 rounded-lg' : ''">
+                        <div v-if="isEditable" class="text-xs font-bold text-slate-400 uppercase mb-2">{{ getDefinition(block.type).label || block.type }}</div>
                         
                         <!-- Resizable Container for Section -->
                         <div v-if="block.type === 'section'" :style="{ width: block.params.width || '100%', margin: '0 auto' }" class="relative group/resize">
                             <!-- Left Handle -->
-                            <div @mousedown.stop.prevent="(e) => startBlockResize(e, block, 'left')"
+                            <div v-if="isEditable" @mousedown.stop.prevent="(e) => startBlockResize(e, block, 'left')"
                                  class="absolute top-0 left-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/resize:opacity-100 transition-opacity z-20">
                                 <div class="w-1 h-8 bg-black/20 rounded-full"></div>
                             </div>
@@ -2278,7 +2278,7 @@
                             ></drop-zone>
 
                             <!-- Right Handle -->
-                            <div @mousedown.stop.prevent="(e) => startBlockResize(e, block, 'right')"
+                            <div v-if="isEditable" @mousedown.stop.prevent="(e) => startBlockResize(e, block, 'right')"
                                  class="absolute top-0 right-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/resize:opacity-100 transition-opacity z-20">
                                 <div class="w-1 h-8 bg-black/20 rounded-full"></div>
                             </div>
