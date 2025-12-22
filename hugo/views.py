@@ -1791,8 +1791,25 @@ class SiteTemplateViewSet(viewsets.ModelViewSet):
                 'success': False,
                 'error': 'Template not found'
             }, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
             return Response({
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BlockTemplateViewSet(viewsets.ViewSet):
+    """
+    Serves the raw Handlebars templates to the frontend.
+    """
+    def list(self, request):
+        templates_dir = Path(settings.BASE_DIR) / 'hugo' / 'templates' / 'blocks'
+        templates = {}
+        
+        if templates_dir.exists():
+            for hbs_file in templates_dir.glob('*.hbs'):
+                try:
+                    templates[hbs_file.stem] = hbs_file.read_text(encoding='utf-8')
+                except Exception as e:
+                    print(f"Error reading block template {hbs_file}: {e}")
+                    
+        return Response(templates)

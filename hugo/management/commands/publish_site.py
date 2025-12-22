@@ -7,6 +7,7 @@ import shutil
 import os
 import json
 import uuid
+from hugo.management.commands.compile_templates import TemplateCompiler
 
 
 class Command(BaseCommand):
@@ -713,7 +714,7 @@ theme = []
     {{ end }}
 </div>"""
 
-        with open(blocks / 'hero.html', 'w') as f: f.write(hero_tpl)
+        # with open(blocks / 'hero.html', 'w') as f: f.write(hero_tpl)
         with open(blocks / 'markdown.html', 'w') as f: f.write(markdown_tpl)
         with open(blocks / 'button.html', 'w') as f: f.write(button_tpl)
         with open(blocks / 'accordion.html', 'w') as f: f.write(accordion_tpl)
@@ -1343,8 +1344,13 @@ theme = []
         
         # Write generic fallback for others if they don't exist
         for name in ['text', 'gallery', 'stats', 'embed', 'cta_hero', 'social_links', 'faq', 'google_reviews', 'flip_cards', 'process_steps']:
-             if not (blocks / f'{name}.html').exists():
                  with open(blocks / f'{name}.html', 'w') as f: f.write(f'<div class="{name}">{{{{ . | jsonify }}}}</div>')
+
+        # Compile Handlebars blocks (overwriting hardcoded ones if match)
+        print("DEBUG: Compiling Handlebars templates...")
+        src_blocks = Path(settings.BASE_DIR) / 'hugo' / 'templates' / 'blocks'
+        dest_blocks = output_dir / 'layouts' / 'partials' / 'blocks'
+        TemplateCompiler.compile_all(src_blocks, dest_blocks)
 
 
 

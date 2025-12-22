@@ -3,10 +3,12 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     PageViewSet, CmsInitViewSet, editor_view, WebsiteViewSet, 
     StorageSettingsViewSet, FileUploadViewSet, DeploymentProviderViewSet,
-    TemplateCategoryViewSet, SiteTemplateViewSet, serve_preview_asset
+    TemplateCategoryViewSet, SiteTemplateViewSet, serve_preview_asset,
+    BlockTemplateViewSet
 )
 
 router = DefaultRouter()
+router.register(r'block-templates', BlockTemplateViewSet, basename='block-templates')
 router.register(r'pages', PageViewSet, basename='page')
 router.register(r'init', CmsInitViewSet, basename='cms-init')
 router.register(r'websites', WebsiteViewSet, basename='website')

@@ -7,8 +7,11 @@
     <title>Hugo CMS Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.min.js"></script>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- CodeMirror for CSS syntax highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
@@ -2077,6 +2080,9 @@
                         <icon name="move" :size="14"></icon>
                     </div>
                     
+                    <!-- Handlebars Render (Unified Template) -->
+                    <div v-if="hasCustomTemplate" v-html="renderedHtml" class="handlebars-content w-full"></div>
+                    <template v-else>
                     <!-- Content Rendering -->
                     <div v-if="block.type === 'hero'" class="relative h-64 w-full flex items-center justify-center text-center text-white overflow-hidden rounded-sm">
                         <div class="absolute inset-0 bg-slate-900/40 z-10"></div>
@@ -3010,6 +3016,7 @@
                             </div>
                         </div>
                     </div>
+                    </template>
                 </div>
             `,
             setup(props, {emit}) {
@@ -3019,7 +3026,8 @@
                 const prevCarouselSlide = inject('prevCarouselSlide');
                 const nextCarouselSlide = inject('nextCarouselSlide');
                 // Fix: Explicitly inject required functions
-                const {findBlockAndParent, updateBlock, componentLibrary, getColWidths, updateSingleWidth} = Vue.inject('cmsState');
+                const {findBlockAndParent, updateBlock, componentLibrary, getColWidths, updateSingleWidth, blockTemplates} = Vue.inject('cmsState');
+                const Handlebars = window.Handlebars;
 
                 const getHandlePosition = (block, index) => {
                     let pos = 0;
@@ -3265,7 +3273,30 @@
                     return componentLibrary.value.find(def => def.id === type) || {};
                 };
 
+                const hasCustomTemplate = computed(() => {
+                    return blockTemplates.value && !!blockTemplates.value[props.block.type];
+                });
+
+                const renderedHtml = computed(() => {
+                    if(!hasCustomTemplate.value) return '';
+                    try {
+                        const templateSource = blockTemplates.value[props.block.type];
+                        const template = Handlebars.compile(templateSource);
+                        const context = {
+                            ...props.block.params,
+                            id: props.block.id,
+                            type: props.block.type
+                        };
+                        return template(context);
+                    } catch(e) {
+                        console.error("Handlebars render error", e);
+                        return `<div class="text-red-500 p-2 border border-red-300 bg-red-50">Error rendering block: ${e.message}</div>`;
+                    }
+                });
+
                 return {
+                    hasCustomTemplate,
+                    renderedHtml,
                     getCarouselSlide,
                     setCarouselSlide,
                     prevCarouselSlide,
@@ -3328,7 +3359,22 @@
                 const viewMode = ref('editor');
                 const selectedBlockId = ref(null);
                 const sidebarTab = ref('pages');
+
                 const searchQuery = ref('');
+                const blockTemplates = ref({});
+
+                // Fetch block templates
+                const fetchBlockTemplates = async () => {
+                    try {
+                        const response = await fetch('/api/block-templates/');
+                        if(response.ok) {
+                            blockTemplates.value = await response.json();
+                            console.log('Loaded block templates:', Object.keys(blockTemplates.value));
+                        }
+                    } catch(e) {
+                        console.error("Failed to load block templates", e);
+                    }
+                };
 
                 // Quill editor references
                 const richTextEditors = {};
@@ -3456,7 +3502,16 @@
                     }
                 };
 
-                Vue.provide('cmsState', {findBlockAndParent, updateBlock, componentLibrary, getColWidths, updateColWidths: updateBlock, updateColCount, updateSingleWidth});
+                Vue.provide('cmsState', {
+                    findBlockAndParent,
+                    updateBlock,
+                    componentLibrary,
+                    getColWidths,
+                    updateColWidths: updateBlock,
+                    updateColCount,
+                    updateSingleWidth,
+                    blockTemplates
+                });
 
                 // --- COMPUTED PROPERTIES ---
                 const activePage = computed(() => pages.value.find(p => p.id === activePageId.value));
@@ -3888,6 +3943,7 @@ layout = "${activePage.value.layout}"
                     try {
                         // Fetch templates in parallel with config
                         fetchTemplates();
+                        await fetchBlockTemplates(); // Fetch Handlebars templates
                         await fetchConfig(WEBSITE_ID || null);
                         await fetchPages();
 
