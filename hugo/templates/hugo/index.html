@@ -869,15 +869,13 @@
                     </div>
 
                     <!-- Preview Viewport Container (scoped, no HTTP calls) -->
-                    <div data-preview-scope 
-                         class="w-full max-w-6xl bg-white shadow-xl overflow-y-auto" 
-                         style="height: calc(100vh - 200px); position: relative;">
-                        
+                    <div data-preview-scope class="w-full max-w-6xl bg-white shadow-xl overflow-y-auto"
+                        style="height: calc(100vh - 200px); position: relative;">
+
                         <!-- Inject site styles within this scope -->
-                        <link v-if="currentWebsite && currentWebsite.id" 
-                              :href="`${API_BASE_URL}sites/${currentWebsite.id}/preview/css/styles.css`" 
-                              rel="stylesheet">
-                        
+                        <link v-if="currentWebsite && currentWebsite.id"
+                            :href="`${API_BASE_URL}sites/${currentWebsite.id}/preview/css/styles.css`" rel="stylesheet">
+
                         <!-- Header Zone (Global) -->
                         <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
                             :style="{ order: getZoneConfig('header')?.order || 0 }">
@@ -2048,7 +2046,7 @@
                                 <!-- Sidebar Menu (from side, full height) -->
                                 <div v-else-if="block._menuOpen"
                                     :class="[
-                                        'absolute top-0 h-screen w-64 bg-white shadow-2xl z-50 flex flex-col',
+                                        'fixed top-0 h-screen w-64 bg-white shadow-2xl z-50 flex flex-col',
                                         (block.params.sidebarSide === 'right' || (!block.params.sidebarSide && block.params.alignment === 'right')) ? 'right-0 border-l' : 'left-0 border-r',
                                         'border-slate-200'
                                     ]">
@@ -2087,7 +2085,7 @@
                                 <!-- Overlay for sidebar -->
                                 <div v-if="block.params.hamburgerDirection === 'sidebar' && block._menuOpen"
                                     @click="block._menuOpen = false"
-                                    class="absolute inset-0 bg-black/30 z-40"></div>
+                                    class="fixed inset-0 bg-black/30 z-40"></div>
                             </div>
                             </div>
                         </div>
