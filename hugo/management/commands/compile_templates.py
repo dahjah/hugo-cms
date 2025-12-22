@@ -12,6 +12,13 @@ class TemplateCompiler:
             content = match.group(1).strip()
             # Handle helper inside triple stash: {{{ icon name }}} -> {{ partial "helpers/icon.html" (dict "name" name) | safeHTML }}
             if content.startswith('icon '):
+                 # Handle both: {{{ icon name }}} and {{{ icon ( 'name' ) }}}
+                 # Extract the icon name from various formats
+                 icon_match = re.search(r'icon\s+(?:\(\s*)?["\']([^"\']+)["\'](?:\s*\))?', content)
+                 if icon_match:
+                     icon_name = icon_match.group(1)
+                     return f'{{{{ partial "helpers/icon.html" (dict "name" "{icon_name}") | safeHTML }}}}'
+                 # Fallback to simple space-separated format
                  parts = content.split()
                  if len(parts) >= 2:
                      return f'{{{{ partial "helpers/icon.html" (dict "name" .{parts[1]}) | safeHTML }}}}'
@@ -21,6 +28,12 @@ class TemplateCompiler:
                  parts = content.split()
                  if len(parts) >= 2:
                      return f'{{{{ partial "helpers/stars.html" (dict "rating" .{parts[1]}) | safeHTML }}}}'
+            
+            # Handle markdownify: {{{ markdownify md }}} -> {{ .md | markdownify }}
+            if content.startswith('markdownify '):
+                 parts = content.split()
+                 if len(parts) >= 2:
+                     return f'{{{{ .{parts[1]} | markdownify }}}}'
             
             # Generic case: {{{ var }}} -> {{ .var | safeHTML }}
             return f'{{{{ .{content} | safeHTML }}}}'
@@ -48,6 +61,8 @@ class TemplateCompiler:
             if parts[0] == 'eq':
                 var_name = parts[1]
                 val = parts[2]
+                # Convert single quotes to double quotes for Hugo (Go templates only support double quotes)
+                val = val.replace("'", '"')
                 return f'{{{{ if eq .{var_name} {val} }}}}'
             return f'{{{{ is {content} }}}}' 
 
