@@ -869,45 +869,10 @@
                     </div>
 
 
-                    <!-- Preview Viewport with Shadow DOM (provides true viewport for fixed positioning) -->
-                    <preview-viewport ref="previewViewport" class="w-full max-w-6xl bg-white shadow-xl"
-                        style="height: calc(100vh - 200px); display: block; overflow-y: auto;">
-
-                        <!-- Header Zone (Global) -->
-                        <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
-                            :style="{ order: getZoneConfig('header')?.order || 0 }">
-                            <block-renderer v-for="block in activeContent.header" :key="block.id" :block="block"
-                                :is-selected="false" :is-editable="false">
-                            </block-renderer>
-                        </div>
-
-                        <!-- Main Content Canvas -->
-                        <div class="flex flex-1" style="display: flex; min-height: 100%;">
-                            <!-- Sidebar Zone -->
-                            <div v-if="getZoneConfig('sidebar')"
-                                :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
-                                :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
-                                <block-renderer v-for="block in activeContent.sidebar" :key="block.id" :block="block"
-                                    :is-selected="false" :is-editable="false">
-                                </block-renderer>
-                            </div>
-
-                            <!-- Page Content Zone -->
-                            <div class="flex-1" :style="{ order: getZoneConfig('main')?.order || 2 }">
-                                <block-renderer v-for="block in activeContent.main" :key="block.id" :block="block"
-                                    :is-selected="false" :is-editable="false">
-                                </block-renderer>
-                            </div>
-                        </div>
-
-                        <!-- Footer Zone (Global) -->
-                        <div v-if="getZoneConfig('footer')" :class="getZoneConfig('footer')?.cssClasses || ''"
-                            :style="{ order: getZoneConfig('footer')?.order || 0 }">
-                            <block-renderer v-for="block in activeContent.footer" :key="block.id" :block="block"
-                                :is-selected="false" :is-editable="false">
-                            </block-renderer>
-                        </div>
-                    </preview-viewport>
+                    <!-- Iframe Preview with CDN (provides true viewport for fixed positioning) -->
+                    <iframe :srcdoc="previewSrcdoc" class="w-full max-w-6xl bg-white shadow-xl"
+                        style="height: calc(100vh - 200px); border: none;">
+                    </iframe>
                 </div>
 
                 <!-- Editor View -->
@@ -3225,7 +3190,7 @@
                     // Create container for Vue content
                     const container = document.createElement('div');
                     container.id = 'preview-root';
-                    container.style.cssText = 'min-height: 100%; transform: translateZ(0);';
+                    container.style.cssText = 'height: 100%; overflow-y: auto; transform: translateZ(0);';
 
                     // Add slot to project light DOM children into shadow root
                     const slot = document.createElement('slot');
@@ -3418,6 +3383,38 @@
 
                 // Combine global + page specific for viewing
                 const activeContent = computed(() => contentZones.value);
+
+                // Generate srcdoc for iframe preview with CDN
+                const previewSrcdoc = computed(() => {
+                    if (!currentWebsite.value) return '';
+                    
+                    const customCSS = currentWebsite.value.custom_css || '';
+                    const theme = currentWebsite.value.theme_preset || 'light';
+                    
+                    // Note: We can't easily render Vue components to HTML strings
+                    // So we'll delegate to backend API that will render from block data
+                    // For now, return minimal HTML with CDN links
+                    
+                    return `<!DOCTYPE html>
+<html data-theme="${theme}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
+    <style>
+${customCSS}
+    </style>
+</head>
+<body>
+    <div id="preview-content" class="min-h-screen">
+        <!-- Content will be injected here -->
+        <p class="p-4">Preview loading...</p>
+    </div>
+</body>
+</html>`.trim();
+                });
+
 
                 // Filter component library based on search query
                 const filteredComponentLibrary = computed(() => {
