@@ -2490,6 +2490,64 @@
 
 
 
+
+
+
+                    <!-- Carousel Block -->
+                    <div v-else-if="block.type === 'carousel'" class="carousel-container relative w-full overflow-hidden bg-base-200 rounded-lg min-h-[300px]"
+                         :data-carousel-id="block.id"
+                         :data-auto-advance="block.params.auto_advance !== false"
+                         :data-interval="block.params.interval_seconds || 8"
+                         :data-show-dots="block.params.show_dots !== false"
+                         :data-show-arrows="block.params.show_arrows !== false"
+                         :data-slide-count="(block.params.slides || []).length">
+                        
+                        <!-- Carousel Track -->
+                        <div class="carousel-track relative w-full h-full">
+                            <template v-for="(slide, slideIndex) in (block.params.slides || [])" :key="slide.id || slideIndex">
+                                <div class="carousel-slide w-full h-full transition-opacity duration-500"
+                                     :class="{ 'active': getCarouselSlide(block.id) === slideIndex, 'hidden': getCarouselSlide(block.id) !== slideIndex }"
+                                     :data-slide-index="slideIndex">
+                                    <!-- Render child blocks within this slide -->
+                                    <block-renderer
+                                        v-for="childBlock in (slide.children || [])"
+                                        :key="childBlock.id"
+                                        :block="childBlock"
+                                        :is-selected="false"
+                                        :is-editable="false">
+                                    </block-renderer>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <!-- Navigation Arrows -->
+                        <template v-if="block.params.show_arrows !== false">
+                            <button @click.stop="prevCarouselSlide(block.id, (block.params.slides || []).length)"
+                                    class="carousel-btn carousel-prev absolute left-2 top-1/2 -translate-y-1/2 bg-base-100/80 hover:bg-base-100 text-base-content rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition-all z-10"
+                                    data-carousel-prev
+                                    aria-label="Previous slide">
+                                <span class="text-2xl">‹</span>
+                            </button>
+                            <button @click.stop="nextCarouselSlide(block.id, (block.params.slides || []).length)"
+                                    class="carousel-btn carousel-next absolute right-2 top-1/2 -translate-y-1/2 bg-base-100/80 hover:bg-base-100 text-base-content rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition-all z-10"
+                                    data-carousel-next
+                                    aria-label="Next slide">
+                                <span class="text-2xl">›</span>
+                            </button>
+                        </template>
+                        
+                        <!-- Navigation Dots -->
+                        <div v-if="block.params.show_dots !== false" class="carousel-dots absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                            <button v-for="(slide, dotIndex) in (block.params.slides || [])"
+                                    :key="dotIndex"
+                                    @click.stop="setCarouselSlide(block.id, dotIndex)"
+                                    class="carousel-dot w-3 h-3 rounded-full transition-all"
+                                    :class="{ 'bg-primary scale-125': getCarouselSlide(block.id) === dotIndex, 'bg-base-100/60 hover:bg-base-100': getCarouselSlide(block.id) !== dotIndex }"
+                                    :data-slide="dotIndex"
+                                    :aria-label="'Go to slide ' + (dotIndex + 1)"></button>
+                        </div>
+                    </div>
+
                     <!-- Google Reviews Block -->
 
 

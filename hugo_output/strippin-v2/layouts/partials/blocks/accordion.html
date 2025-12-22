@@ -1,6 +1,21 @@
-{{ $theme := site.Params.theme_preset | default "default" }}
-{{ $templateDir := "default" }}
-{{ if ne $theme "default" }}
-    {{ $templateDir = "daisy" }}
-{{ end }}
-{{ partial (printf "themes/%s/accordion.html" $templateDir) . }}
+<div class="max-w-3xl mx-auto p-6">
+    {{ if .title }}<h2 class="text-2xl font-bold text-center mb-8 text-base-content">{{ .title }}</h2>{{ end }}
+    <div class="space-y-4">
+        {{ range $index, $element := .items }}{{ with $element }}
+        <div class="collapse collapse-arrow bg-base-100 border border-base-200 rounded-box">
+            <input type="radio" name="accordion-{{ ../id }}" {{ .#if ../allow_multiple }}type="checkbox" {{ end }} />
+            <div class="collapse-title text-xl font-medium text-base-content">
+                {{ .title }}
+            </div>
+            <div class="collapse-content text-base-content/80">
+                <p>{{ .content }}</p>
+            </div>
+        </div>
+        {{ end }}{{ end }}
+    </div>
+    {{ if not .items }}
+    <div class="text-center text-base-content/40 py-8 border-2 border-dashed border-base-200 rounded-lg">
+        Add accordion items via the sidebar editor
+    </div>
+    {{ end }}
+</div>
