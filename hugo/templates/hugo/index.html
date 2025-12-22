@@ -897,7 +897,7 @@
                             </div>
 
                             <!-- Page Content Zone -->
-                            <div class="flex-1" :style="{ order: getZoneConfig('main')?.order || 2 }">
+                            <div class="flex-1 min-w-0" :style="{ order: getZoneConfig('main')?.order || 2 }">
                                 <block-renderer v-for="block in activeContent.main" :key="block.id" :block="block"
                                     :is-selected="false" :is-editable="false">
                                 </block-renderer>
@@ -938,7 +938,7 @@
                         </div>
 
                         <!-- Page Content Zone (Main) -->
-                        <div class="flex-1 min-h-[400px]" :style="{ order: getZoneConfig('main')?.order || 2 }">
+                        <div class="flex-1 min-w-0 min-h-[400px]" :style="{ order: getZoneConfig('main')?.order || 2 }">
                             <drop-zone title="Page Content" zone="main" :blocks="activeContent.main"
                                 :is-active="viewMode === 'editor'" :selected-id="selectedBlockId" class="h-full"
                                 @drop-item="handleDrop" @select-block="setSelectedBlockId"
@@ -2084,16 +2084,9 @@
                     <div v-if="hasCustomTemplate" v-html="renderedHtml" class="handlebars-content w-full"></div>
                     <template v-else>
                     <!-- Content Rendering -->
-                    <div v-if="block.type === 'hero'" class="relative h-64 w-full flex items-center justify-center text-center text-white overflow-hidden rounded-sm">
-                        <div class="absolute inset-0 bg-slate-900/40 z-10"></div>
-                        <img :src="block.params.bgImage" alt="Hero" class="absolute inset-0 w-full h-full object-cover" />
-                        <div class="relative z-20 p-6 max-w-2xl">
-                            <h1 class="text-4xl font-bold mb-2">{{ block.params.title }}</h1>
-                            <p class="text-lg opacity-90">{{ block.params.subtitle }}</p>
-                        </div>
-                    </div>
 
-                    <div v-else-if="block.type === 'menu'" 
+
+                    <div v-if="block.type === 'menu'" 
                         :class="[
                             'w-full',
                             block.params.position === 'overlay' ? 'absolute top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-sm shadow-md' :
@@ -2604,299 +2597,10 @@
                         </div>
                     </div>
 
-                    <!-- Features Grid Block -->
-                    <div v-else-if="block.type === 'features_grid'" class="p-6 bg-white rounded-lg">
-                        <h2 v-if="block.params.title" class="text-2xl font-bold text-center mb-8 text-slate-900">{{ block.params.title }}</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div v-for="(feature, idx) in (block.params.features || block.params.items || [])" :key="idx" class="text-center p-4 rounded-lg hover:shadow-md transition-shadow">
-                                <div class="w-12 h-12 mx-auto mb-3 bg-indigo-100 rounded-full flex items-center justify-center">
-                                    <icon name="check-circle" :size="24" class="text-indigo-600"></icon>
-                                </div>
-                                <h4 class="text-lg font-semibold mb-2 text-slate-800">{{ feature.title }}</h4>
-                                <p class="text-sm text-slate-600">{{ feature.description }}</p>
-                            </div>
-                        </div>
-                        <div v-if="(!block.params.features && !block.params.items) || (block.params.features || block.params.items || []).length === 0" class="text-center text-slate-400 py-8">
-                            No features added yet.
-                        </div>
-                    </div>
 
-                    <!-- Flip Cards Grid -->
-                    <div v-else-if="block.type === 'flip_cards'" class="p-6">
-                        <div class="grid gap-6" :style="{ gridTemplateColumns: 'repeat(' + (block.params.columns || 3) + ', minmax(0, 1fr))' }">
-                            <div v-for="(card, idx) in (block.params.cards || [])" :key="idx" class="group h-64 perspective">
-                                <div class="relative w-full h-full transition-all duration-500 transform-style-3d group-hover:rotate-y-180">
-                                    <!-- Front -->
-                                    <div class="absolute inset-0 backface-hidden bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center border border-slate-100">
-                                        <div v-if="card.front_icon" class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4 text-indigo-600">
-                                            <icon :name="card.front_icon" :size="32"></icon>
-                                        </div>
-                                        <h3 class="text-xl font-bold text-slate-800">{{ card.front_title || 'Card Title' }}</h3>
-                                    </div>
-                                    
-                                    <!-- Back -->
-                                    <div class="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center text-white">
-                                        <p class="text-sm mb-4">{{ card.back_description || 'Description goes here...' }}</p>
-                                        <a v-if="card.back_cta_text" :href="card.back_cta_url || '#'" class="px-4 py-2 bg-white text-indigo-600 rounded-full text-sm font-bold hover:bg-indigo-50 transition-colors">
-                                            {{ card.back_cta_text }}
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div v-if="!block.params.cards || block.params.cards.length === 0" class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg">
-                            Add cards via the sidebar editor
-                        </div>
-                    </div>
-
-                    <!-- Carousel (Slides managed in sidebar) -->
-                    <div v-else-if="block.type === 'carousel'" class="relative overflow-hidden rounded-lg">
-                        <!-- Editor Mode: Show current slide -->
-                        <div v-if="isEditable" class="border border-slate-200 rounded-lg bg-slate-50">
-                            <!-- Header with slide navigation -->
-                            <div class="flex items-center justify-between p-3 border-b border-slate-200 bg-white rounded-t-lg">
-                                <span class="text-xs font-semibold text-slate-500 uppercase">Carousel</span>
-                                <div v-if="block.params.slides?.length > 1" class="flex items-center space-x-2">
-                                    <button @click="prevCarouselSlide(block)"
-                                            class="p-1 hover:bg-slate-100 rounded transition-colors">
-                                        <icon name="chevron-left" :size="16" class="text-slate-600"></icon>
-                                    </button>
-                                    <span class="text-sm text-slate-600">{{ getCarouselSlide(block.id) + 1 }} / {{ block.params.slides.length }}</span>
-                                    <button @click="nextCarouselSlide(block)"
-                                            class="p-1 hover:bg-slate-100 rounded transition-colors">
-                                        <icon name="chevron-right" :size="16" class="text-slate-600"></icon>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- Current slide content -->
-                            <div class="min-h-[200px] p-4">
-                                <template v-if="block.params.slides?.length > 0">
-                                    <template v-for="child in (block.params.slides[getCarouselSlide(block.id)]?.children || [])" :key="child.id">
-                                        <block-renderer 
-                                            :block="child" 
-                                            :is-selected="false"
-                                            :is-editable="false"
-                                            @select="$emit('select-block', $event)"
-                                        ></block-renderer>
-                                    </template>
-                                    <div v-if="!block.params.slides[getCarouselSlide(block.id)]?.children?.length" 
-                                         class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg bg-white">
-                                        Slide {{ getCarouselSlide(block.id) + 1 }} is empty - drag blocks to this slide in the sidebar
-                                    </div>
-                                </template>
-                                <div v-else class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg bg-white">
-                                    <icon name="gallery-horizontal" :size="32" class="mx-auto mb-2 opacity-50"></icon>
-                                    <p>No slides yet - add slides in the sidebar</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Preview Mode: Show actual carousel with auto-advance -->
-                        <div v-else class="carousel-container"
-                             :data-carousel-id="block.id"
-                             :data-auto-advance="block.params.auto_advance ? 'true' : 'false'"
-                             :data-interval="block.params.interval_seconds || 5"
-                             :data-slide-count="(block.params.slides || []).length">
-                            
-                            <!-- Carousel Wrapper (stacked slides with arrows) -->
-                            <div class="relative" style="display: grid; grid-template-areas: 'stack'; place-items: center; min-height: 300px; overflow: hidden;">
-                                <!-- Slides -->
-                                <template v-for="(slide, idx) in (block.params.slides || [])" :key="slide.id || idx">
-                                    <div class="carousel-slide"
-                                         style="grid-area: stack; width: 85%; max-width: 900px; transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;"
-                                         :style="{
-                                             transform: getCarouselSlide(block.id) === idx ? 'translateX(0)' : (getCarouselSlide(block.id) > idx ? 'translateX(-100%)' : 'translateX(100%)'),
-                                             opacity: getCarouselSlide(block.id) === idx ? 1 : 0,
-                                             pointerEvents: getCarouselSlide(block.id) === idx ? 'auto' : 'none',
-                                             zIndex: getCarouselSlide(block.id) === idx ? 2 : 1
-                                         }">
-                                        <template v-for="child in (slide.children || [])" :key="child.id">
-                                            <block-renderer 
-                                                :block="child" 
-                                                :is-selected="false"
-                                                :is-editable="false"
-                                                @select="$emit('select-block', $event)"
-                                            ></block-renderer>
-                                        </template>
-                                        <div v-if="!slide.children?.length" class="py-16 px-8 flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700 text-white text-xl rounded-lg">
-                                            Slide {{ idx + 1 }}
-                                        </div>
-                                    </div>
-                                </template>
-                                
-                                <!-- Empty State -->
-                                <div v-if="!block.params.slides || block.params.slides.length === 0" 
-                                     style="grid-area: stack;"
-                                     class="py-16 px-8 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 rounded-lg">
-                                    No slides added
-                                </div>
-                                
-                                <!-- Arrows (positioned within grid area) -->
-                                <template v-if="block.params.show_arrows && block.params.slides?.length > 1">
-                                    <button @click="prevCarouselSlide(block)"
-                                            data-carousel-prev
-                                            style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
-                                            class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
-                                        <icon name="chevron-left" :size="24" class="text-slate-600"></icon>
-                                    </button>
-                                    <button @click="nextCarouselSlide(block)"
-                                            data-carousel-next
-                                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
-                                            class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
-                                        <icon name="chevron-right" :size="24" class="text-slate-600"></icon>
-                                    </button>
-                                </template>
-                            </div>
-                            
-                            <!-- Dots (outside carousel, below) -->
-                            <div v-if="block.params.show_dots && block.params.slides?.length > 1" 
-                                 class="flex justify-center gap-3 mt-6">
-                                <button v-for="(slide, idx) in block.params.slides" :key="slide.id || idx"
-                                        @click="setCarouselSlide(block.id, idx)"
-                                        data-carousel-dot
-                                        class="transition-all duration-200 border-0 cursor-pointer p-0"
-                                        :style="{
-                                            width: getCarouselSlide(block.id) === idx ? '32px' : '12px',
-                                            height: '12px',
-                                            borderRadius: getCarouselSlide(block.id) === idx ? '6px' : '50%',
-                                            background: getCarouselSlide(block.id) === idx ? 'var(--color-primary, #6366f1)' : '#e2e8f0'
-                                        }">
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Testimonial -->
-                    <div v-else-if="block.type === 'testimonial'" class="p-8 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
-                        <div class="max-w-2xl mx-auto text-center">
-                            <div class="text-indigo-400 mb-4">
-                                <icon name="quote" :size="48"></icon>
-                            </div>
-                            <blockquote class="text-xl text-slate-700 italic mb-6 leading-relaxed">
-                                "{{ block.params.quote || 'Testimonial quote goes here...' }}"
-                            </blockquote>
-                            <div class="flex items-center justify-center space-x-4">
-                                <div v-if="block.params.image" class="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-md">
-                                    <img :src="block.params.image" :alt="block.params.author" class="w-full h-full object-cover" />
-                                </div>
-                                <div class="text-left">
-                                    <div class="font-semibold text-slate-800">{{ block.params.author || 'Author Name' }}</div>
-                                    <div v-if="block.params.author_title" class="text-sm text-slate-500">{{ block.params.author_title }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-else-if="block.type === 'accordion'" class="max-w-3xl mx-auto p-6">
-                        <h2 v-if="block.params.title" class="text-2xl font-bold text-center mb-8 text-slate-900">{{ block.params.title }}</h2>
-                        <div class="space-y-4">
-                            <div v-for="(item, idx) in (block.params.items || [])" :key="idx" class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-                                <button @click="() => {
-                                    if (block.params.allow_multiple === true || block.params.allow_multiple === 'true') {
-                                        item._isOpen = !item._isOpen;
-                                    } else {
-                                        const wasOpen = item._isOpen;
-                                        (block.params.items || []).forEach(i => i._isOpen = false);
-                                        item._isOpen = !wasOpen;
-                                    }
-                                }" class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-slate-50 transition-colors">
-                                    <span class="font-semibold text-slate-800">{{ item.title || 'Question' }}</span>
-                                    <icon :name="item._isOpen ? 'chevron-up' : 'chevron-down'" :size="20" class="text-slate-400"></icon>
-                                </button>
-                                <div v-show="item._isOpen" class="px-6 pb-4 text-slate-600 border-t border-slate-100 pt-4">
-                                    {{ item.content }}
-                                </div>
-                            </div>
-                        </div>
-                        <div v-if="!block.params.items || block.params.items.length === 0" class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg">
-                            Add accordion items via the sidebar editor
-                        </div>
-                    </div>
-
-                    <!-- Process Steps Block -->
-                    <div v-else-if="block.type === 'process_steps'" class="p-6 bg-slate-50 rounded-lg">
-                        <h2 v-if="block.params.title" class="text-2xl font-bold text-center mb-8 text-slate-900">{{ block.params.title }}</h2>
-                        <div class="space-y-6 max-w-2xl mx-auto">
-                            <div v-for="(step, idx) in (block.params.steps || [])" :key="idx" class="flex gap-4 items-start">
-                                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">
-                                    {{ idx + 1 }}
-                                </div>
-                                <div class="flex-1">
-                                    <h3 class="text-xl font-semibold mb-1 text-slate-900">{{ step.title }}</h3>
-                                    <p class="text-slate-600">{{ step.description }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div v-if="!block.params.steps || block.params.steps.length === 0" class="text-center text-slate-400 py-8">
-                            No steps added yet
-                        </div>
-                    </div>
-
-                    <!-- Stats Counter Block -->
-                    <div v-else-if="block.type === 'stats_counter'" class="p-8 bg-indigo-600 text-white rounded-lg">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                            <div v-for="(stat, idx) in (block.params.stats || [])" :key="idx">
-                                <div class="text-4xl font-bold mb-1">{{ stat.value }}{{ stat.suffix || '' }}</div>
-                                <div class="text-indigo-100">{{ stat.label }}</div>
-                            </div>
-                        </div>
-                        <div v-if="!block.params.stats || block.params.stats.length === 0" class="text-center text-indigo-200 py-8">
-                            No stats added yet
-                        </div>
-                    </div>
-
-                    <!-- Menu Grid Block -->
-                    <div v-else-if="block.type === 'menu_grid'" class="p-6 bg-white rounded-lg">
-                        <h2 v-if="block.params.title" class="text-2xl font-bold text-center mb-8 text-slate-900">{{ block.params.title }}</h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div v-for="(item, idx) in (block.params.items || [])" :key="idx" class="bg-white rounded-lg overflow-hidden shadow-md">
-                                <img v-if="item.image" :src="item.image" :alt="item.name" class="w-full h-32 object-cover"/>
-                                <div class="p-3">
-                                    <h4 class="font-semibold text-slate-900 mb-1">{{ item.name }}</h4>
-                                    <p v-if="item.description" class="text-xs text-slate-600">{{ item.description }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div v-if="!block.params.items || block.params.items.length === 0" class="text-center text-slate-400 py-8">
-                            No menu items added yet
-                        </div>
-                    </div>
 
                     <!-- Social Links Block -->
-                    <div v-else-if="block.type === 'social_links'" class="p-6 bg-slate-50 rounded-lg">
-                        <div class="flex justify-center gap-4">
-                            <div v-for="(link, idx) in (block.params.links || [])" :key="idx" 
-                                 class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-700 hover:bg-indigo-600 text-white transition-colors">
-                                <!-- Facebook Icon -->
-                                <svg v-if="link.platform === 'facebook'" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                </svg>
-                                <!-- Instagram Icon -->
-                                <svg v-else-if="link.platform === 'instagram'" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
-                                </svg>
-                                <!-- Twitter Icon -->
-                                <svg v-else-if="link.platform === 'twitter'" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                                </svg>
-                                <!-- LinkedIn Icon -->
-                                <svg v-else-if="link.platform === 'linkedin'" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                                </svg>
-                                <!-- YouTube Icon -->
-                                <svg v-else-if="link.platform === 'youtube'" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                                </svg>
-                                <!-- Generic Link Icon -->
-                                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                                </svg>
-                            </div>
-                        </div>
-                        <div v-if="!block.params.links || block.params.links.length === 0" class="text-center text-slate-400 py-8">
-                            No social links added yet
-                        </div>
-                    </div>
+
 
                     <!-- Stats Counter Block -->
                     <div v-else-if="block.type === 'stats'" class="p-6 bg-white rounded-lg">
@@ -2975,33 +2679,7 @@
 
 
                     <!-- Google Reviews Block -->
-                    <div v-else-if="block.type === 'google_reviews'" class="p-6 bg-slate-50 rounded-lg">
-                        <h3 v-if="block.params.title" class="text-2xl font-bold text-center mb-2 text-slate-900">{{ block.params.title }}</h3>
-                        <p v-if="block.params.subtitle" class="text-center text-slate-600 mb-6 text-sm">{{ block.params.subtitle }}</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div v-for="(review, idx) in (block.params.reviews || [])" :key="idx" class="bg-white rounded-lg shadow-sm p-4">
-                                <div class="flex items-start mb-2">
-                                    <div v-if="review.image" class="w-8 h-8 rounded-full mr-2 bg-slate-200 overflow-hidden">
-                                        <img :src="review.image" class="w-full h-full object-cover">
-                                    </div>
-                                    <div v-else class="w-8 h-8 rounded-full mr-2 bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-bold">
-                                        {{ review.name ? review.name.charAt(0) : '?' }}
-                                    </div>
-                                    <div>
-                                        <div class="text-sm font-semibold text-slate-900">{{ review.name }}</div>
-                                        <div class="flex text-yellow-400 text-xs">
-                                            <span v-for="n in parseInt(review.rating || 5)">★</span>
-                                            <span v-for="n in (5 - parseInt(review.rating || 5))" class="text-slate-300">★</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p class="text-xs text-slate-600 line-clamp-3">{{ review.text }}</p>
-                            </div>
-                        </div>
-                        <div v-if="!block.params.reviews || block.params.reviews.length === 0" class="text-center text-slate-400 py-8">
-                            No reviews added yet
-                        </div>
-                    </div>
+
 
                     <!-- GENERIC RENDERER (For unknown blocks) -->
                     <div v-else class="p-4 bg-white border border-slate-100 rounded-lg shadow-sm m-1">
