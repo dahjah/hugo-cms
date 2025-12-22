@@ -3225,7 +3225,7 @@
                     // Create container for Vue content
                     const container = document.createElement('div');
                     container.id = 'preview-root';
-                    container.style.cssText = 'min-height: 100%;';
+                    container.style.cssText = 'min-height: 100%; transform: translateZ(0);';
 
                     // Add slot to project light DOM children into shadow root
                     const slot = document.createElement('slot');
