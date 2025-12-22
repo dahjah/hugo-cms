@@ -3273,6 +3273,38 @@
                     return componentLibrary.value.find(def => def.id === type) || {};
                 };
 
+
+                // Register Helpers
+                if(!Handlebars.helpers.icon) {
+                    Handlebars.registerHelper('icon', function(name) {
+                        return ICONS[name] || '';
+                    });
+                }
+                if(!Handlebars.helpers.add) {
+                    Handlebars.registerHelper('add', function(a, b) {
+                        return parseInt(a) + parseInt(b);
+                    });
+                }
+                if(!Handlebars.helpers.eq) {
+                    Handlebars.registerHelper('eq', function(a, b) {
+                        return a === b;
+                    });
+                }
+                if(!Handlebars.helpers.charAt) {
+                    Handlebars.registerHelper('charAt', function(str, index) {
+                        return str ? str.charAt(index) : '';
+                    });
+                }
+                if(!Handlebars.helpers.renderStars) {
+                    Handlebars.registerHelper('renderStars', function(rating) {
+                        const r = parseInt(rating || 5);
+                        let html = '';
+                        for(let i = 0; i < r; i++) html += '<span>★</span>';
+                        for(let i = r; i < 5; i++) html += '<span class="text-slate-300">★</span>';
+                        return html;
+                    });
+                }
+
                 const hasCustomTemplate = computed(() => {
                     return blockTemplates.value && !!blockTemplates.value[props.block.type];
                 });

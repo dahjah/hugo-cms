@@ -1,0 +1,38 @@
+<div class="p-6">
+    <div class="grid gap-6" style="grid-template-columns: repeat({{ columns }}, minmax(0, 1fr));">
+        {{#each cards}}
+        <div class="group h-64 perspective">
+            <div class="relative w-full h-full transition-all duration-500 transform-style-3d group-hover:rotate-y-180">
+                <div
+                    class="absolute inset-0 backface-hidden bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center border border-slate-100">
+                    {{#if front_icon}}
+                    <div
+                        class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4 text-indigo-600">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            {{{ icon front_icon }}}
+                        </svg>
+                    </div>
+                    {{/if}}
+                    <h3 class="text-xl font-bold text-slate-800">{{ front_title }}</h3>
+                </div>
+                <div
+                    class="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center text-white">
+                    <p class="text-sm mb-4">{{ back_description }}</p>
+                    {{#if back_cta_text}}
+                    <a href="{{ back_cta_url }}"
+                        class="px-4 py-2 bg-white text-indigo-600 rounded-full text-sm font-bold hover:bg-indigo-50 transition-colors">
+                        {{ back_cta_text }}
+                    </a>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+    {{#unless cards}}
+    <div class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg">
+        Add cards via the sidebar editor
+    </div>
+    {{/unless}}
+</div>

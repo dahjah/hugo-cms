@@ -1,26 +1,38 @@
-<div class="grid grid-cols-1 md:grid-cols-{{ .columns | default 3 }} gap-6 {{ .css_classes }}">
-    {{ range .cards }}
-    <div class="card bg-base-100 shadow-xl group perspective-1000">
-        <div class="relative w-full h-64 transition-all duration-500 preserve-3d group-hover:my-rotate-y-180" style="transform-style: preserve-3d;">
-            <!-- Front -->
-            <div class="absolute inset-0 backface-hidden flex flex-col items-center justify-center p-6 bg-base-100 border border-base-200 rounded-xl">
-                {{ if .front_icon }}<div class="text-4xl mb-4 text-primary">{{ .front_icon }}</div>{{ end }}
-                <h3 class="card-title text-center">{{ .front_title }}</h3>
-            </div>
-            <!-- Back -->
-            <div class="absolute inset-0 backface-hidden my-rotate-y-180 flex flex-col items-center justify-center p-6 bg-primary text-primary-content rounded-xl" style="transform: rotateY(180deg);">
-                <p class="text-center mb-4">{{ .back_description }}</p>
-                {{ if .back_cta_text }}
-                <a href="{{ .back_cta_url }}" class="btn btn-sm btn-outline btn-white bg-base-100 text-base-content hover:bg-base-200 border-none">{{ .back_cta_text }}</a>
-                {{ end }}
+<div class="p-6">
+    <div class="grid gap-6" style="grid-template-columns: repeat({{ .columns }}, minmax(0, 1fr));">
+        {{ range $index, $element := .cards }}{{ with $element }}
+        <div class="group h-64 perspective">
+            <div class="relative w-full h-full transition-all duration-500 transform-style-3d group-hover:rotate-y-180">
+                <div
+                    class="absolute inset-0 backface-hidden bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center border border-slate-100">
+                    {{ if .front_icon }}
+                    <div
+                        class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4 text-indigo-600">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            {{ partial "helpers/icon.html" (dict "name" .front_icon) | safeHTML }}
+                        </svg>
+                    </div>
+                    {{ end }}
+                    <h3 class="text-xl font-bold text-slate-800">{{ .front_title }}</h3>
+                </div>
+                <div
+                    class="absolute inset-0 backface-hidden rotate-y-180 bg-indigo-600 p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center text-white">
+                    <p class="text-sm mb-4">{{ .back_description }}</p>
+                    {{ if .back_cta_text }}
+                    <a href="{{ .back_cta_url }}"
+                        class="px-4 py-2 bg-white text-indigo-600 rounded-full text-sm font-bold hover:bg-indigo-50 transition-colors">
+                        {{ .back_cta_text }}
+                    </a>
+                    {{ end }}
+                </div>
             </div>
         </div>
+        {{ end }}{{ end }}
+    </div>
+    {{ if not .cards }}
+    <div class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg">
+        Add cards via the sidebar editor
     </div>
     {{ end }}
 </div>
-<style>
-.perspective-1000 { perspective: 1000px; }
-.preserve-3d { transform-style: preserve-3d; }
-.backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.my-rotate-y-180 { transform: rotateY(180deg); }
-</style>

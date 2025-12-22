@@ -1348,6 +1348,15 @@ theme = []
 
         # Compile Handlebars blocks (overwriting hardcoded ones if match)
         print("DEBUG: Compiling Handlebars templates...")
+
+        # Copy Helper Partials (icons, stars, etc)
+        src_helpers = Path(settings.BASE_DIR) / 'theme' / 'layouts' / 'partials' / 'helpers'
+        dest_helpers = output_dir / 'layouts' / 'partials' / 'helpers'
+        if src_helpers.exists():
+            if dest_helpers.exists():
+                shutil.rmtree(dest_helpers)
+            shutil.copytree(src_helpers, dest_helpers)
+
         src_blocks = Path(settings.BASE_DIR) / 'hugo' / 'templates' / 'blocks'
         dest_blocks = output_dir / 'layouts' / 'partials' / 'blocks'
         TemplateCompiler.compile_all(src_blocks, dest_blocks)
