@@ -3400,7 +3400,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
     <style>
-        ${
+        $ {
+            customCSS
+        }
     </style>
     </head>
 
@@ -4335,104 +4337,100 @@ for(let colIndex = 0; colIndex < numCols; colIndex++) { const placement_key=`col
             const previewUrl = ref('');
             const isPreviewLoading = ref(false);
 
-                            const refreshPreview = async () => {
-                                if(!activePage.value) return;
+            const refreshPreview = async () => {
+            if(!activePage.value) return;
 
-                                try {
-                                    const transformBlock = (block) => {
-                                        const transformed = {...block};
-                                        if(block.type === 'flex_columns' && block.children && Array.isArray(block.children)) {
-                                            const columnMap = {};
-                                            block.children.forEach(child => {
-                                                const colKey = child.placement_key || 'col_0';
-                                                if(!columnMap[colKey]) {
-                                                    columnMap[colKey] = [];
-                                                }
-                                                columnMap[colKey].push(transformBlock(child));
-                                            });
-                                            transformed.children = Object.keys(columnMap)
-                                                .sort()
-                                                .map(key => ({blocks: columnMap[key]}));
-                                        } else if(block.children && Array.isArray(block.children)) {
-                                            transformed.children = block.children.map(transformBlock);
-                                        }
-                                        return transformed;
-                                    };
+            try {
+            const transformBlock = (block) => {
+            const transformed = {...block};
+            if(block.type === 'flex_columns' && block.children && Array.isArray(block.children)) {
+            const columnMap = {};
+            block.children.forEach(child => {
+            const colKey = child.placement_key || 'col_0';
+            if(!columnMap[colKey]) {
+            columnMap[colKey] = [];
+            }
+            columnMap[colKey].push(transformBlock(child));
+            });
+            transformed.children = Object.keys(columnMap)
+            .sort()
+            .map(key => ({blocks: columnMap[key]}));
+            } else if(block.children && Array.isArray(block.children)) {
+            transformed.children = block.children.map(transformBlock);
+            }
+            return transformed;
+            };
 
-                                    const allPageBlocks = [
-                                        ...contentZones.value.main.map(b => transformBlock({...b, placement_key: 'main'})),
-                                        ...contentZones.value.sidebar.map(b => transformBlock({...b, placement_key: 'sidebar'}))
-                                    ];
+            const allPageBlocks = [
+            ...contentZones.value.main.map(b => transformBlock({...b, placement_key: 'main'})),
+            ...contentZones.value.sidebar.map(b => transformBlock({...b, placement_key: 'sidebar'}))
+            ];
 
-                                    const allBlocks = [
-                                        ...contentZones.value.header.map(b => transformBlock({...b, placement_key: 'header'})),
-                                        ...allPageBlocks,
-                                        ...contentZones.value.footer.map(b => transformBlock({...b, placement_key: 'footer'}))
-                                    ];
+            const allBlocks = [
+            ...contentZones.value.header.map(b => transformBlock({...b, placement_key: 'header'})),
+            ...allPageBlocks,
+            ...contentZones.value.footer.map(b => transformBlock({...b, placement_key: 'footer'}))
+            ];
 
-                                    const payload = {
-                                        website_id: currentWebsite.value.id,
-                                        page_id: activePage.value.id,
-                                        page: {
-                                            ...activePage.value
-                                        },
-                                        blocks: allBlocks
-                                    };
+            const payload = {
+            website_id: currentWebsite.value.id,
+            page_id: activePage.value.id,
+            page: {
+            ...activePage.value
+            },
+            blocks: allBlocks
+            };
 
-                                    const csrfToken = getCsrfToken();
-                                    const response = await fetch(\`\${API_BASE_URL}websites/render_canvas/\`, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRFToken': csrfToken,
-                                        },
-                                        body: JSON.stringify(payload)
-                                    });
+            const csrfToken = getCsrfToken();
+            const response = await fetch(\`\${API_BASE_URL}websites/render_canvas/\`, {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify(payload)
+            });
 
-                                    if(!response.ok) {
-                                        throw new Error(\`Preview Error: \${response.statusText}\`);
-                                    }
+            if(!response.ok) {
+            throw new Error(\`Preview Error: \${response.statusText}\`);
+            }
 
-                                    const data = await response.json();
-                                    console.log("Preview Built Successfully.");
+            const data = await response.json();
+            console.log("Preview Built Successfully.");
 
-                                    // Now fetch the generated HTML
-                                    let slug = activePage.value.slug || '';
-                                    if(slug.startsWith('/')) slug = slug.substring(1);
-                                    const websiteId = currentWebsite.value.id;
-                                    const ts = new Date().getTime();
-                                    
-                                    const htmlResponse = await fetch(\`\${API_BASE_URL}sites/\${websiteId}/preview/\${slug}?t=\${ts}\`);
-                                    if (!htmlResponse.ok) {
-                                        throw new Error(\`Failed to fetch HTML: \${htmlResponse.statusText}\`);
-                                    }
-                                    
-                                    let html = await htmlResponse.text();
-                                    
-                                    // Inject CDN links and custom CSS
-                                    const theme = currentWebsite.value.theme_preset || 'light';
-                                    const customCSS = currentWebsite.value.custom_css || '';
-                                    
-                                    const cdnHead = \`
-                <script src="https://cdn.tailwindcss.com"></script>
-                <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
-                <style>
-            \${customCSS}
-                </style>
+            // Now fetch the generated HTML
+            let slug = activePage.value.slug || '';
+            if(slug.startsWith('/')) slug = slug.substring(1);
+            const websiteId = currentWebsite.value.id;
+            const ts = new Date().getTime();
+
+            const htmlResponse = await fetch(\`\${API_BASE_URL}sites/\${websiteId}/preview/\${slug}?t=\${ts}\`);
+            if (!htmlResponse.ok) {
+            throw new Error(\`Failed to fetch HTML: \${htmlResponse.statusText}\`);
+            }
+
+            let html = await htmlResponse.text();
+
+            // Inject CDN links and custom CSS
+            const theme = currentWebsite.value.theme_preset || 'light';
+            const customCSS = currentWebsite.value.custom_css || '';
+
+            const cdnHead = \`
+            <script src="https://cdn.tailwindcss.com"></script>
+            <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
+            <style>
+                \$ {
+                    customCSS
+                }
+            </style>
             \`;
-                                    
-                                    // Inject CDN links before closing </head>
-                                    html = html.replace('</head>', \`\${cdnHead}</head>\`);
-                                    
-                                    // Set data-theme attribute
-                                    html = html.replace('<html', \`<html data-theme="\${theme}"\`);
-                                    
-                                    // Update srcdoc
-                                    previewSrcdoc.value = html;
 
-                                } catch(e) {
-                                    console.error("Preview failed", e);
-                                    showToast("Preview failed: " + e.message, 'error');
+            // Inject CDN links before closing </head>
+            html = html.replace('</head>', \`\${cdnHead}</head>\`);
+
+            // Set data-theme attribute
+            html = html.replace('<html', \`<html data-theme="\${theme}" \`); // Update srcdoc previewSrcdoc.value=html;
+                } catch(e) { console.error("Preview failed", e); showToast("Preview failed: " + e.message, 'error');
                                 }
                             };
 
@@ -4473,20 +4471,11 @@ for(let colIndex = 0; colIndex < numCols; colIndex++) { const placement_key=`col
 
             const data = await response.json();
 
-            console.log("Preview Built Successfully.");
-
-            // Construct Preview URL
-            // trigger reload with timestamp
-            const ts = new Date().getTime();
-            let slug = activePage.value.slug || '';
-            if(slug.startsWith('/')) slug = slug.substring(1);
-
-            const websiteId = currentWebsite.value.id;
-            previewUrl.value = `${API_BASE_URL}sites/${websiteId}/preview/${slug}?t=${ts}`;
-
-            } catch(e) {
-            console.error("Preview failed", e);
-            showToast("Preview failed: " + e.message, 'error');
+            console.log(" Preview Built Successfully."); // Construct Preview URL // trigger reload with timestamp
+                const ts=new Date().getTime(); let slug=activePage.value.slug || '' ; if(slug.startsWith('/'))
+                slug=slug.substring(1); const websiteId=currentWebsite.value.id;
+                previewUrl.value=`${API_BASE_URL}sites/${websiteId}/preview/${slug}?t=${ts}`; } catch(e) {
+                console.error("Preview failed", e); showToast("Preview failed: " + e.message, 'error');
             } finally {
             // isPreviewLoading.value = false;
             }
@@ -4811,222 +4800,201 @@ for(let colIndex = 0; colIndex < numCols; colIndex++) { const placement_key=`col
 
             const websiteName = currentWebsite.value.name;
             const confirmation = confirm(
-            `Are you sure you want to delete "${websiteName}"?\n\n` +
-            `This will permanently delete:\n` +
-            `• All pages and content\n` +
-            `• All blocks and settings\n` +
-            `• All media files\n\n` +
-            `This action cannot be undone!`
-            );
+            `Are you sure you want to delete " ${websiteName}"?\n\n` + `This will permanently delete:\n` + `• All pages
+                and content\n` + `• All blocks and settings\n` + `• All media files\n\n` + `This action cannot be
+                undone!` ); if(!confirmation) return; try { const
+                csrfToken=document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken'); const
+                response=await fetch(`/api/websites/${currentWebsite.value.id}/`, { method: 'DELETE' , headers:
+                { 'X-CSRFToken' : csrfToken } }); if(!response.ok) { throw new Error('Failed to delete website'); }
+                showToast(`Website "${websiteName}" deleted successfully`, 'success' ); showSettingsModal.value=false;
+                // Remove from websites list websites.value=websites.value.filter(w=> w.id !== currentWebsite.value.id);
 
-            if(!confirmation) return;
-
-            try {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-
-            const response = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
-            method: 'DELETE',
-            headers: {
-            'X-CSRFToken': csrfToken
-            }
-            });
-
-            if(!response.ok) {
-            throw new Error('Failed to delete website');
-            }
-
-            showToast(`Website "${websiteName}" deleted successfully`, 'success');
-            showSettingsModal.value = false;
-
-            // Remove from websites list
-            websites.value = websites.value.filter(w => w.id !== currentWebsite.value.id);
-
-            // Reload the page to switch to another website or show empty state
-            // This is simpler than manually updating all state
-            setTimeout(() => {
-            window.location.href = '/';
-            }, 500);
-            } catch(error) {
-            console.error('Error deleting website:', error);
-            showToast('Error deleting website', 'error');
-            }
-            },
-
-            uploadFile: async (file) => {
-            if(!currentWebsite.value) throw new Error("No website selected");
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('website_id', currentWebsite.value.id);
-
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-
-            const response = await fetch('/api/files/upload/', {
-            method: 'POST',
-            headers: {
-            'X-CSRFToken': csrfToken
-            },
-            body: formData
-            });
-
-            if(!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Upload failed');
-            }
-
-            return await response.json();
-            },
-            toasts,
-            showToast,
-            removeToast,
-            richTextEditors,
-            handleDragStartNew,
-            handleDragStartExisting,
-            showSettingsModal,
-            customCss,
-            websiteSlug,
-            cssEditorRef,
-            storageSettings,
-            availableProviders,
-            selectedProviderId,
-            isEditingProvider,
-            editingProvider,
-            handleDrop,
-            updateBlock,
-            updateBlockParams: updateBlock,
-            deleteBlock,
-            closeInspector,
-            formatKey,
-            shouldShowParam,
-            addGenericItem,
-            setSelectedBlockId: (id) => selectedBlockId.value = id,
-            selectedBlockDefinition,
-            getColWidths,
-            updateColWidths: updateBlock,
-            updateColCount,
-            updateSingleWidth,
-            sidebarTab,
-            currentLayout,
-            layoutTemplates,
-            getZoneConfig,
-            websites,
-            currentWebsite,
-            showCreateWebsiteModal,
-            showPublishDropdown,
-            isPublishing,
-            isSavingSettings,
-            hasUnsavedChanges,
-            publishCurrentPage,
-            showWebsiteDropdown,
-            newWebsiteName,
-            newWebsiteSlug,
-            websiteName,
-            themePreset,
-            siteTemplates,
-            selectedTemplateId,
-            // Carousel slide helpers
-            getCarouselSlide,
-            setCarouselSlide,
-            prevCarouselSlide,
-            nextCarouselSlide
-            };
-
-
-            }
-            });
-
-
-            app.mount('#app');
-
-            // Carousel Auto-Advance (vanilla JS - works same in editor and production)
-            function initCarouselAutoAdvance() {
-            const carousels = document.querySelectorAll('.carousel-container');
-
-            carousels.forEach(carousel => {
-            // Skip if already initialized
-            if(carousel._carouselInitialized) return;
-            carousel._carouselInitialized = true;
-
-            const autoAdvance = carousel.dataset.autoAdvance === 'true';
-            const interval = parseInt(carousel.dataset.interval) || 5;
-            const slideCount = parseInt(carousel.dataset.slideCount) || 0;
-
-            if(!autoAdvance || slideCount <= 1) return; // Function to start/restart the timer function startTimer() {
-                // Clear any existing interval if(carousel._autoAdvanceInterval) {
-                clearInterval(carousel._autoAdvanceInterval); } // Set up auto-advance
-                carousel._autoAdvanceInterval=setInterval(()=> {
-                const nextBtn = carousel.querySelector('[data-carousel-next]');
-                if(nextBtn) {
-                nextBtn.click();
-                } else {
-                const carouselId = carousel.dataset.carouselId;
-                const event = new CustomEvent('carousel-advance', {
-                detail: {id: carouselId},
-                bubbles: true
-                });
-                carousel.dispatchEvent(event);
+                // Reload the page to switch to another website or show empty state
+                // This is simpler than manually updating all state
+                setTimeout(() => {
+                window.location.href = '/';
+                }, 500);
+                } catch(error) {
+                console.error('Error deleting website:', error);
+                showToast('Error deleting website', 'error');
                 }
-                }, interval * 1000);
+                },
+
+                uploadFile: async (file) => {
+                if(!currentWebsite.value) throw new Error("No website selected");
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('website_id', currentWebsite.value.id);
+
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                const response = await fetch('/api/files/upload/', {
+                method: 'POST',
+                headers: {
+                'X-CSRFToken': csrfToken
+                },
+                body: formData
+                });
+
+                if(!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Upload failed');
                 }
 
-                function stopTimer() {
-                if(carousel._autoAdvanceInterval) {
-                clearInterval(carousel._autoAdvanceInterval);
-                carousel._autoAdvanceInterval = null;
+                return await response.json();
+                },
+                toasts,
+                showToast,
+                removeToast,
+                richTextEditors,
+                handleDragStartNew,
+                handleDragStartExisting,
+                showSettingsModal,
+                customCss,
+                websiteSlug,
+                cssEditorRef,
+                storageSettings,
+                availableProviders,
+                selectedProviderId,
+                isEditingProvider,
+                editingProvider,
+                handleDrop,
+                updateBlock,
+                updateBlockParams: updateBlock,
+                deleteBlock,
+                closeInspector,
+                formatKey,
+                shouldShowParam,
+                addGenericItem,
+                setSelectedBlockId: (id) => selectedBlockId.value = id,
+                selectedBlockDefinition,
+                getColWidths,
+                updateColWidths: updateBlock,
+                updateColCount,
+                updateSingleWidth,
+                sidebarTab,
+                currentLayout,
+                layoutTemplates,
+                getZoneConfig,
+                websites,
+                currentWebsite,
+                showCreateWebsiteModal,
+                showPublishDropdown,
+                isPublishing,
+                isSavingSettings,
+                hasUnsavedChanges,
+                publishCurrentPage,
+                showWebsiteDropdown,
+                newWebsiteName,
+                newWebsiteSlug,
+                websiteName,
+                themePreset,
+                siteTemplates,
+                selectedTemplateId,
+                // Carousel slide helpers
+                getCarouselSlide,
+                setCarouselSlide,
+                prevCarouselSlide,
+                nextCarouselSlide
+                };
+
+
                 }
-                }
-
-                // Start timer initially
-                startTimer();
-
-                // Reset timer when prev/next buttons are clicked
-                const prevBtn = carousel.querySelector('[data-carousel-prev]');
-                const nextBtn = carousel.querySelector('[data-carousel-next]');
-
-                if(prevBtn) {
-                prevBtn.addEventListener('click', () => {
-                startTimer(); // Reset timer on manual navigation
-                });
-                }
-
-                if(nextBtn) {
-                nextBtn.addEventListener('click', () => {
-                startTimer(); // Reset timer on manual navigation
-                });
-                }
-
-                // Also reset timer when dots are clicked
-                const dots = carousel.querySelectorAll('[data-carousel-dot]');
-                dots.forEach(dot => {
-                dot.addEventListener('click', () => {
-                startTimer(); // Reset timer on dot click
-                });
                 });
 
-                // Pause on hover
-                carousel.addEventListener('mouseenter', () => {
-                stopTimer();
-                });
 
-                carousel.addEventListener('mouseleave', () => {
-                if(autoAdvance && slideCount > 1) {
-                startTimer();
-                }
-                });
-                });
-                }
+                app.mount('#app');
 
-                // Re-init carousels when DOM updates
-                const carouselObserver = new MutationObserver(() => {
-                initCarouselAutoAdvance();
-                });
-                carouselObserver.observe(document.body, {childList: true, subtree: true});
+                // Carousel Auto-Advance (vanilla JS - works same in editor and production)
+                function initCarouselAutoAdvance() {
+                const carousels = document.querySelectorAll('.carousel-container');
 
-                // Initial init
-                setTimeout(initCarouselAuvance000);
-                </script>
-                </body>
-                {% endverbatim %}
+                carousels.forEach(carousel => {
+                // Skip if already initialized
+                if(carousel._carouselInitialized) return;
+                carousel._carouselInitialized = true;
 
-                </html>
-                ```
+                const autoAdvance = carousel.dataset.autoAdvance === 'true';
+                const interval = parseInt(carousel.dataset.interval) || 5;
+                const slideCount = parseInt(carousel.dataset.slideCount) || 0;
+
+                if(!autoAdvance || slideCount <= 1) return; // Function to start/restart the timer function startTimer()
+                    { // Clear any existing interval if(carousel._autoAdvanceInterval) {
+                    clearInterval(carousel._autoAdvanceInterval); } // Set up auto-advance
+                    carousel._autoAdvanceInterval=setInterval(()=> {
+                    const nextBtn = carousel.querySelector('[data-carousel-next]');
+                    if(nextBtn) {
+                    nextBtn.click();
+                    } else {
+                    const carouselId = carousel.dataset.carouselId;
+                    const event = new CustomEvent('carousel-advance', {
+                    detail: {id: carouselId},
+                    bubbles: true
+                    });
+                    carousel.dispatchEvent(event);
+                    }
+                    }, interval * 1000);
+                    }
+
+                    function stopTimer() {
+                    if(carousel._autoAdvanceInterval) {
+                    clearInterval(carousel._autoAdvanceInterval);
+                    carousel._autoAdvanceInterval = null;
+                    }
+                    }
+
+                    // Start timer initially
+                    startTimer();
+
+                    // Reset timer when prev/next buttons are clicked
+                    const prevBtn = carousel.querySelector('[data-carousel-prev]');
+                    const nextBtn = carousel.querySelector('[data-carousel-next]');
+
+                    if(prevBtn) {
+                    prevBtn.addEventListener('click', () => {
+                    startTimer(); // Reset timer on manual navigation
+                    });
+                    }
+
+                    if(nextBtn) {
+                    nextBtn.addEventListener('click', () => {
+                    startTimer(); // Reset timer on manual navigation
+                    });
+                    }
+
+                    // Also reset timer when dots are clicked
+                    const dots = carousel.querySelectorAll('[data-carousel-dot]');
+                    dots.forEach(dot => {
+                    dot.addEventListener('click', () => {
+                    startTimer(); // Reset timer on dot click
+                    });
+                    });
+
+                    // Pause on hover
+                    carousel.addEventListener('mouseenter', () => {
+                    stopTimer();
+                    });
+
+                    carousel.addEventListener('mouseleave', () => {
+                    if(autoAdvance && slideCount > 1) {
+                    startTimer();
+                    }
+                    });
+                    });
+                    }
+
+                    // Re-init carousels when DOM updates
+                    const carouselObserver = new MutationObserver(() => {
+                    initCarouselAutoAdvance();
+                    });
+                    carouselObserver.observe(document.body, {childList: true, subtree: true});
+
+                    // Initial init
+                    setTimeout(initCarouselAuvance000);
+                    </script>
+                    </body>
+                    {% endverbatim %}
+
+                    </html>
+                    ```
