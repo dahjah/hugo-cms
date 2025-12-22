@@ -1,8 +1,8 @@
 <div class="p-6">
     <div class="grid gap-6" style="grid-template-columns: repeat({{ columns }}, minmax(0, 1fr));">
         {{#each cards}}
-        <div class="group h-64 perspective">
-            <div class="relative w-full h-full transition-all duration-500 transform-style-3d group-hover:rotate-y-180">
+        <div class="group h-64 perspective-1000">
+            <div class="relative w-full h-full transition-all duration-500 preserve-3d group-hover:my-rotate-y-180">
                 <div
                     class="absolute inset-0 backface-hidden bg-base-100 p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center border border-base-200">
                     {{#if front_icon}}
@@ -17,7 +17,7 @@
                     <h3 class="text-xl font-bold text-base-content">{{ front_title }}</h3>
                 </div>
                 <div
-                    class="absolute inset-0 backface-hidden rotate-y-180 bg-primary p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center text-primary-content">
+                    class="absolute inset-0 backface-hidden my-rotate-y-180 bg-primary p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center text-primary-content">
                     <p class="text-sm mb-4">{{ back_description }}</p>
                     {{#if back_cta_text}}
                     <a href="{{ back_cta_url }}"
