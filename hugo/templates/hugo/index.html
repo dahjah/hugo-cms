@@ -868,13 +868,10 @@
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
                     </div>
 
-                    <!-- Preview Viewport Container (scoped, no HTTP calls) -->
-                    <div data-preview-scope class="w-full max-w-6xl bg-white shadow-xl overflow-y-auto"
-                        style="height: calc(100vh - 200px); position: relative;">
 
-                        <!-- Inject site styles within this scope -->
-                        <link v-if="currentWebsite && currentWebsite.id"
-                            :href="`${API_BASE_URL}sites/${currentWebsite.id}/preview/css/styles.css`" rel="stylesheet">
+                    <!-- Preview Viewport with Shadow DOM (provides true viewport for fixed positioning) -->
+                    <preview-viewport ref="previewViewport" class="w-full max-w-6xl bg-white shadow-xl"
+                        style="height: calc(100vh - 200px); display: block; overflow-y: auto;">
 
                         <!-- Header Zone (Global) -->
                         <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
@@ -910,7 +907,7 @@
                                 :is-selected="false" :is-editable="false">
                             </block-renderer>
                         </div>
-                    </div>
+                    </preview-viewport>
                 </div>
 
                 <!-- Editor View -->
@@ -3215,9 +3212,41 @@
             'Icon': Icon
         };
 
+
+        // Define custom element for preview with Shadow DOM
+        if(!customElements.get('preview-viewport')) {
+            customElements.define('preview-viewport', class extends HTMLElement {
+                constructor() {
+                    super();
+                    this.attachShadow({mode: 'open'});
+                }
+
+                connectedCallback() {
+                    // Create container for Vue content
+                    const container = document.createElement('div');
+                    container.id = 'preview-root';
+                    container.style.cssText = 'min-height: 100%;';
+                    this.shadowRoot.appendChild(container);
+                }
+
+                loadStyles(cssUrl) {
+                    // Remove existing style links
+                    const existingLinks = this.shadowRoot.querySelectorAll('link[rel="stylesheet"]');
+                    existingLinks.forEach(link => link.remove());
+
+                    // Add stylesheet to shadow root
+                    const styleLink = document.createElement('link');
+                    styleLink.rel = 'stylesheet';
+                    styleLink.href = cssUrl;
+                    this.shadowRoot.insertBefore(styleLink, this.shadowRoot.firstChild);
+                }
+            });
+        }
+
         // --- MAIN APP ---
         const app = createApp({
             components: {Icon, DropZone, BlockRenderer},
+
             setup() {
                 // --- CONSTANTS ---
                 const ZONES = {
@@ -4386,11 +4415,32 @@ layout = "${activePage.value.layout}"
                     }
                 };
 
-                // Watch viewMode to refresh preview
+                // Watch viewMode to refresh preview and load styles into shadow DOM
                 watch(viewMode, (newMode) => {
                     if(newMode === 'preview') {
-
                         refreshPreview();
+
+                        // Load styles into shadow DOM on next tick
+                        nextTick(() => {
+                            const previewEl = document.querySelector('preview-viewport');
+                            if(previewEl && currentWebsite.value?.id) {
+                                const cssUrl = `${API_BASE_URL}sites/${currentWebsite.value.id}/preview/css/styles.css`;
+                                previewEl.loadStyles(cssUrl);
+                            }
+                        });
+                    }
+                });
+
+                // Watch currentWebsite to reload styles when it changes
+                watch(currentWebsite, (newSite) => {
+                    if(newSite?.id && viewMode.value === 'preview') {
+                        nextTick(() => {
+                            const previewEl = document.querySelector('preview-viewport');
+                            if(previewEl) {
+                                const cssUrl = `${API_BASE_URL}sites/${newSite.id}/preview/css/styles.css`;
+                                previewEl.loadStyles(cssUrl);
+                            }
+                        });
                     }
                 });
 
