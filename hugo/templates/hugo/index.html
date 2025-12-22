@@ -2046,7 +2046,7 @@
                                 <!-- Sidebar Menu (from side, full height) -->
                                 <div v-else-if="block._menuOpen"
                                     :class="[
-                                        'fixed top-0 h-screen w-64 bg-white shadow-2xl z-50 flex flex-col',
+                                        'absolute top-0 h-full w-64 bg-white shadow-2xl z-50 flex flex-col',
                                         (block.params.sidebarSide === 'right' || (!block.params.sidebarSide && block.params.alignment === 'right')) ? 'right-0 border-l' : 'left-0 border-r',
                                         'border-slate-200'
                                     ]">
