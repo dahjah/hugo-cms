@@ -48,7 +48,7 @@ type = "home"
   type = "section"
   style = "default"
   id = "highlights"
-  width = "62.1%"
+  width = "66.2%"
   [[main_blocks.blocks]]
     type = "text"
     content = "<h2 class=\"text-center\">Highlights</h2>"

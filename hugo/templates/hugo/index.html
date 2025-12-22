@@ -869,10 +869,46 @@
                     </div>
 
 
-                    <!-- Iframe Preview with CDN (provides true viewport for fixed positioning) -->
-                    <iframe :srcdoc="previewSrcdoc" class="w-full max-w-6xl bg-white shadow-xl"
-                        style="height: calc(100vh - 200px); border: none;">
-                    </iframe>
+                    <!-- Preview Viewport with Shadow DOM (provides true viewport for fixed positioning) -->
+                    <preview-viewport ref="previewViewport" class="w-full max-w-6xl bg-white shadow-xl"
+                        style="height: calc(100vh - 200px); display: block; overflow-y: auto;" :custom-css="customCss"
+                        :theme="themePreset || 'default'">
+
+                        <!-- Header Zone (Global) -->
+                        <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
+                            :style="{ order: getZoneConfig('header')?.order || 0 }">
+                            <block-renderer v-for="block in activeContent.header" :key="block.id" :block="block"
+                                :is-selected="false" :is-editable="false">
+                            </block-renderer>
+                        </div>
+
+                        <!-- Main Content Canvas -->
+                        <div class="flex flex-1" style="display: flex; min-height: 100%;">
+                            <!-- Sidebar Zone -->
+                            <div v-if="getZoneConfig('sidebar')"
+                                :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
+                                :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
+                                <block-renderer v-for="block in activeContent.sidebar" :key="block.id" :block="block"
+                                    :is-selected="false" :is-editable="false">
+                                </block-renderer>
+                            </div>
+
+                            <!-- Page Content Zone -->
+                            <div class="flex-1" :style="{ order: getZoneConfig('main')?.order || 2 }">
+                                <block-renderer v-for="block in activeContent.main" :key="block.id" :block="block"
+                                    :is-selected="false" :is-editable="false">
+                                </block-renderer>
+                            </div>
+                        </div>
+
+                        <!-- Footer Zone (Global) -->
+                        <div v-if="getZoneConfig('footer')" :class="getZoneConfig('footer')?.cssClasses || ''"
+                            :style="{ order: getZoneConfig('footer')?.order || 0 }">
+                            <block-renderer v-for="block in activeContent.footer" :key="block.id" :block="block"
+                                :is-selected="false" :is-editable="false">
+                            </block-renderer>
+                        </div>
+                    </preview-viewport>
                 </div>
 
                 <!-- Editor View -->
@@ -1691,6 +1727,74 @@
 
         const {createApp, ref, computed, onMounted, watch, nextTick, provide, inject} = Vue;
 
+        // --- PREVIEW VIEWPORT COMPONENT ---
+        const PreviewViewport = {
+            props: ['customCss', 'theme'],
+            template: `
+            <div class="w-full h-full relative">
+                <iframe ref="iframe" class="w-full h-full border-none bg-white"></iframe>
+                <teleport :to="iframeBody" v-if="iframeBody">
+                    <div :data-theme="theme" class="min-h-screen bg-base-100 text-base-content font-sans antialiased">
+                         <slot></slot>
+                    </div>
+                </teleport>
+            </div>
+            `,
+            setup(props) {
+                const iframe = ref(null);
+                const iframeBody = ref(null);
+
+                const updateStyles = (doc) => {
+                    let styleEl = doc.getElementById('custom-styles');
+                    if(!styleEl) {
+                        styleEl = doc.createElement('style');
+                        styleEl.id = 'custom-styles';
+                        doc.head.appendChild(styleEl);
+                    }
+                    styleEl.textContent = props.customCss || '';
+                };
+
+                const initIframe = () => {
+                    const doc = iframe.value.contentDocument;
+
+                    // Write initial structure
+                    doc.open();
+                    doc.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="utf-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1">
+                            <script src="https://cdn.tailwindcss.com"><\/script>
+                            <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
+                        </head>
+                        <body></body>
+                        </html>
+                    `);
+                    doc.close();
+
+                    // Setup body reference and styles
+                    // We need to wait for the write to take effect somewhat, but open/write/close is synchronous usually.
+                    // But loading scripts (tailwind) is async.
+
+                    iframeBody.value = doc.body;
+                    updateStyles(doc);
+                };
+
+                watch(() => props.customCss, () => {
+                    if(iframe.value && iframe.value.contentDocument) {
+                        updateStyles(iframe.value.contentDocument);
+                    }
+                });
+
+                onMounted(() => {
+                    initIframe();
+                });
+
+                return {iframe, iframeBody};
+            }
+        };
+
         // --- ICON COMPONENT ---
         const ICONS = {
             'layout': '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="9" y2="21"/>',
@@ -1838,8 +1942,12 @@
 
                     const base = this.isNested ? 'p-2' : 'p-4';
 
-                    return `${base} ${isGlobalDropTarget || isNestedDropTarget ? 'border-2 border-dashed' : ''} 
-                            ${this.isOver && (isGlobalDropTarget || isNestedDropTarget) ? 'border-indigo-400 bg-indigo-50/50' : (isGlobalDropTarget ? 'border-slate-200' : (isNestedDropTarget ? 'border-slate-300' : ''))}`;
+                    const borderClass = (isGlobalDropTarget || isNestedDropTarget) ? 'border-2 border-dashed' : '';
+                    const colorClass = (this.isOver && (isGlobalDropTarget || isNestedDropTarget))
+                        ? 'border-indigo-400 bg-indigo-50/50'
+                        : (isGlobalDropTarget ? 'border-slate-200' : (isNestedDropTarget ? 'border-slate-300' : ''));
+
+                    return base + ' ' + borderClass + ' ' + colorClass;
                 }
             },
             methods: {
@@ -3178,44 +3286,11 @@
         };
 
 
-        // Define custom element for preview with Shadow DOM
-        if(!customElements.get('preview-viewport')) {
-            customElements.define('preview-viewport', class extends HTMLElement {
-                constructor() {
-                    super();
-                    this.attachShadow({mode: 'open'});
-                }
 
-                connectedCallback() {
-                    // Create container for Vue content
-                    const container = document.createElement('div');
-                    container.id = 'preview-root';
-                    container.style.cssText = 'height: 100%; overflow-y: auto; transform: translateZ(0);';
-
-                    // Add slot to project light DOM children into shadow root
-                    const slot = document.createElement('slot');
-                    container.appendChild(slot);
-
-                    this.shadowRoot.appendChild(container);
-                }
-
-                loadStyles(cssUrl) {
-                    // Remove existing style links
-                    const existingLinks = this.shadowRoot.querySelectorAll('link[rel="stylesheet"]');
-                    existingLinks.forEach(link => link.remove());
-
-                    // Add stylesheet to shadow root
-                    const styleLink = document.createElement('link');
-                    styleLink.rel = 'stylesheet';
-                    styleLink.href = cssUrl;
-                    this.shadowRoot.insertBefore(styleLink, this.shadowRoot.firstChild);
-                }
-            });
-        }
 
         // --- MAIN APP ---
         const app = createApp({
-            components: {Icon, DropZone, BlockRenderer},
+            components: {Icon, DropZone, BlockRenderer, PreviewViewport},
 
             setup() {
                 // --- CONSTANTS ---
@@ -3384,1533 +3459,1457 @@
                 // Combine global + page specific for viewing
                 const activeContent = computed(() => contentZones.value);
 
-                // Store preview HTML for iframe srcdoc
-                const previewSrcdoc = ref('');
-
-                // Initialize with loading state
-                const initPreviewSrcdoc = () => {
-                    const theme = currentWebsite.value?.theme_preset || 'light';
-                    const customCSS = currentWebsite.value?.custom_css || '';
-
-                    return `<!DOCTYPE html>
-<html data-theme="${theme}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
-    <style>
-        $ {
-            customCSS
-        }
-    </style>
-    </head>
-
-    <body>
-        <div class="flex items-center justify-center min-h-screen">
-            <p class="text-lg">Loading preview...</p>
-        </div>
-    </body>
-
-</html>`.trim();
-};
-
-previewSrcdoc.value = initPreviewSrcdoc();
-
-
-// Filter component library based on search query
-const filteredComponentLibrary = computed(() => {
-if(!searchQuery.value.trim()) {
-return componentLibrary.value;
-}
-const query = searchQuery.value.toLowerCase();
-return componentLibrary.value.filter(comp =>
-comp.label.toLowerCase().includes(query) ||
-comp.id.toLowerCase().includes(query)
-);
-});
-
-
-const selectedBlock = computed(() => {
-if(!selectedBlockId.value) return null;
-const result = findBlockAndParent(selectedBlockId.value);
-if(!result) return null;
-return result.block;
-});
-
-const selectedBlockDefinition = computed(() => {
-if(!selectedBlock.value) return null;
-return componentLibrary.value.find(def => def.id === selectedBlock.value.type);
-});
-
-// Initialize Quill editor when text block is selected
-Vue.watch(selectedBlock, (newBlock, oldBlock) => {
-if(newBlock && newBlock.params && newBlock.params.content !== undefined) {
-Vue.nextTick(() => {
-const editorKey = newBlock.id + '_content';
-const editorElement = richTextEditors[editorKey];
-
-if(editorElement && !quillInstances[editorKey]) {
-const quill = new Quill(editorElement, {
-theme: 'snow',
-modules: {
-toolbar: [
-['bold', 'italic', 'underline'],
-[{'list': 'ordered'}, {'list': 'bullet'}],
-['link']
-]
-}
-});
-
-quill.root.innerHTML = newBlock.params.content || '';
-
-quill.on('text-change', () => {
-updateBlock(newBlock.id, 'content', quill.root.innerHTML);
-});
-
-quillInstances[editorKey] = quill;
-} else if(editorElement && quillInstances[editorKey]) {
-const quill = quillInstances[editorKey];
-if(quill.root.innerHTML !== newBlock.params.content) {
-quill.root.innerHTML = newBlock.params.content || '';
-}
-}
-});
-}
-
-if(oldBlock && oldBlock.id !== newBlock?.id) {
-const oldEditorKey = oldBlock.id + '_content';
-if(quillInstances[oldEditorKey]) {
-delete quillInstances[oldEditorKey];
-delete richTextEditors[oldEditorKey];
-}
-}
-});
-
-
-// Toast notifications
-const toasts = ref([]);
-let toastIdCounter = 0;
-
-const showToast = (message, type = 'info', detail = null, duration = 4000) => {
-const id = ++toastIdCounter;
-toasts.value.push({id, message, type, detail});
-
-if(duration > 0) {
-setTimeout(() => {
-removeToast(id);
-}, duration);
-}
-};
-
-const removeToast = (id) => {
-const index = toasts.value.findIndex(t => t.id === id);
-if(index > -1) {
-toasts.value.splice(index, 1);
-}
-};
-
-// Simplified (and potentially buggy for deep nesting) TOML generator for display only
-const generateConfig = computed(() => {
-if(!activePage.value) return '';
-
-let toml = `+++
-title = "${activePage.value.title}"
-layout = "${activePage.value.layout}"
-status = "${activePage.value.status}"
-url = "${activePage.value.slug}"
-date = "${activePage.value.date || ''}"
-description = "${activePage.value.description || ''}"
-tags = [${activePage.value.tags ? activePage.value.tags.map(t => `"${t}"`).join(', ') : ''}]
-+++
-
-`;
-// Recursive function to render block TOML
-const renderBlockToml = (blocks, zoneName, depth = 0) => {
-let output = '';
-const indent = " ".repeat(depth);
-
-blocks.forEach(b => {
-output += `${indent}[[${zoneName}]]\n`;
-output += `${indent} type = "${b.type}"\n`;
-
-// 1. Render immediate params (skip complex objects/arrays)
-Object.entries(b.params).forEach(([k, v]) => {
-// Skip complex types that need special handling
-if(typeof v === 'object' && v !== null) {
-return; // Skip arrays and objects
-}
-output += `${indent} ${k} = "${v}"\n`;
-});
-
-// 2. Handle menu-specific complex parameters
-if(b.type === 'menu') {
-// Render menu items as TOML array of tables
-if(b.params.items && Array.isArray(b.params.items)) {
-b.params.items.forEach(item => {
-output += `${indent} [[menu.items]]\n`;
-output += `${indent} label = "${item.label}"\n`;
-output += `${indent} url = "${item.url}"\n`;
-output += `${indent} type = "${item.type}"\n`;
-});
-}
-
-// Render sidebar footer blocks recursively
-if(b.params.sidebarFooterBlocks && Array.isArray(b.params.sidebarFooterBlocks) && b.params.sidebarFooterBlocks.length >
-0) {
-output += renderBlockToml(b.params.sidebarFooterBlocks, 'menu.sidebarFooterBlocks', depth + 1);
-}
-}
-
-// 3. Render nested children (e.g., columns)
-if(b.type === 'flex_columns') {
-
-output += `${indent} widths = [${b.params.col_widths}]\n`; // Use col_widths from parent params
-
-// Group children blocks by column (col_0, col_1, etc.)
-const widthsStr = b.params.col_widths || '';
-const numCols = widthsStr.split(',').length;
-
-for(let colIndex = 0; colIndex < numCols; colIndex++) { const placement_key=`col_${colIndex}`; const
-    colBlocks=b.children.filter(c=> c.placement_key === placement_key).sort((a, b) => a.sort_order - b.sort_order);
-
-    if(colBlocks.length > 0) {
-    output += `${indent} [${placement_key}]\n`;
-    // Render blocks inside this column structure
-    output += renderBlockToml(colBlocks, 'block', depth + 2);
-    }
-    }
-    }
-    output += '\n';
-    });
-    return output;
-    };
-
-    // Render Global Zones
-    if(contentZones.value.header.length > 0) {
-    toml += `# Site Header Blocks (Global)\n`;
-    toml += renderBlockToml(contentZones.value.header, 'header');
-    }
-    if(contentZones.value.footer.length > 0) {
-    toml += `# Site Footer Blocks (Global)\n`;
-    toml += renderBlockToml(contentZones.value.footer, 'footer');
-    }
-
-    // Render Main Page Content
-    if(activeContent.value.main.length > 0) {
-    toml += `# Page Content Blocks (Main)\n`;
-    toml += renderBlockToml(activeContent.value.main, 'main');
-    }
-
-    // Render Sidebar Content
-    if(activeContent.value.sidebar.length > 0) {
-    toml += `\n# Sidebar Blocks\n`;
-    toml += renderBlockToml(activeContent.value.sidebar, 'sidebar');
-    }
-
-    return toml;
-    });
-
-    // --- API & DATA FETCHING ---
-
-    const fetchApi = async (url, method = 'GET', data = null) => {
-    const headers = {
-    'Content-Type': 'application/json',
-    'X-CSRFToken': getCsrfToken(),
-    };
-
-    const config = {
-    method,
-    headers,
-    };
-    if(data) {
-    config.body = JSON.stringify(data);
-    }
-
-    const response = await fetch(url, config);
-    if(!response.ok) {
-    throw new Error(`API Error: ${response.statusText}`);
-    }
-    return response.json();
-    };
-
-    const fetchContent = async (pageId) => {
-    isFetchingContent.value = true;
-    try {
-    const url = `${API_BASE_URL}pages/${pageId}/content/`;
-    const blocks = await fetchApi(url) || [];
-
-    // Populate page-specific zones in contentZones
-    contentZones.value.main = blocks.filter(b => b.placement_key === 'main' || !b.placement_key).sort((a, b) =>
-    a.sort_order - b.sort_order);
-    contentZones.value.sidebar = blocks.filter(b => b.placement_key === 'sidebar').sort((a, b) => a.sort_order -
-    b.sort_order);
-
-    // Reset unsaved changes flag after content load
-    await nextTick();
-    hasUnsavedChanges.value = false;
-    } finally {
-    isFetchingContent.value = false;
-    }
-    };
-
-    const websites = ref([]);
-    const currentWebsite = ref(null);
-    const showCreateWebsiteModal = ref(false);
-    const showWebsiteDropdown = ref(false);
-    const newWebsiteName = ref('');
-    const newWebsiteSlug = ref('');
-    const websiteName = ref('');
-    const deploymentProviders = ref([]);
-    const siteTemplates = ref([]);
-    const selectedTemplateId = ref('');
-    const isLoadingTemplates = ref(false);
-
-    // Settings State
-    const showSettingsModal = ref(false);
-    const showPublishDropdown = ref(false);
-    const isPublishing = ref(false);
-    const isSavingSettings = ref(false);
-    const hasUnsavedChanges = ref(false);
-    const themePreset = ref('default');
-    const carouselSlideIndexes = ref({}); // Track carousel current slides separately to avoid triggering unsaved
-    changes
-    const isFetchingContent = ref(false);
-    const customCss = ref('');
-    const websiteSlug = ref('');
-    const cssEditorRef = ref(null);
-    let cssEditorInstance = null;
-
-    const storageSettings = ref({
-    storage_type: 'local',
-    s3_bucket: '',
-    s3_endpoint: '',
-    s3_access_key: '',
-    s3_secret_key: '',
-    s3_region: '',
-    s3_public_url: ''
-    });
-
-    const availableProviders = ref([]);
-    const selectedProviderId = ref('');
-    const isEditingProvider = ref(false);
-    const editingProvider = ref({
-    id: null,
-    name: '',
-    enabled: false,
-    provider_type: 'cloudflare_r2',
-    cf_account_id: '',
-    cf_zone_id: '',
-    cf_r2_access_key: '',
-    cf_r2_secret_key: '',
-    cf_api_token: '',
-    cf_bucket_name: '',
-    custom_domain: ''
-    });
-
-    // Initialize CodeMirror when settings modal opens
-    Vue.watch(showSettingsModal, (isOpen) => {
-    if(isOpen) {
-    Vue.nextTick(() => {
-    if(cssEditorRef.value && !cssEditorInstance) {
-    cssEditorInstance = CodeMirror(cssEditorRef.value, {
-    value: customCss.value || '',
-    mode: 'css',
-    lineNumbers: true,
-    theme: 'eclipse'
-    });
-
-    cssEditorInstance.on('change', (editor) => {
-    customCss.value = editor.getValue();
-    });
-    } else if(cssEditorInstance) {
-    cssEditorInstance.setValue(customCss.value || '');
-    cssEditorInstance.refresh();
-    }
-    });
-    } else {
-    cssEditorInstance = null;
-    // Clean up the DOM element if needed, though Vue handles the div removal
-    }
-    });
-
-    // Watch for changes to customCss (e.g. from fetch) and update editor
-    Vue.watch(customCss, (newValue) => {
-    if(cssEditorInstance && newValue !== cssEditorInstance.getValue()) {
-    cssEditorInstance.setValue(newValue || '');
-    }
-    });
-
-    // Watch for changes to newWebsiteName to auto-generate slug
-    const isSlugManuallyEdited = ref(false);
-
-    // Reset manual edit flag when modal opens
-    Vue.watch(showCreateWebsiteModal, (isOpen) => {
-    if(isOpen) {
-    isSlugManuallyEdited.value = false;
-    }
-    });
-
-    Vue.watch(newWebsiteName, (newValue) => {
-    if(!isSlugManuallyEdited.value) {
-    newWebsiteSlug.value = newValue
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric chars with dashes
-    .replace(/^-+|-+$/g, ''); // Trim leading/trailing dashes
-    }
-    });
-
-    // Detect manual edits to the slug
-    const onSlugInput = () => {
-    isSlugManuallyEdited.value = true;
-    };
-
-    const fetchConfig = async (websiteId = null) => {
-    try {
-    let url = `${API_BASE_URL}init/`;
-    if(websiteId) {
-    url += `?website_id=${websiteId}`;
-    }
-    const response = await fetch(url);
-    const data = await response.json();
-
-    componentLibrary.value = data.definitions;
-    layoutTemplates.value = data.layouts;
-    websites.value = data.websites || [];
-    currentWebsite.value = data.current_website;
-
-    // Fetch providers for UI
-    const providersResponse = await fetch(`${API_BASE_URL}deployment-providers/`);
-    if(providersResponse.ok) {
-    availableProviders.value = await providersResponse.json();
-    }
-
-    if(currentWebsite.value) {
-    selectedProviderId.value = currentWebsite.value.deployment_provider || '';
-    }
-
-    // Initialize global zones
-    contentZones.value.header = data.header.map(b => ({...b, zone: 'header'}));
-    contentZones.value.footer = data.footer.map(b => ({...b, zone: 'footer'}));
-
-    isLoaded.value = true;
-    } catch(error) {
-    console.error('Error fetching config:', error);
-    showToast('Failed to load configuration', 'error');
-    }
-    };
-
-    const fetchPages = async () => {
-    try {
-    let url = `${API_BASE_URL}pages/`;
-    if(currentWebsite.value) {
-    url += `?website_id=${currentWebsite.value.id}`;
-    }
-    const response = await fetch(url);
-    pages.value = await response.json();
-    } catch(error) {
-    console.error('Error fetching pages:', error);
-    }
-    };
-
-    const fetchTemplates = async () => {
-    try {
-    isLoadingTemplates.value = true;
-    const response = await fetch(`${API_BASE_URL}templates/`);
-    if(response.ok) {
-    siteTemplates.value = await response.json();
-    }
-    } catch(error) {
-    console.error('Error fetching templates:', error);
-    } finally {
-    isLoadingTemplates.value = false;
-    }
-    };
-
-    const initialLoad = async () => {
-    try {
-    // Fetch templates in parallel with config
-    fetchTemplates();
-    await fetchConfig(WEBSITE_ID || null);
-    await fetchPages();
-
-    if(pages.value.length > 0) {
-    activePageId.value = pages.value[0].id;
-    await fetchContent(activePageId.value);
-    }
-    } catch(error) {
-    console.error('Failed to load CMS data:', error);
-    } finally {
-    isLoaded.value = true;
-    }
-    };
-
-    // --- LIFECYCLE ---
-    onMounted(() => {
-    initialLoad();
-    });
-
-    // Watch activePageId to load new main content
-    watch(activePageId, async (newId) => {
-    if(newId) {
-    await fetchContent(newId);
-    }
-    });
-
-    // Watch for content changes
-    watch(contentZones, () => {
-    if(!isFetchingContent.value) {
-    hasUnsavedChanges.value = true;
-    }
-    }, {deep: true});
-
-    // --- ACTIONS ---
-    const setActivePage = (id) => {
-    activePageId.value = id;
-    selectedBlockId.value = null;
-    };
-
-    const createNewPage = async () => {
-    try {
-    const newPage = {
-    title: 'New Page',
-    slug: 'new-page-' + Date.now(),
-    layout: 'single',
-    status: 'draft',
-    date: new Date().toISOString().split('T')[0],
-    description: '',
-    tags: [],
-    website: currentWebsite.value?.id // Add current website
-    };
-
-    const response = await fetchApi(`${API_BASE_URL}pages/`, 'POST', newPage);
-    pages.value.push(response);
-    activePageId.value = response.id;
-    } catch(error) {
-    console.error('Error creating page:', error);
-    alert('Failed to create new page. Please try again.');
-    }
-    };
-    const savePageContent = async () => {
-    if(!activePage.value) return;
-
-    try {
-    const pageId = activePage.value.id;
-    const metadataPayload = {
-    title: activePage.value.title,
-    slug: activePage.value.slug,
-    layout: activePage.value.layout,
-    status: activePage.value.status,
-    date: activePage.value.date,
-    description: activePage.value.description,
-    tags: activePage.value.tags,
-    };
-
-    // 1. Save Page Metadata (PUT)
-    await fetchApi(`${API_BASE_URL}pages/${pageId}/`, 'PUT', metadataPayload);
-
-
-    // 2. Save Block Content (POST to custom action)
-    // Collect page-specific blocks from contentZones
-    const transformBlock = (block) => {
-    const transformed = {...block};
-
-    // Transform flex_columns children structure
-    if(block.type === 'flex_columns' && block.children && Array.isArray(block.children)) {
-    // Group children by col_0, col_1, etc.
-    const columnMap = {};
-    block.children.forEach(child => {
-    const colKey = child.placement_key || 'col_0';
-    if(!columnMap[colKey]) {
-    columnMap[colKey] = [];
-    }
-    columnMap[colKey].push(transformBlock(child));
-    });
-
-    // Convert to array format expected by backend: [{blocks: [...]}, {blocks: [...]}]
-    transformed.children = Object.keys(columnMap)
-    .sort() // Ensure col_0, col_1, col_2 order
-    .map(key => ({blocks: columnMap[key]}));
-    } else if(block.children && Array.isArray(block.children)) {
-    // Recursively transform any other children
-    transformed.children = block.children.map(transformBlock);
-    }
-
-    return transformed;
-    };
-
-    const allPageBlocks = [
-    ...contentZones.value.main.map(b => transformBlock({...b, placement_key: 'main'})),
-    ...contentZones.value.sidebar.map(b => transformBlock({...b, placement_key: 'sidebar'}))
-    ];
-    const contentPayload = {blocks: allPageBlocks};
-    await fetchApi(`${API_BASE_URL}pages/${pageId}/save_content/`, 'POST', contentPayload);
-
-    // 3. Save Global Content (POST to init action)
-    const saveGlobals = async () => {
-    try {
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-
-    // Prepare payload with only IDs and structure for diffing
-    const payload = {
-    header: contentZones.value.header,
-    footer: contentZones.value.footer,
-    website_id: currentWebsite.value?.id
-    };
-
-    const response = await fetch(`${API_BASE_URL}init/save_globals/`, {
-    method: 'POST',
-    headers: {
-    'Content-Type': 'application/json',
-    'X-CSRFToken': csrfToken,
-    },
-    body: JSON.stringify(payload),
-    });
-
-    if(!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    showToast('Global content saved successfully', 'success');
-    } catch(error) {
-    console.error('Error saving global content:', error);
-    showToast('Failed to save global content', 'error', error.message);
-    }
-    };
-    await saveGlobals();
-
-    showToast('Content saved successfully', 'success');
-    hasUnsavedChanges.value = false; // Reset unsaved changes flag
-    } catch(error) {
-    console.error("Save Error:", error);
-    showToast('Failed to save content', 'error', error.message);
-    }
-    };
-
-    // Helper to generate UUIDs
-    const generateId = () => uuid.v4();
-
-    // --- DRAG & DROP HANDLERS ---
-
-    // Helper to insert a block into the correct position within a zone or column
-    const insertIntoCorrectPosition = (list, newBlock, targetZone, targetIndex) => {
-    if(!targetZone.startsWith('col_')) {
-    // Top-level insertion (Header, Footer, Main, Sidebar)
-    newBlock.placement_key = targetZone;
-
-    if(targetIndex < list.length) { list.splice(targetIndex, 0, newBlock); } else { list.push(newBlock); } // Update
-        sort_order for all blocks in this zone list.forEach((b, index)=> {
-        b.sort_order = index;
-        });
-
-        } else {
-        // Nested insertion into flex column
-        const currentColBlocks = list.filter(b => b.placement_key === targetZone)
-        .sort((a, b) => a.sort_order - b.sort_order);
-
-        if(currentColBlocks.length === 0) {
-        list.push(newBlock);
-        } else if(targetIndex < currentColBlocks.length) { const blockToInsertBefore=currentColBlocks[targetIndex];
-            const actualIndex=list.findIndex(b=> b.id === blockToInsertBefore.id);
-            list.splice(actualIndex, 0, newBlock);
-            } else {
-            list.push(newBlock);
-            }
-
-            // Update sort_order for nested blocks
-            let currentSortOrder = 0;
-            list.forEach(b => {
-            if(b.placement_key === targetZone) {
-            b.sort_order = currentSortOrder++;
-            }
-            });
-            }
-            };
-
-            // Helper to find the mutable array reference for blocks within a zone/column
-            function findMutableBlockArray(zone, parentBlockId) {
-            // Handle menu footer zones (nested within menu block)
-            if(zone.startsWith('menu_footer_')) {
-            const menuBlockId = zone.replace('menu_footer_', '');
-            const result = findBlockAndParent(menuBlockId);
-            if(result && result.block) {
-            if(!result.block.params.sidebarFooterBlocks) {
-            result.block.params.sidebarFooterBlocks = [];
-            }
-            return result.block.params.sidebarFooterBlocks;
-            }
-            console.error('Menu block not found for footer zone:', zone);
-            return null;
-            }
-
-            // Handle carousel slide zones (nested within carousel block)
-            if(zone.startsWith('carousel_slide_')) {
-            // Zone format: carousel_slide_{blockId}_{slideIndex}
-            const parts = zone.replace('carousel_slide_', '').split('_');
-            const slideIndex = parseInt(parts.pop());
-            const carouselBlockId = parts.join('_');
-            const result = findBlockAndParent(carouselBlockId);
-            if(result && result.block && result.block.type === 'carousel') {
-            if(!result.block.params.slides) {
-            result.block.params.slides = [];
-            }
-            if(!result.block.params.slides[slideIndex]) {
-            result.block.params.slides[slideIndex] = {id: generateId(), children: []};
-            }
-            if(!result.block.params.slides[slideIndex].children) {
-            result.block.params.slides[slideIndex].children = [];
-            }
-            return result.block.params.slides[slideIndex].children;
-            }
-            console.error('Carousel block not found for slide zone:', zone);
-            return null;
-            }
-
-            // Handle column zones (nested within columns block)
-            if(zone.startsWith('col_') && parentBlockId) {
-            const result = findBlockAndParent(parentBlockId);
-            if(result && result.block && result.block.type === 'flex_columns') {
-            const colIndex = parseInt(zone.split('_')[1]);
-            if(!result.block.children) {
-            result.block.children = [];
-            }
-            return result.block.children;
-            }
-            return null;
-            }
-
-            // Handle generic nested children
-            if(zone === 'children' && parentBlockId) {
-            const result = findBlockAndParent(parentBlockId);
-            if(result && result.block) {
-            if(!result.block.children) {
-            result.block.children = [];
-            }
-            return result.block.children;
-            }
-            return null;
-            }
-
-            // Handle top-level zones
-            if(contentZones.value[zone]) {
-            return contentZones.value[zone];
-            }
-
-            console.error('No mutation list found for zone:', zone);
-            return null;
-            }
-
-            const handleDragStartNew = (e, type) => {
-            e.dataTransfer.setData('type', type);
-            e.dataTransfer.setData('source', 'sidebar');
-            };
-
-            const handleDragStartExisting = (e, blockId, zone, parentBlockId) => {
-            e.dataTransfer.setData('blockId', blockId);
-            e.dataTransfer.setData('zone', zone);
-            e.dataTransfer.setData('parentBlockId', parentBlockId || '');
-            e.dataTransfer.setData('source', 'canvas');
-            };
-
-            const handleDrop = (e, targetZone, targetIndex, parentBlockId) => {
-            e.preventDefault();
-            const source = e.dataTransfer.getData('source');
-            const mutationList = findMutableBlockArray(targetZone, parentBlockId);
-
-            if(!mutationList) {
-            console.error('No mutation list found for zone:', targetZone);
-            return;
-            }
-
-            if(source === 'sidebar') {
-            // New block from component library
-            const type = e.dataTransfer.getData('type');
-            const definition = componentLibrary.value.find(c => c.id === type);
-
-            const newBlock = {
-            id: generateId(),
-            type: type,
-            params: {...definition.default_params},
-            children: type === 'flex_columns' ? [] : null,
-            placement_key: targetZone,
-            parent_id: parentBlockId || null,
-            };
-
-            if(type === 'flex_columns') {
-            newBlock.params.col_widths = newBlock.params.col_widths || '50.0, 50.0';
-            }
-
-            insertIntoCorrectPosition(mutationList, newBlock, targetZone, targetIndex);
-            selectedBlockId.value = newBlock.id;
-            }
-            else if(source === 'canvas') {
-            // Move existing block
-            const blockId = e.dataTransfer.getData('blockId');
-            const sourceResult = findBlockAndParent(blockId);
-
-            if(!sourceResult) {
-            console.error('Source block not found:', blockId);
-            return;
-            }
-
-            const sourceList = sourceResult.list;
-            const blockIndex = sourceResult.index;
-            const [movedBlock] = sourceList.splice(blockIndex, 1);
-
-            movedBlock.placement_key = targetZone;
-            movedBlock.parent_id = parentBlockId || null;
-
-            insertIntoCorrectPosition(mutationList, movedBlock, targetZone, targetIndex);
-            }
-            };
-
-            const closeInspector = () => {
-            const currentId = selectedBlockId.value;
-            if(!currentId) return;
-
-            const result = findBlockAndParent(currentId);
-            if(result && result.parent) {
-            selectedBlockId.value = result.parent.id;
-            } else {
-            selectedBlockId.value = null;
-            }
-            };
-
-            const deleteBlock = (blockId) => {
-            const result = findBlockAndParent(blockId);
-            const parentId = result && result.parent ? result.parent.id : null;
-
-            if(result && result.list) {
-            result.list.splice(result.index, 1);
-            }
-
-            if(parentId) {
-            selectedBlockId.value = parentId;
-            } else {
-            selectedBlockId.value = null;
-            }
-            };
-
-            // --- UTILITIES ---
-            const formatKey = (key) => key.replace(/([A-Z])/g, ' $1').trim();
-
-            const shouldShowParam = (type, key) => {
-            if(type === 'menu' && ['orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection',
-            'sidebarSide', 'sidebarFooterBlocks', 'position', 'sticky'].includes(key)) return false;
-            // Keep menu with custom editor
-            if(type === 'menu' && key === 'items') return false;
-            // Hide cta_hero parameters that have custom editors
-            if(type === 'cta_hero' && ['background_image', 'headline', 'subheadline', 'cta_text'].includes(key)) return
-            false;
-            // Hero Parallax Dependency
-            if(type === 'hero' && key === 'parallax_strength' && !selectedBlock.value.params.parallax) return false;
-            // Allow all other fields to show in schema-driven editor
-            return true;
-            };
-
-
-            const addGenericItem = (block) => {
-            if(!block.params.items) {
-            block.params.items = [];
-            }
-
-            // Try to infer the structure from existing items
-            if(block.params.items.length > 0) {
-            const template = {...block.params.items[0]};
-            // Clear values but keep structure
-            Object.keys(template).forEach(key => {
-            template[key] = '';
-            });
-            block.params.items.push(template);
-            } else {
-            // Default structure for common item types
-            if(block.type === 'theme_features') {
-            block.params.items.push({icon: 'box', text: 'New Feature'});
-            } else {
-            // Generic default
-            block.params.items.push({text: 'New Item'});
-            }
-            }
-            };
-
-            // Provide helper to global scope for debugging/reuse
-            if(typeof window !== 'undefined') {
-            window.findBlock = findBlockAndParent;
-            }
-
-            // Publish functions
-            const publishSite = async () => {
-            isPublishing.value = true;
-            try {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
-            getCookie('csrftoken');
-
-            const response = await fetch('/api/websites/publish/', {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({
-            website_id: currentWebsite.value.id
-            })
-            });
-
-            const data = await response.json();
-
-            if(data.success) {
-            showToast('Site published successfully!', 'success');
-            // Refresh pages to update status indicators
-            await fetchPages();
-            } else {
-            showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
-            }
-            } catch(error) {
-            console.error('Publish error:', error);
-            showToast('Publish failed: ' + error.message, 'error');
-            } finally {
-            isPublishing.value = false;
-            }
-            };
-
-            const publishCurrentPage = async () => {
-            if(!activePage.value) {
-            showToast('No page selected', 'error');
-            return;
-            }
-            isPublishing.value = true;
-
-            try {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
-            getCookie('csrftoken');
-
-            const response = await fetch('/api/websites/publish_page/', {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({
-            website_id: currentWebsite.value.id,
-            page_id: activePage.value.id
-            })
-            });
-
-            const data = await response.json();
-
-            if(data.success) {
-            showToast('Page published successfully!', 'success');
-            // Refresh pages to update status indicators
-            await fetchPages();
-            } else {
-            showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
-            }
-            } catch(error) {
-            console.error('Publish error:', error);
-            showToast('Publish failed: ' + error.message, 'error');
-            } finally {
-            isPublishing.value = false;
-            }
-            };
-
-            // --- Carousel Slide Index Helpers (tracked outside contentZones to avoid triggering unsaved changes) ---
-            const getCarouselSlide = (blockId) => {
-            return carouselSlideIndexes.value[blockId] || 0;
-            };
-
-            const setCarouselSlide = (blockId, index) => {
-            carouselSlideIndexes.value[blockId] = index;
-            };
-
-            const prevCarouselSlide = (block) => {
-            const current = getCarouselSlide(block.id);
-            const total = block.params.slides?.length || 1;
-            setCarouselSlide(block.id, (current - 1 + total) % total);
-            };
-
-            const nextCarouselSlide = (block) => {
-            const current = getCarouselSlide(block.id);
-            const total = block.params.slides?.length || 1;
-            setCarouselSlide(block.id, (current + 1) % total);
-            };
-
-            // --- PREVIEW LOGIC ---
-            const previewUrl = ref('');
-            const isPreviewLoading = ref(false);
-
-            const refreshPreview = async () => {
-            if(!activePage.value) return;
-
-            try {
-            const transformBlock = (block) => {
-            const transformed = {...block};
-            if(block.type === 'flex_columns' && block.children && Array.isArray(block.children)) {
-            const columnMap = {};
-            block.children.forEach(child => {
-            const colKey = child.placement_key || 'col_0';
-            if(!columnMap[colKey]) {
-            columnMap[colKey] = [];
-            }
-            columnMap[colKey].push(transformBlock(child));
-            });
-            transformed.children = Object.keys(columnMap)
-            .sort()
-            .map(key => ({blocks: columnMap[key]}));
-            } else if(block.children && Array.isArray(block.children)) {
-            transformed.children = block.children.map(transformBlock);
-            }
-            return transformed;
-            };
-
-            const allPageBlocks = [
-            ...contentZones.value.main.map(b => transformBlock({...b, placement_key: 'main'})),
-            ...contentZones.value.sidebar.map(b => transformBlock({...b, placement_key: 'sidebar'}))
-            ];
-
-            const allBlocks = [
-            ...contentZones.value.header.map(b => transformBlock({...b, placement_key: 'header'})),
-            ...allPageBlocks,
-            ...contentZones.value.footer.map(b => transformBlock({...b, placement_key: 'footer'}))
-            ];
-
-            const payload = {
-            website_id: currentWebsite.value.id,
-            page_id: activePage.value.id,
-            page: {
-            ...activePage.value
-            },
-            blocks: allBlocks
-            };
-
-            const csrfToken = getCsrfToken();
-            const response = await fetch(\`\${API_BASE_URL}websites/render_canvas/\`, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken,
-            },
-            body: JSON.stringify(payload)
-            });
-
-            if(!response.ok) {
-            throw new Error(\`Preview Error: \${response.statusText}\`);
-            }
-
-            const data = await response.json();
-            console.log("Preview Built Successfully.");
-
-            // Now fetch the generated HTML
-            let slug = activePage.value.slug || '';
-            if(slug.startsWith('/')) slug = slug.substring(1);
-            const websiteId = currentWebsite.value.id;
-            const ts = new Date().getTime();
-
-            const htmlResponse = await fetch(\`\${API_BASE_URL}sites/\${websiteId}/preview/\${slug}?t=\${ts}\`);
-            if (!htmlResponse.ok) {
-            throw new Error(\`Failed to fetch HTML: \${htmlResponse.statusText}\`);
-            }
-
-            let html = await htmlResponse.text();
-
-            // Inject CDN links and custom CSS
-            const theme = currentWebsite.value.theme_preset || 'light';
-            const customCSS = currentWebsite.value.custom_css || '';
-
-            const cdnHead = \`
-            <script src="https://cdn.tailwindcss.com"></script>
-            <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet">
-            <style>
-                \$ {
-                    customCSS
-                }
-            </style>
-            \`;
-
-            // Inject CDN links before closing </head>
-            html = html.replace('</head>', \`\${cdnHead}</head>\`);
-
-            // Set data-theme attribute
-            html = html.replace('<html', \`<html data-theme="\${theme}" \`); // Update srcdoc previewSrcdoc.value=html;
-                } catch(e) { console.error("Preview failed", e); showToast("Preview failed: " + e.message, 'error');
-                                }
-                            };
-
-
-            const allPageBlocks = [
-            ...contentZones.value.main.map(b => transformBlock({...b, placement_key: 'main'})),
-            ...contentZones.value.sidebar.map(b => transformBlock({...b, placement_key: 'sidebar'}))
-            ];
-
-            const allBlocks = [
-            ...contentZones.value.header.map(b => transformBlock({...b, placement_key: 'header'})),
-            ...allPageBlocks,
-            ...contentZones.value.footer.map(b => transformBlock({...b, placement_key: 'footer'}))
-            ];
-
-            const payload = {
-            website_id: currentWebsite.value.id,
-            page_id: activePage.value.id,
-            page: {
-            ...activePage.value
-            },
-            blocks: allBlocks
-            };
-
-            const csrfToken = getCsrfToken();
-            const response = await fetch(`${API_BASE_URL}websites/render_canvas/`, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken,
-            },
-            body: JSON.stringify(payload)
-            });
-
-            if(!response.ok) {
-            throw new Error(`Preview Error: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-
-            console.log(" Preview Built Successfully."); // Construct Preview URL // trigger reload with timestamp
-                const ts=new Date().getTime(); let slug=activePage.value.slug || '' ; if(slug.startsWith('/'))
-                slug=slug.substring(1); const websiteId=currentWebsite.value.id;
-                previewUrl.value=`${API_BASE_URL}sites/${websiteId}/preview/${slug}?t=${ts}`; } catch(e) {
-                console.error("Preview failed", e); showToast("Preview failed: " + e.message, 'error');
-            } finally {
-            // isPreviewLoading.value = false;
-            }
-            };
-
-            // Watch viewMode to refresh preview and load styles into shadow DOM
-            watch(viewMode, (newMode) => {
-            if(newMode === 'preview') {
-            refreshPreview();
-
-            // Load styles into shadow DOM on next tick
-            nextTick(() => {
-            const previewEl = document.querySelector('preview-viewport');
-            if(previewEl && currentWebsite.value?.id) {
-            const cssUrl = `${API_BASE_URL}sites/${currentWebsite.value.id}/preview/css/styles.css`;
-            previewEl.loadStyles(cssUrl);
-            }
-            });
-            }
-            });
-
-            // Watch currentWebsite to reload styles when it changes
-            watch(currentWebsite, (newSite) => {
-            if(newSite?.id && viewMode.value === 'preview') {
-            nextTick(() => {
-            const previewEl = document.querySelector('preview-viewport');
-            if(previewEl) {
-            const cssUrl = `${API_BASE_URL}sites/${newSite.id}/preview/css/styles.css`;
-            previewEl.loadStyles(cssUrl);
-            }
-            });
-            }
-            });
-
-
-            // Provide helpers to child components
-            provide('getCarouselSlide', getCarouselSlide);
-            provide('setCarouselSlide', setCarouselSlide);
-            provide('prevCarouselSlide', prevCarouselSlide);
-            provide('nextCarouselSlide', nextCarouselSlide);
-
-
-            return {
-            previewUrl,
-            refreshPreview,
-            isPreviewLoading,
-            isLoaded,
-            pages,
-            activePageId,
-            viewMode,
-            activePage,
-            activeContent,
-            selectedBlockId,
-            selectedBlock,
-            componentLibrary,
-            searchQuery,
-            filteredComponentLibrary,
-            websiteName,
-            websiteSlug,
-            generateConfig,
-            setActivePage,
-            createNewPage,
-            savePageContent,
-            publishSite,
-            publishCurrentPage,
-            onSlugInput,
-            changeWebsite: async (websiteId) => {
-            if(currentWebsite.value && currentWebsite.value.id === websiteId) return;
-
-            // Update URL
-            const newUrl = websiteId ? `/site/${websiteId}/` : '/';
-            // Use history API to change URL without reload
-            window.history.pushState({}, '', newUrl);
-
-            await fetchConfig(websiteId);
-            // Refresh pages list for the new website
-            await fetchPages();
-
-            // Select first page
-            if(pages.value.length > 0) {
-            activePageId.value = pages.value[0].id;
-            await fetchContent(pages.value[0].id);
-            }
-            },
-            createWebsite: async () => {
-            if(!newWebsiteName.value || !newWebsiteSlug.value) {
-
-            showToast('Please fill in all fields', 'error');
-            return;
-            }
-            try {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-            let response;
-
-            if(selectedTemplateId.value) {
-            // Create from template
-            response = await fetch(`${API_BASE_URL}templates/${selectedTemplateId.value}/create_website/`, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({
-            website_name: newWebsiteName.value,
-            website_slug: newWebsiteSlug.value
-            })
-            });
-            } else {
-            // Create blank site
-            response = await fetch(`${API_BASE_URL}websites/`, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({
-            name: newWebsiteName.value,
-            slug: newWebsiteSlug.value
-            })
-            });
-            }
-
-            if(response.ok) {
-            const data = await response.json();
-            const newSite = selectedTemplateId.value ? data.website : data;
-            showCreateWebsiteModal.value = false;
-            newWebsiteName.value = '';
-            newWebsiteSlug.value = '';
-            selectedTemplateId.value = '';
-            showToast(selectedTemplateId.value ? 'Website created from template!' : 'Website created successfully',
-            'success');
-            // Switch to new website
-            await fetchConfig(newSite.id);
-            await fetchPages();
-            // Select first page if available
-            if(pages.value.length > 0) {
-            activePageId.value = pages.value[0].id;
-            await fetchContent(pages.value[0].id);
-            }
-            } else {
-            const data = await response.json();
-            showToast('Failed to create website', 'error', data.error || JSON.stringify(data));
-            }
-            } catch(error) {
-            console.error('Create website error:', error);
-            showToast('Failed to create website', 'error', error.message);
-            }
-            },
-
-            openSettingsModal: async () => {
-            if(!currentWebsite.value) return;
-            showSettingsModal.value = true;
-
-            // Initialize locally from currentWebsite to avoid flashing empty
-            websiteName.value = currentWebsite.value.name || '';
-            websiteSlug.value = currentWebsite.value.slug || '';
-
-            try {
-            // Fetch storage settings
-            const response = await fetch(`/api/storage-settings/?website_id=${currentWebsite.value.id}`);
-            if(response.ok) {
-            const data = await response.json();
-            if(data.length > 0) {
-            storageSettings.value = {...storageSettings.value, ...data[0]};
-            }
-            }
-
-            // Fetch website details (for custom_css)
-            const websiteResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`);
-            if(websiteResponse.ok) {
-            const websiteData = await websiteResponse.json();
-            customCss.value = websiteData.custom_css || '';
-            websiteSlug.value = websiteData.slug || '';
-            websiteName.value = websiteData.name || '';
-            themePreset.value = websiteData.theme_preset || 'default';
-            }
-            } catch(error) {
-            console.error('Error fetching settings:', error);
-            showToast('Failed to load settings', 'error');
-            }
-            },
-
-            saveSettings: async () => {
-            if(!currentWebsite.value) return;
-            isSavingSettings.value = true;
-
-            try {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-
-            // Save Storage Settings
-            const storagePayload = {
-            ...storageSettings.value,
-            website_id: currentWebsite.value.id
-            };
-
-            let url = '/api/storage-settings/';
-            let method = 'POST';
-
-            if(storageSettings.value.id) {
-            url += `${storageSettings.value.id}/`;
-            method = 'PUT';
-            }
-
-            const response = await fetch(url, {
-            method: method,
-            headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify(storagePayload)
-            });
-
-            if(!response.ok) {
-            throw new Error('Failed to save storage settings');
-            }
-
-            // Save Website Settings (Custom CSS & Slug)
-            const websitePayload = {
-            custom_css: customCss.value,
-            slug: websiteSlug.value,
-            name: websiteName.value,
-            theme_preset: themePreset.value
-            };
-
-            const websiteResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
-            method: 'PATCH',
-            headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify(websitePayload)
-            });
-
-            if(!websiteResponse.ok) {
-            throw new Error('Failed to save website settings');
-            }
-
-            // Update local state to reflect changes immediately
-            if(currentWebsite.value) {
-            currentWebsite.value.name = websiteName.value;
-            currentWebsite.value.slug = websiteSlug.value;
-            }
-
-            // Save Deployment Settings
-
-            // 1. If editing a provider, save it first
-            if(isEditingProvider.value) {
-            const providerPayload = {...editingProvider.value};
-            let providerUrl = '/api/deployment-providers/';
-            let providerMethod = 'POST';
-
-            if(providerPayload.id) {
-            providerUrl += `${providerPayload.id}/`;
-            providerMethod = 'PUT';
-            }
-
-            const providerResponse = await fetch(providerUrl, {
-            method: providerMethod,
-            headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify(providerPayload)
-            });
-
-            if(!providerResponse.ok) {
-            throw new Error('Failed to save provider settings');
-            }
-
-            const savedProvider = await providerResponse.json();
-
-            // Update available providers list
-            if(providerMethod === 'POST') {
-            availableProviders.value.push(savedProvider);
-            selectedProviderId.value = savedProvider.id; // Auto-select new provider
-            } else {
-            const index = availableProviders.value.findIndex(p => p.id === savedProvider.id);
-            if(index !== -1) {
-            availableProviders.value[index] = savedProvider;
-            }
-            }
-            isEditingProvider.value = false;
-            }
-
-            // 2. Link Selected Provider to Website
-            // We need to update the website record with the selected deployment_provider
-            const websiteLinkPayload = {
-            deployment_provider: selectedProviderId.value || null
-            };
-
-            const linkResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
-            method: 'PATCH',
-            headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify(websiteLinkPayload)
-            });
-
-            if(!linkResponse.ok) {
-            throw new Error('Failed to link deployment provider');
-            }
-
-            showToast('Settings saved successfully', 'success');
-            showSettingsModal.value = false;
-
-            // Refresh storage settings ID if it was a new creation
-            if(method === 'POST') {
-            const data = await response.json();
-            storageSettings.value.id = data.id;
-            }
-            } catch(error) {
-            console.error('Error saving settings:', error);
-            showToast('Error saving settings', 'error');
-            } finally {
-            isSavingSettings.value = false;
-            }
-            },
-
-            confirmDeleteWebsite: async () => {
-            if(!currentWebsite.value) return;
-
-            const websiteName = currentWebsite.value.name;
-            const confirmation = confirm(
-            `Are you sure you want to delete " ${websiteName}"?\n\n` + `This will permanently delete:\n` + `• All pages
-                and content\n` + `• All blocks and settings\n` + `• All media files\n\n` + `This action cannot be
-                undone!` ); if(!confirmation) return; try { const
-                csrfToken=document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken'); const
-                response=await fetch(`/api/websites/${currentWebsite.value.id}/`, { method: 'DELETE' , headers:
-                { 'X-CSRFToken' : csrfToken } }); if(!response.ok) { throw new Error('Failed to delete website'); }
-                showToast(`Website "${websiteName}" deleted successfully`, 'success' ); showSettingsModal.value=false;
-                // Remove from websites list websites.value=websites.value.filter(w=> w.id !== currentWebsite.value.id);
-
-                // Reload the page to switch to another website or show empty state
-                // This is simpler than manually updating all state
-                setTimeout(() => {
-                window.location.href = '/';
-                }, 500);
-                } catch(error) {
-                console.error('Error deleting website:', error);
-                showToast('Error deleting website', 'error');
-                }
-                },
-
-                uploadFile: async (file) => {
-                if(!currentWebsite.value) throw new Error("No website selected");
-
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('website_id', currentWebsite.value.id);
-
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
-
-                const response = await fetch('/api/files/upload/', {
-                method: 'POST',
-                headers: {
-                'X-CSRFToken': csrfToken
-                },
-                body: formData
+                // Filter component library based on search query
+                const filteredComponentLibrary = computed(() => {
+                    if(!searchQuery.value.trim()) {
+                        return componentLibrary.value;
+                    }
+                    const query = searchQuery.value.toLowerCase();
+                    return componentLibrary.value.filter(comp =>
+                        comp.label.toLowerCase().includes(query) ||
+                        comp.id.toLowerCase().includes(query)
+                    );
                 });
 
-                if(!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Upload failed');
+
+                const selectedBlock = computed(() => {
+                    if(!selectedBlockId.value) return null;
+                    const result = findBlockAndParent(selectedBlockId.value);
+                    if(!result) return null;
+                    return result.block;
+                });
+
+                const selectedBlockDefinition = computed(() => {
+                    if(!selectedBlock.value) return null;
+                    return componentLibrary.value.find(def => def.id === selectedBlock.value.type);
+                });
+
+                // Initialize Quill editor when text block is selected
+                Vue.watch(selectedBlock, (newBlock, oldBlock) => {
+                    if(newBlock && newBlock.params && newBlock.params.content !== undefined) {
+                        Vue.nextTick(() => {
+                            const editorKey = newBlock.id + '_content';
+                            const editorElement = richTextEditors[editorKey];
+
+                            if(editorElement && !quillInstances[editorKey]) {
+                                const quill = new Quill(editorElement, {
+                                    theme: 'snow',
+                                    modules: {
+                                        toolbar: [
+                                            ['bold', 'italic', 'underline'],
+                                            [{'list': 'ordered'}, {'list': 'bullet'}],
+                                            ['link']
+                                        ]
+                                    }
+                                });
+
+                                quill.root.innerHTML = newBlock.params.content || '';
+
+                                quill.on('text-change', () => {
+                                    updateBlock(newBlock.id, 'content', quill.root.innerHTML);
+                                });
+
+                                quillInstances[editorKey] = quill;
+                            } else if(editorElement && quillInstances[editorKey]) {
+                                const quill = quillInstances[editorKey];
+                                if(quill.root.innerHTML !== newBlock.params.content) {
+                                    quill.root.innerHTML = newBlock.params.content || '';
+                                }
+                            }
+                        });
+                    }
+
+                    if(oldBlock && oldBlock.id !== newBlock?.id) {
+                        const oldEditorKey = oldBlock.id + '_content';
+                        if(quillInstances[oldEditorKey]) {
+                            delete quillInstances[oldEditorKey];
+                            delete richTextEditors[oldEditorKey];
+                        }
+                    }
+                });
+
+
+                // Toast notifications
+                const toasts = ref([]);
+                let toastIdCounter = 0;
+
+                const showToast = (message, type = 'info', detail = null, duration = 4000) => {
+                    const id = ++toastIdCounter;
+                    toasts.value.push({id, message, type, detail});
+
+                    if(duration > 0) {
+                        setTimeout(() => {
+                            removeToast(id);
+                        }, duration);
+                    }
+                };
+
+                const removeToast = (id) => {
+                    const index = toasts.value.findIndex(t => t.id === id);
+                    if(index > -1) {
+                        toasts.value.splice(index, 1);
+                    }
+                };
+
+                // Simplified (and potentially buggy for deep nesting) TOML generator for display only
+                const generateConfig = computed(() => {
+                    if(!activePage.value) return '';
+
+                    let toml = `+++
+title = "${activePage.value.title}"
+layout = "${activePage.value.layout}"
+                    status = "${activePage.value.status}"
+                    url = "${activePage.value.slug}"
+                    date = "${activePage.value.date || ''}"
+                    description = "${activePage.value.description || ''}"
+                    tags = [${activePage.value.tags ? activePage.value.tags.map(t => `"${t}"`).join(', ') : ''}]
+                    +++
+
+`;
+                    // Recursive function to render block TOML
+                    const renderBlockToml = (blocks, zoneName, depth = 0) => {
+                        let output = '';
+                        const indent = "  ".repeat(depth);
+
+                        blocks.forEach(b => {
+                            output += `${indent}[[${zoneName}]]\n`;
+                            output += `${indent}  type = "${b.type}"\n`;
+
+                            // 1. Render immediate params (skip complex objects/arrays)
+                            Object.entries(b.params).forEach(([k, v]) => {
+                                // Skip complex types that need special handling
+                                if(typeof v === 'object' && v !== null) {
+                                    return; // Skip arrays and objects
+                                }
+                                output += `${indent}  ${k} = "${v}"\n`;
+                            });
+
+                            // 2. Handle menu-specific complex parameters
+                            if(b.type === 'menu') {
+                                // Render menu items as TOML array of tables
+                                if(b.params.items && Array.isArray(b.params.items)) {
+                                    b.params.items.forEach(item => {
+                                        output += `${indent}  [[menu.items]]\n`;
+                                        output += `${indent}    label = "${item.label}"\n`;
+                                        output += `${indent}    url = "${item.url}"\n`;
+                                        output += `${indent}    type = "${item.type}"\n`;
+                                    });
+                                }
+
+                                // Render sidebar footer blocks recursively
+                                if(b.params.sidebarFooterBlocks && Array.isArray(b.params.sidebarFooterBlocks) && b.params.sidebarFooterBlocks.length > 0) {
+                                    output += renderBlockToml(b.params.sidebarFooterBlocks, 'menu.sidebarFooterBlocks', depth + 1);
+                                }
+                            }
+
+                            // 3. Render nested children (e.g., columns)
+                            if(b.type === 'flex_columns') {
+
+                                output += `${indent}  widths = [${b.params.col_widths}]\n`; // Use col_widths from parent params
+
+                                // Group children blocks by column (col_0, col_1, etc.)
+                                const widthsStr = b.params.col_widths || '';
+                                const numCols = widthsStr.split(',').length;
+
+                                for(let colIndex = 0; colIndex < numCols; colIndex++) {
+                                    const placement_key = `col_${colIndex}`;
+                                    const colBlocks = b.children.filter(c => c.placement_key === placement_key).sort((a, b) => a.sort_order - b.sort_order);
+
+                                    if(colBlocks.length > 0) {
+                                        output += `${indent}  [${placement_key}]\n`;
+                                        // Render blocks inside this column structure
+                                        output += renderBlockToml(colBlocks, 'block', depth + 2);
+                                    }
+                                }
+                            }
+                            output += '\n';
+                        });
+                        return output;
+                    };
+
+                    // Render Global Zones
+                    if(contentZones.value.header.length > 0) {
+                        toml += `# Site Header Blocks (Global)\n`;
+                        toml += renderBlockToml(contentZones.value.header, 'header');
+                    }
+                    if(contentZones.value.footer.length > 0) {
+                        toml += `# Site Footer Blocks (Global)\n`;
+                        toml += renderBlockToml(contentZones.value.footer, 'footer');
+                    }
+
+                    // Render Main Page Content
+                    if(activeContent.value.main.length > 0) {
+                        toml += `# Page Content Blocks (Main)\n`;
+                        toml += renderBlockToml(activeContent.value.main, 'main');
+                    }
+
+                    // Render Sidebar Content
+                    if(activeContent.value.sidebar.length > 0) {
+                        toml += `\n# Sidebar Blocks\n`;
+                        toml += renderBlockToml(activeContent.value.sidebar, 'sidebar');
+                    }
+
+                    return toml;
+                });
+
+                // --- API & DATA FETCHING ---
+
+                const fetchApi = async (url, method = 'GET', data = null) => {
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken(),
+                    };
+
+                    const config = {
+                        method,
+                        headers,
+                    };
+                    if(data) {
+                        config.body = JSON.stringify(data);
+                    }
+
+                    const response = await fetch(url, config);
+                    if(!response.ok) {
+                        throw new Error(`API Error: ${response.statusText}`);
+                    }
+                    return response.json();
+                };
+
+                const fetchContent = async (pageId) => {
+                    isFetchingContent.value = true;
+                    try {
+                        const url = `${API_BASE_URL}pages/${pageId}/content/`;
+                        const blocks = await fetchApi(url) || [];
+
+                        // Populate page-specific zones in contentZones
+                        contentZones.value.main = blocks.filter(b => b.placement_key === 'main' || !b.placement_key).sort((a, b) => a.sort_order - b.sort_order);
+                        contentZones.value.sidebar = blocks.filter(b => b.placement_key === 'sidebar').sort((a, b) => a.sort_order - b.sort_order);
+
+                        // Reset unsaved changes flag after content load
+                        await nextTick();
+                        hasUnsavedChanges.value = false;
+                    } finally {
+                        isFetchingContent.value = false;
+                    }
+                };
+
+                const websites = ref([]);
+                const currentWebsite = ref(null);
+                const showCreateWebsiteModal = ref(false);
+                const showWebsiteDropdown = ref(false);
+                const newWebsiteName = ref('');
+                const newWebsiteSlug = ref('');
+                const websiteName = ref('');
+                const deploymentProviders = ref([]);
+                const siteTemplates = ref([]);
+                const selectedTemplateId = ref('');
+                const isLoadingTemplates = ref(false);
+
+                // Settings State
+                const showSettingsModal = ref(false);
+                const showPublishDropdown = ref(false);
+                const isPublishing = ref(false);
+                const isSavingSettings = ref(false);
+                const hasUnsavedChanges = ref(false);
+                const themePreset = ref('default');
+                const carouselSlideIndexes = ref({}); // Track carousel current slides separately to avoid triggering unsaved changes
+                const isFetchingContent = ref(false);
+                const customCss = ref('');
+                const websiteSlug = ref('');
+                const cssEditorRef = ref(null);
+                let cssEditorInstance = null;
+
+                const storageSettings = ref({
+                    storage_type: 'local',
+                    s3_bucket: '',
+                    s3_endpoint: '',
+                    s3_access_key: '',
+                    s3_secret_key: '',
+                    s3_region: '',
+                    s3_public_url: ''
+                });
+
+                const availableProviders = ref([]);
+                const selectedProviderId = ref('');
+                const isEditingProvider = ref(false);
+                const editingProvider = ref({
+                    id: null,
+                    name: '',
+                    enabled: false,
+                    provider_type: 'cloudflare_r2',
+                    cf_account_id: '',
+                    cf_zone_id: '',
+                    cf_r2_access_key: '',
+                    cf_r2_secret_key: '',
+                    cf_api_token: '',
+                    cf_bucket_name: '',
+                    custom_domain: ''
+                });
+
+                // Initialize CodeMirror when settings modal opens
+                Vue.watch(showSettingsModal, (isOpen) => {
+                    if(isOpen) {
+                        Vue.nextTick(() => {
+                            if(cssEditorRef.value && !cssEditorInstance) {
+                                cssEditorInstance = CodeMirror(cssEditorRef.value, {
+                                    value: customCss.value || '',
+                                    mode: 'css',
+                                    lineNumbers: true,
+                                    theme: 'eclipse'
+                                });
+
+                                cssEditorInstance.on('change', (editor) => {
+                                    customCss.value = editor.getValue();
+                                });
+                            } else if(cssEditorInstance) {
+                                cssEditorInstance.setValue(customCss.value || '');
+                                cssEditorInstance.refresh();
+                            }
+                        });
+                    } else {
+                        cssEditorInstance = null;
+                        // Clean up the DOM element if needed, though Vue handles the div removal
+                    }
+                });
+
+                // Watch for changes to customCss (e.g. from fetch) and update editor
+                Vue.watch(customCss, (newValue) => {
+                    if(cssEditorInstance && newValue !== cssEditorInstance.getValue()) {
+                        cssEditorInstance.setValue(newValue || '');
+                    }
+                });
+
+                // Watch for changes to newWebsiteName to auto-generate slug
+                const isSlugManuallyEdited = ref(false);
+
+                // Reset manual edit flag when modal opens
+                Vue.watch(showCreateWebsiteModal, (isOpen) => {
+                    if(isOpen) {
+                        isSlugManuallyEdited.value = false;
+                    }
+                });
+
+                Vue.watch(newWebsiteName, (newValue) => {
+                    if(!isSlugManuallyEdited.value) {
+                        newWebsiteSlug.value = newValue
+                            .toLowerCase()
+                            .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric chars with dashes
+                            .replace(/^-+|-+$/g, '');   // Trim leading/trailing dashes
+                    }
+                });
+
+                // Detect manual edits to the slug
+                const onSlugInput = () => {
+                    isSlugManuallyEdited.value = true;
+                };
+
+                const fetchConfig = async (websiteId = null) => {
+                    try {
+                        let url = `${API_BASE_URL}init/`;
+                        if(websiteId) {
+                            url += `?website_id=${websiteId}`;
+                        }
+                        const response = await fetch(url);
+                        const data = await response.json();
+
+                        componentLibrary.value = data.definitions;
+                        layoutTemplates.value = data.layouts;
+                        websites.value = data.websites || [];
+                        currentWebsite.value = data.current_website;
+
+                        // Fetch providers for UI
+                        const providersResponse = await fetch(`${API_BASE_URL}deployment-providers/`);
+                        if(providersResponse.ok) {
+                            availableProviders.value = await providersResponse.json();
+                        }
+
+                        if(currentWebsite.value) {
+                            selectedProviderId.value = currentWebsite.value.deployment_provider || '';
+                        }
+
+                        // Initialize global zones
+                        contentZones.value.header = data.header.map(b => ({...b, zone: 'header'}));
+                        contentZones.value.footer = data.footer.map(b => ({...b, zone: 'footer'}));
+
+                        isLoaded.value = true;
+                    } catch(error) {
+                        console.error('Error fetching config:', error);
+                        showToast('Failed to load configuration', 'error');
+                    }
+                };
+
+                const fetchPages = async () => {
+                    try {
+                        let url = `${API_BASE_URL}pages/`;
+                        if(currentWebsite.value) {
+                            url += `?website_id=${currentWebsite.value.id}`;
+                        }
+                        const response = await fetch(url);
+                        pages.value = await response.json();
+                    } catch(error) {
+                        console.error('Error fetching pages:', error);
+                    }
+                };
+
+                const fetchTemplates = async () => {
+                    try {
+                        isLoadingTemplates.value = true;
+                        const response = await fetch(`${API_BASE_URL}templates/`);
+                        if(response.ok) {
+                            siteTemplates.value = await response.json();
+                        }
+                    } catch(error) {
+                        console.error('Error fetching templates:', error);
+                    } finally {
+                        isLoadingTemplates.value = false;
+                    }
+                };
+
+                const initialLoad = async () => {
+                    try {
+                        // Fetch templates in parallel with config
+                        fetchTemplates();
+                        await fetchConfig(WEBSITE_ID || null);
+                        await fetchPages();
+
+                        if(pages.value.length > 0) {
+                            activePageId.value = pages.value[0].id;
+                            await fetchContent(activePageId.value);
+                        }
+                    } catch(error) {
+                        console.error('Failed to load CMS data:', error);
+                    } finally {
+                        isLoaded.value = true;
+                    }
+                };
+
+                // --- LIFECYCLE ---
+                onMounted(() => {
+                    initialLoad();
+                });
+
+                // Watch activePageId to load new main content
+                watch(activePageId, async (newId) => {
+                    if(newId) {
+                        await fetchContent(newId);
+                    }
+                });
+
+                // Watch for content changes
+                watch(contentZones, () => {
+                    if(!isFetchingContent.value) {
+                        hasUnsavedChanges.value = true;
+                    }
+                }, {deep: true});
+
+                // --- ACTIONS ---
+                const setActivePage = (id) => {
+                    activePageId.value = id;
+                    selectedBlockId.value = null;
+                };
+
+                const createNewPage = async () => {
+                    try {
+                        const newPage = {
+                            title: 'New Page',
+                            slug: 'new-page-' + Date.now(),
+                            layout: 'single',
+                            status: 'draft',
+                            date: new Date().toISOString().split('T')[0],
+                            description: '',
+                            tags: [],
+                            website: currentWebsite.value?.id  // Add current website
+                        };
+
+                        const response = await fetchApi(`${API_BASE_URL}pages/`, 'POST', newPage);
+                        pages.value.push(response);
+                        activePageId.value = response.id;
+                    } catch(error) {
+                        console.error('Error creating page:', error);
+                        alert('Failed to create new page. Please try again.');
+                    }
+                };
+                const savePageContent = async () => {
+                    if(!activePage.value) return;
+
+                    try {
+                        const pageId = activePage.value.id;
+                        const metadataPayload = {
+                            title: activePage.value.title,
+                            slug: activePage.value.slug,
+                            layout: activePage.value.layout,
+                            status: activePage.value.status,
+                            date: activePage.value.date,
+                            description: activePage.value.description,
+                            tags: activePage.value.tags,
+                        };
+
+                        // 1. Save Page Metadata (PUT)
+                        await fetchApi(`${API_BASE_URL}pages/${pageId}/`, 'PUT', metadataPayload);
+
+
+                        // 2. Save Block Content (POST to custom action)
+                        // Collect page-specific blocks from contentZones
+                        const transformBlock = (block) => {
+                            const transformed = {...block};
+
+                            // Transform flex_columns children structure
+                            if(block.type === 'flex_columns' && block.children && Array.isArray(block.children)) {
+                                // Group children by col_0, col_1, etc.
+                                const columnMap = {};
+                                block.children.forEach(child => {
+                                    const colKey = child.placement_key || 'col_0';
+                                    if(!columnMap[colKey]) {
+                                        columnMap[colKey] = [];
+                                    }
+                                    columnMap[colKey].push(transformBlock(child));
+                                });
+
+                                // Convert to array format expected by backend: [{blocks: [...]}, {blocks: [...]}]
+                                transformed.children = Object.keys(columnMap)
+                                    .sort() // Ensure col_0, col_1, col_2 order
+                                    .map(key => ({blocks: columnMap[key]}));
+                            } else if(block.children && Array.isArray(block.children)) {
+                                // Recursively transform any other children
+                                transformed.children = block.children.map(transformBlock);
+                            }
+
+                            return transformed;
+                        };
+
+                        const allPageBlocks = [
+                            ...contentZones.value.main.map(b => transformBlock({...b, placement_key: 'main'})),
+                            ...contentZones.value.sidebar.map(b => transformBlock({...b, placement_key: 'sidebar'}))
+                        ];
+                        const contentPayload = {blocks: allPageBlocks};
+                        await fetchApi(`${API_BASE_URL}pages/${pageId}/save_content/`, 'POST', contentPayload);
+
+                        // 3. Save Global Content (POST to init action)
+                        const saveGlobals = async () => {
+                            try {
+                                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                                // Prepare payload with only IDs and structure for diffing
+                                const payload = {
+                                    header: contentZones.value.header,
+                                    footer: contentZones.value.footer,
+                                    website_id: currentWebsite.value?.id
+                                };
+
+                                const response = await fetch(`${API_BASE_URL}init/save_globals/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken,
+                                    },
+                                    body: JSON.stringify(payload),
+                                });
+
+                                if(!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                                showToast('Global content saved successfully', 'success');
+                            } catch(error) {
+                                console.error('Error saving global content:', error);
+                                showToast('Failed to save global content', 'error', error.message);
+                            }
+                        };
+                        await saveGlobals();
+
+                        showToast('Content saved successfully', 'success');
+                        hasUnsavedChanges.value = false; // Reset unsaved changes flag
+                    } catch(error) {
+                        console.error("Save Error:", error);
+                        showToast('Failed to save content', 'error', error.message);
+                    }
+                };
+
+                // Helper to generate UUIDs
+                const generateId = () => uuid.v4();
+
+                // --- DRAG & DROP HANDLERS ---
+
+                // Helper to insert a block into the correct position within a zone or column
+                const insertIntoCorrectPosition = (list, newBlock, targetZone, targetIndex) => {
+                    if(!targetZone.startsWith('col_')) {
+                        // Top-level insertion (Header, Footer, Main, Sidebar)
+                        newBlock.placement_key = targetZone;
+
+                        if(targetIndex < list.length) {
+                            list.splice(targetIndex, 0, newBlock);
+                        } else {
+                            list.push(newBlock);
+                        }
+
+                        // Update sort_order for all blocks in this zone
+                        list.forEach((b, index) => {
+                            b.sort_order = index;
+                        });
+
+                    } else {
+                        // Nested insertion into flex column
+                        const currentColBlocks = list.filter(b => b.placement_key === targetZone)
+                            .sort((a, b) => a.sort_order - b.sort_order);
+
+                        if(currentColBlocks.length === 0) {
+                            list.push(newBlock);
+                        } else if(targetIndex < currentColBlocks.length) {
+                            const blockToInsertBefore = currentColBlocks[targetIndex];
+                            const actualIndex = list.findIndex(b => b.id === blockToInsertBefore.id);
+                            list.splice(actualIndex, 0, newBlock);
+                        } else {
+                            list.push(newBlock);
+                        }
+
+                        // Update sort_order for nested blocks
+                        let currentSortOrder = 0;
+                        list.forEach(b => {
+                            if(b.placement_key === targetZone) {
+                                b.sort_order = currentSortOrder++;
+                            }
+                        });
+                    }
+                };
+
+                // Helper to find the mutable array reference for blocks within a zone/column
+                function findMutableBlockArray(zone, parentBlockId) {
+                    // Handle menu footer zones (nested within menu block)
+                    if(zone.startsWith('menu_footer_')) {
+                        const menuBlockId = zone.replace('menu_footer_', '');
+                        const result = findBlockAndParent(menuBlockId);
+                        if(result && result.block) {
+                            if(!result.block.params.sidebarFooterBlocks) {
+                                result.block.params.sidebarFooterBlocks = [];
+                            }
+                            return result.block.params.sidebarFooterBlocks;
+                        }
+                        console.error('Menu block not found for footer zone:', zone);
+                        return null;
+                    }
+
+                    // Handle carousel slide zones (nested within carousel block)
+                    if(zone.startsWith('carousel_slide_')) {
+                        // Zone format: carousel_slide_{blockId}_{slideIndex}
+                        const parts = zone.replace('carousel_slide_', '').split('_');
+                        const slideIndex = parseInt(parts.pop());
+                        const carouselBlockId = parts.join('_');
+                        const result = findBlockAndParent(carouselBlockId);
+                        if(result && result.block && result.block.type === 'carousel') {
+                            if(!result.block.params.slides) {
+                                result.block.params.slides = [];
+                            }
+                            if(!result.block.params.slides[slideIndex]) {
+                                result.block.params.slides[slideIndex] = {id: generateId(), children: []};
+                            }
+                            if(!result.block.params.slides[slideIndex].children) {
+                                result.block.params.slides[slideIndex].children = [];
+                            }
+                            return result.block.params.slides[slideIndex].children;
+                        }
+                        console.error('Carousel block not found for slide zone:', zone);
+                        return null;
+                    }
+
+                    // Handle column zones (nested within columns block)
+                    if(zone.startsWith('col_') && parentBlockId) {
+                        const result = findBlockAndParent(parentBlockId);
+                        if(result && result.block && result.block.type === 'flex_columns') {
+                            const colIndex = parseInt(zone.split('_')[1]);
+                            if(!result.block.children) {
+                                result.block.children = [];
+                            }
+                            return result.block.children;
+                        }
+                        return null;
+                    }
+
+                    // Handle generic nested children
+                    if(zone === 'children' && parentBlockId) {
+                        const result = findBlockAndParent(parentBlockId);
+                        if(result && result.block) {
+                            if(!result.block.children) {
+                                result.block.children = [];
+                            }
+                            return result.block.children;
+                        }
+                        return null;
+                    }
+
+                    // Handle top-level zones
+                    if(contentZones.value[zone]) {
+                        return contentZones.value[zone];
+                    }
+
+                    console.error('No mutation list found for zone:', zone);
+                    return null;
                 }
 
-                return await response.json();
-                },
-                toasts,
-                showToast,
-                removeToast,
-                richTextEditors,
-                handleDragStartNew,
-                handleDragStartExisting,
-                showSettingsModal,
-                customCss,
-                websiteSlug,
-                cssEditorRef,
-                storageSettings,
-                availableProviders,
-                selectedProviderId,
-                isEditingProvider,
-                editingProvider,
-                handleDrop,
-                updateBlock,
-                updateBlockParams: updateBlock,
-                deleteBlock,
-                closeInspector,
-                formatKey,
-                shouldShowParam,
-                addGenericItem,
-                setSelectedBlockId: (id) => selectedBlockId.value = id,
-                selectedBlockDefinition,
-                getColWidths,
-                updateColWidths: updateBlock,
-                updateColCount,
-                updateSingleWidth,
-                sidebarTab,
-                currentLayout,
-                layoutTemplates,
-                getZoneConfig,
-                websites,
-                currentWebsite,
-                showCreateWebsiteModal,
-                showPublishDropdown,
-                isPublishing,
-                isSavingSettings,
-                hasUnsavedChanges,
-                publishCurrentPage,
-                showWebsiteDropdown,
-                newWebsiteName,
-                newWebsiteSlug,
-                websiteName,
-                themePreset,
-                siteTemplates,
-                selectedTemplateId,
-                // Carousel slide helpers
-                getCarouselSlide,
-                setCarouselSlide,
-                prevCarouselSlide,
-                nextCarouselSlide
+                const handleDragStartNew = (e, type) => {
+                    e.dataTransfer.setData('type', type);
+                    e.dataTransfer.setData('source', 'sidebar');
+                };
+
+                const handleDragStartExisting = (e, blockId, zone, parentBlockId) => {
+                    e.dataTransfer.setData('blockId', blockId);
+                    e.dataTransfer.setData('zone', zone);
+                    e.dataTransfer.setData('parentBlockId', parentBlockId || '');
+                    e.dataTransfer.setData('source', 'canvas');
+                };
+
+                const handleDrop = (e, targetZone, targetIndex, parentBlockId) => {
+                    e.preventDefault();
+                    const source = e.dataTransfer.getData('source');
+                    const mutationList = findMutableBlockArray(targetZone, parentBlockId);
+
+                    if(!mutationList) {
+                        console.error('No mutation list found for zone:', targetZone);
+                        return;
+                    }
+
+                    if(source === 'sidebar') {
+                        // New block from component library
+                        const type = e.dataTransfer.getData('type');
+                        const definition = componentLibrary.value.find(c => c.id === type);
+
+                        const newBlock = {
+                            id: generateId(),
+                            type: type,
+                            params: {...definition.default_params},
+                            children: type === 'flex_columns' ? [] : null,
+                            placement_key: targetZone,
+                            parent_id: parentBlockId || null,
+                        };
+
+                        if(type === 'flex_columns') {
+                            newBlock.params.col_widths = newBlock.params.col_widths || '50.0, 50.0';
+                        }
+
+                        insertIntoCorrectPosition(mutationList, newBlock, targetZone, targetIndex);
+                        selectedBlockId.value = newBlock.id;
+                    }
+                    else if(source === 'canvas') {
+                        // Move existing block
+                        const blockId = e.dataTransfer.getData('blockId');
+                        const sourceResult = findBlockAndParent(blockId);
+
+                        if(!sourceResult) {
+                            console.error('Source block not found:', blockId);
+                            return;
+                        }
+
+                        const sourceList = sourceResult.list;
+                        const blockIndex = sourceResult.index;
+                        const [movedBlock] = sourceList.splice(blockIndex, 1);
+
+                        movedBlock.placement_key = targetZone;
+                        movedBlock.parent_id = parentBlockId || null;
+
+                        insertIntoCorrectPosition(mutationList, movedBlock, targetZone, targetIndex);
+                    }
+                };
+
+                const closeInspector = () => {
+                    const currentId = selectedBlockId.value;
+                    if(!currentId) return;
+
+                    const result = findBlockAndParent(currentId);
+                    if(result && result.parent) {
+                        selectedBlockId.value = result.parent.id;
+                    } else {
+                        selectedBlockId.value = null;
+                    }
+                };
+
+                const deleteBlock = (blockId) => {
+                    const result = findBlockAndParent(blockId);
+                    const parentId = result && result.parent ? result.parent.id : null;
+
+                    if(result && result.list) {
+                        result.list.splice(result.index, 1);
+                    }
+
+                    if(parentId) {
+                        selectedBlockId.value = parentId;
+                    } else {
+                        selectedBlockId.value = null;
+                    }
+                };
+
+                // --- UTILITIES ---
+                const formatKey = (key) => key.replace(/([A-Z])/g, ' $1').trim();
+
+                const shouldShowParam = (type, key) => {
+                    if(type === 'menu' && ['orientation', 'alignment', 'style', 'responsive', 'hamburgerDirection', 'sidebarSide', 'sidebarFooterBlocks', 'position', 'sticky'].includes(key)) return false;
+                    // Keep menu with custom editor
+                    if(type === 'menu' && key === 'items') return false;
+                    // Hide cta_hero parameters that have custom editors
+                    if(type === 'cta_hero' && ['background_image', 'headline', 'subheadline', 'cta_text'].includes(key)) return false;
+                    // Hero Parallax Dependency
+                    if(type === 'hero' && key === 'parallax_strength' && !selectedBlock.value.params.parallax) return false;
+                    // Allow all other fields to show in schema-driven editor
+                    return true;
                 };
 
 
+                const addGenericItem = (block) => {
+                    if(!block.params.items) {
+                        block.params.items = [];
+                    }
+
+                    // Try to infer the structure from existing items
+                    if(block.params.items.length > 0) {
+                        const template = {...block.params.items[0]};
+                        // Clear values but keep structure
+                        Object.keys(template).forEach(key => {
+                            template[key] = '';
+                        });
+                        block.params.items.push(template);
+                    } else {
+                        // Default structure for common item types
+                        if(block.type === 'theme_features') {
+                            block.params.items.push({icon: 'box', text: 'New Feature'});
+                        } else {
+                            // Generic default
+                            block.params.items.push({text: 'New Item'});
+                        }
+                    }
+                };
+
+                // Provide helper to global scope for debugging/reuse
+                if(typeof window !== 'undefined') {
+                    window.findBlock = findBlockAndParent;
                 }
+
+                // Publish functions
+                const publishSite = async () => {
+                    isPublishing.value = true;
+                    try {
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                            getCookie('csrftoken');
+
+                        const response = await fetch('/api/websites/publish/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: JSON.stringify({
+                                website_id: currentWebsite.value.id
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if(data.success) {
+                            showToast('Site published successfully!', 'success');
+                            // Refresh pages to update status indicators
+                            await fetchPages();
+                        } else {
+                            showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
+                        }
+                    } catch(error) {
+                        console.error('Publish error:', error);
+                        showToast('Publish failed: ' + error.message, 'error');
+                    } finally {
+                        isPublishing.value = false;
+                    }
+                };
+
+                const publishCurrentPage = async () => {
+                    if(!activePage.value) {
+                        showToast('No page selected', 'error');
+                        return;
+                    }
+                    isPublishing.value = true;
+
+                    try {
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                            getCookie('csrftoken');
+
+                        const response = await fetch('/api/websites/publish_page/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: JSON.stringify({
+                                website_id: currentWebsite.value.id,
+                                page_id: activePage.value.id
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if(data.success) {
+                            showToast('Page published successfully!', 'success');
+                            // Refresh pages to update status indicators
+                            await fetchPages();
+                        } else {
+                            showToast('Publish failed: ' + (data.error || 'Unknown error'), 'error');
+                        }
+                    } catch(error) {
+                        console.error('Publish error:', error);
+                        showToast('Publish failed: ' + error.message, 'error');
+                    } finally {
+                        isPublishing.value = false;
+                    }
+                };
+
+                // --- Carousel Slide Index Helpers (tracked outside contentZones to avoid triggering unsaved changes) ---
+                const getCarouselSlide = (blockId) => {
+                    return carouselSlideIndexes.value[blockId] || 0;
+                };
+
+                const setCarouselSlide = (blockId, index) => {
+                    carouselSlideIndexes.value[blockId] = index;
+                };
+
+                const prevCarouselSlide = (block) => {
+                    const current = getCarouselSlide(block.id);
+                    const total = block.params.slides?.length || 1;
+                    setCarouselSlide(block.id, (current - 1 + total) % total);
+                };
+
+                const nextCarouselSlide = (block) => {
+                    const current = getCarouselSlide(block.id);
+                    const total = block.params.slides?.length || 1;
+                    setCarouselSlide(block.id, (current + 1) % total);
+                };
+
+                // --- PREVIEW LOGIC ---
+                const previewUrl = ref('');
+                const isPreviewLoading = ref(false);
+
+                const refreshPreview = async () => {
+                    if(!activePage.value) return;
+
+                    // isPreviewLoading.value = true;
+                    try {
+                        const transformBlock = (block) => {
+                            const transformed = {...block};
+                            if(block.type === 'flex_columns' && block.children && Array.isArray(block.children)) {
+                                const columnMap = {};
+                                block.children.forEach(child => {
+                                    const colKey = child.placement_key || 'col_0';
+                                    if(!columnMap[colKey]) {
+                                        columnMap[colKey] = [];
+                                    }
+                                    columnMap[colKey].push(transformBlock(child));
+                                });
+                                transformed.children = Object.keys(columnMap)
+                                    .sort() // Ensure col_0, col_1 order
+                                    .map(key => ({blocks: columnMap[key]}));
+                            } else if(block.children && Array.isArray(block.children)) {
+                                transformed.children = block.children.map(transformBlock);
+                            }
+                            return transformed;
+                        };
+
+                        const allPageBlocks = [
+                            ...contentZones.value.main.map(b => transformBlock({...b, placement_key: 'main'})),
+                            ...contentZones.value.sidebar.map(b => transformBlock({...b, placement_key: 'sidebar'}))
+                        ];
+
+                        const allBlocks = [
+                            ...contentZones.value.header.map(b => transformBlock({...b, placement_key: 'header'})),
+                            ...allPageBlocks,
+                            ...contentZones.value.footer.map(b => transformBlock({...b, placement_key: 'footer'}))
+                        ];
+
+                        const payload = {
+                            website_id: currentWebsite.value.id,
+                            page_id: activePage.value.id,
+                            page: {
+                                ...activePage.value
+                            },
+                            blocks: allBlocks
+                        };
+
+                        const csrfToken = getCsrfToken();
+                        const response = await fetch(`${API_BASE_URL}websites/render_canvas/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken,
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if(!response.ok) {
+                            throw new Error(`Preview Error: ${response.statusText}`);
+                        }
+
+                        const data = await response.json();
+
+                        console.log("Preview Built Successfully.");
+
+                        // Construct Preview URL
+                        // trigger reload with timestamp
+                        const ts = new Date().getTime();
+                        let slug = activePage.value.slug || '';
+                        if(slug.startsWith('/')) slug = slug.substring(1);
+
+                        const websiteId = currentWebsite.value.id;
+                        previewUrl.value = `${API_BASE_URL}sites/${websiteId}/preview/${slug}?t=${ts}`;
+
+                    } catch(e) {
+                        console.error("Preview failed", e);
+                        showToast("Preview failed: " + e.message, 'error');
+                    } finally {
+                        // isPreviewLoading.value = false;
+                    }
+                };
+
+                // Watch viewMode to refresh preview and load styles into shadow DOM
+                watch(viewMode, (newMode) => {
+                    if(newMode === 'preview') {
+                        refreshPreview();
+
+                        // Load styles into shadow DOM on next tick
+                        nextTick(() => {
+                            const previewEl = document.querySelector('preview-viewport');
+                            if(previewEl && currentWebsite.value?.id) {
+                                const cssUrl = `${API_BASE_URL}sites/${currentWebsite.value.id}/preview/css/styles.css`;
+                                previewEl.loadStyles(cssUrl);
+                            }
+                        });
+                    }
+                });
+
+                // Watch currentWebsite to reload styles when it changes
+                watch(currentWebsite, (newSite) => {
+                    if(newSite?.id && viewMode.value === 'preview') {
+                        nextTick(() => {
+                            const previewEl = document.querySelector('preview-viewport');
+                            if(previewEl) {
+                                const cssUrl = `${API_BASE_URL}sites/${newSite.id}/preview/css/styles.css`;
+                                previewEl.loadStyles(cssUrl);
+                            }
+                        });
+                    }
                 });
 
 
-                app.mount('#app');
+                // Provide helpers to child components
+                provide('getCarouselSlide', getCarouselSlide);
+                provide('setCarouselSlide', setCarouselSlide);
+                provide('prevCarouselSlide', prevCarouselSlide);
+                provide('nextCarouselSlide', nextCarouselSlide);
 
-                // Carousel Auto-Advance (vanilla JS - works same in editor and production)
-                function initCarouselAutoAdvance() {
-                const carousels = document.querySelectorAll('.carousel-container');
 
-                carousels.forEach(carousel => {
+                return {
+                    previewUrl,
+                    refreshPreview,
+                    isPreviewLoading,
+                    isLoaded,
+                    pages,
+                    activePageId,
+                    viewMode,
+                    activePage,
+                    activeContent,
+                    selectedBlockId,
+                    selectedBlock,
+                    componentLibrary,
+                    searchQuery,
+                    filteredComponentLibrary,
+                    websiteName,
+                    websiteSlug,
+                    generateConfig,
+                    setActivePage,
+                    createNewPage,
+                    savePageContent,
+                    publishSite,
+                    publishCurrentPage,
+                    onSlugInput,
+                    changeWebsite: async (websiteId) => {
+                        if(currentWebsite.value && currentWebsite.value.id === websiteId) return;
+
+                        // Update URL
+                        const newUrl = websiteId ? `/site/${websiteId}/` : '/';
+                        // Use history API to change URL without reload
+                        window.history.pushState({}, '', newUrl);
+
+                        await fetchConfig(websiteId);
+                        // Refresh pages list for the new website
+                        await fetchPages();
+
+                        // Select first page
+                        if(pages.value.length > 0) {
+                            activePageId.value = pages.value[0].id;
+                            await fetchContent(pages.value[0].id);
+                        }
+                    },
+                    createWebsite: async () => {
+                        if(!newWebsiteName.value || !newWebsiteSlug.value) {
+
+                            showToast('Please fill in all fields', 'error');
+                            return;
+                        }
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+                            let response;
+
+                            if(selectedTemplateId.value) {
+                                // Create from template
+                                response = await fetch(`${API_BASE_URL}templates/${selectedTemplateId.value}/create_website/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken
+                                    },
+                                    body: JSON.stringify({
+                                        website_name: newWebsiteName.value,
+                                        website_slug: newWebsiteSlug.value
+                                    })
+                                });
+                            } else {
+                                // Create blank site
+                                response = await fetch(`${API_BASE_URL}websites/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken
+                                    },
+                                    body: JSON.stringify({
+                                        name: newWebsiteName.value,
+                                        slug: newWebsiteSlug.value
+                                    })
+                                });
+                            }
+
+                            if(response.ok) {
+                                const data = await response.json();
+                                const newSite = selectedTemplateId.value ? data.website : data;
+                                showCreateWebsiteModal.value = false;
+                                newWebsiteName.value = '';
+                                newWebsiteSlug.value = '';
+                                selectedTemplateId.value = '';
+                                showToast(selectedTemplateId.value ? 'Website created from template!' : 'Website created successfully', 'success');
+                                // Switch to new website
+                                await fetchConfig(newSite.id);
+                                await fetchPages();
+                                // Select first page if available
+                                if(pages.value.length > 0) {
+                                    activePageId.value = pages.value[0].id;
+                                    await fetchContent(pages.value[0].id);
+                                }
+                            } else {
+                                const data = await response.json();
+                                showToast('Failed to create website', 'error', data.error || JSON.stringify(data));
+                            }
+                        } catch(error) {
+                            console.error('Create website error:', error);
+                            showToast('Failed to create website', 'error', error.message);
+                        }
+                    },
+
+                    openSettingsModal: async () => {
+                        if(!currentWebsite.value) return;
+                        showSettingsModal.value = true;
+
+                        // Initialize locally from currentWebsite to avoid flashing empty
+                        websiteName.value = currentWebsite.value.name || '';
+                        websiteSlug.value = currentWebsite.value.slug || '';
+
+                        try {
+                            // Fetch storage settings
+                            const response = await fetch(`/api/storage-settings/?website_id=${currentWebsite.value.id}`);
+                            if(response.ok) {
+                                const data = await response.json();
+                                if(data.length > 0) {
+                                    storageSettings.value = {...storageSettings.value, ...data[0]};
+                                }
+                            }
+
+                            // Fetch website details (for custom_css)
+                            const websiteResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`);
+                            if(websiteResponse.ok) {
+                                const websiteData = await websiteResponse.json();
+                                customCss.value = websiteData.custom_css || '';
+                                websiteSlug.value = websiteData.slug || '';
+                                websiteName.value = websiteData.name || '';
+                                themePreset.value = websiteData.theme_preset || 'default';
+                            }
+                        } catch(error) {
+                            console.error('Error fetching settings:', error);
+                            showToast('Failed to load settings', 'error');
+                        }
+                    },
+
+                    saveSettings: async () => {
+                        if(!currentWebsite.value) return;
+                        isSavingSettings.value = true;
+
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                            // Save Storage Settings
+                            const storagePayload = {
+                                ...storageSettings.value,
+                                website_id: currentWebsite.value.id
+                            };
+
+                            let url = '/api/storage-settings/';
+                            let method = 'POST';
+
+                            if(storageSettings.value.id) {
+                                url += `${storageSettings.value.id}/`;
+                                method = 'PUT';
+                            }
+
+                            const response = await fetch(url, {
+                                method: method,
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify(storagePayload)
+                            });
+
+                            if(!response.ok) {
+                                throw new Error('Failed to save storage settings');
+                            }
+
+                            // Save Website Settings (Custom CSS & Slug)
+                            const websitePayload = {
+                                custom_css: customCss.value,
+                                slug: websiteSlug.value,
+                                name: websiteName.value,
+                                theme_preset: themePreset.value
+                            };
+
+                            const websiteResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify(websitePayload)
+                            });
+
+                            if(!websiteResponse.ok) {
+                                throw new Error('Failed to save website settings');
+                            }
+
+                            // Update local state to reflect changes immediately
+                            if(currentWebsite.value) {
+                                currentWebsite.value.name = websiteName.value;
+                                currentWebsite.value.slug = websiteSlug.value;
+                            }
+
+                            // Save Deployment Settings
+
+                            // 1. If editing a provider, save it first
+                            if(isEditingProvider.value) {
+                                const providerPayload = {...editingProvider.value};
+                                let providerUrl = '/api/deployment-providers/';
+                                let providerMethod = 'POST';
+
+                                if(providerPayload.id) {
+                                    providerUrl += `${providerPayload.id}/`;
+                                    providerMethod = 'PUT';
+                                }
+
+                                const providerResponse = await fetch(providerUrl, {
+                                    method: providerMethod,
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken
+                                    },
+                                    body: JSON.stringify(providerPayload)
+                                });
+
+                                if(!providerResponse.ok) {
+                                    throw new Error('Failed to save provider settings');
+                                }
+
+                                const savedProvider = await providerResponse.json();
+
+                                // Update available providers list
+                                if(providerMethod === 'POST') {
+                                    availableProviders.value.push(savedProvider);
+                                    selectedProviderId.value = savedProvider.id; // Auto-select new provider
+                                } else {
+                                    const index = availableProviders.value.findIndex(p => p.id === savedProvider.id);
+                                    if(index !== -1) {
+                                        availableProviders.value[index] = savedProvider;
+                                    }
+                                }
+                                isEditingProvider.value = false;
+                            }
+
+                            // 2. Link Selected Provider to Website
+                            // We need to update the website record with the selected deployment_provider
+                            const websiteLinkPayload = {
+                                deployment_provider: selectedProviderId.value || null
+                            };
+
+                            const linkResponse = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify(websiteLinkPayload)
+                            });
+
+                            if(!linkResponse.ok) {
+                                throw new Error('Failed to link deployment provider');
+                            }
+
+                            showToast('Settings saved successfully', 'success');
+                            showSettingsModal.value = false;
+
+                            // Refresh storage settings ID if it was a new creation
+                            if(method === 'POST') {
+                                const data = await response.json();
+                                storageSettings.value.id = data.id;
+                            }
+                        } catch(error) {
+                            console.error('Error saving settings:', error);
+                            showToast('Error saving settings', 'error');
+                        } finally {
+                            isSavingSettings.value = false;
+                        }
+                    },
+
+                    confirmDeleteWebsite: async () => {
+                        if(!currentWebsite.value) return;
+
+                        const websiteName = currentWebsite.value.name;
+                        const confirmation = confirm(
+                            `Are you sure you want to delete "${websiteName}"?\n\n` +
+                            `This will permanently delete:\n` +
+                            `• All pages and content\n` +
+                            `• All blocks and settings\n` +
+                            `• All media files\n\n` +
+                            `This action cannot be undone!`
+                        );
+
+                        if(!confirmation) return;
+
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                            const response = await fetch(`/api/websites/${currentWebsite.value.id}/`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': csrfToken
+                                }
+                            });
+
+                            if(!response.ok) {
+                                throw new Error('Failed to delete website');
+                            }
+
+                            showToast(`Website "${websiteName}" deleted successfully`, 'success');
+                            showSettingsModal.value = false;
+
+                            // Remove from websites list
+                            websites.value = websites.value.filter(w => w.id !== currentWebsite.value.id);
+
+                            // Reload the page to switch to another website or show empty state
+                            // This is simpler than manually updating all state
+                            setTimeout(() => {
+                                window.location.href = '/';
+                            }, 500);
+                        } catch(error) {
+                            console.error('Error deleting website:', error);
+                            showToast('Error deleting website', 'error');
+                        }
+                    },
+
+                    uploadFile: async (file) => {
+                        if(!currentWebsite.value) throw new Error("No website selected");
+
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('website_id', currentWebsite.value.id);
+
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                        const response = await fetch('/api/files/upload/', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: formData
+                        });
+
+                        if(!response.ok) {
+                            const data = await response.json();
+                            throw new Error(data.error || 'Upload failed');
+                        }
+
+                        return await response.json();
+                    },
+                    toasts,
+                    showToast,
+                    removeToast,
+                    richTextEditors,
+                    handleDragStartNew,
+                    handleDragStartExisting,
+                    showSettingsModal,
+                    customCss,
+                    websiteSlug,
+                    cssEditorRef,
+                    storageSettings,
+                    availableProviders,
+                    selectedProviderId,
+                    isEditingProvider,
+                    editingProvider,
+                    handleDrop,
+                    updateBlock,
+                    updateBlockParams: updateBlock,
+                    deleteBlock,
+                    closeInspector,
+                    formatKey,
+                    shouldShowParam,
+                    addGenericItem,
+                    setSelectedBlockId: (id) => selectedBlockId.value = id,
+                    selectedBlockDefinition,
+                    getColWidths,
+                    updateColWidths: updateBlock,
+                    updateColCount,
+                    updateSingleWidth,
+                    sidebarTab,
+                    currentLayout,
+                    layoutTemplates,
+                    getZoneConfig,
+                    websites,
+                    currentWebsite,
+                    showCreateWebsiteModal,
+                    showPublishDropdown,
+                    isPublishing,
+                    isSavingSettings,
+                    hasUnsavedChanges,
+                    publishCurrentPage,
+                    showWebsiteDropdown,
+                    newWebsiteName,
+                    newWebsiteSlug,
+                    websiteName,
+                    themePreset,
+                    siteTemplates,
+                    selectedTemplateId,
+                    // Carousel slide helpers
+                    getCarouselSlide,
+                    setCarouselSlide,
+                    prevCarouselSlide,
+                    nextCarouselSlide
+                };
+
+
+            }
+        });
+
+
+        app.mount('#app');
+
+        // Carousel Auto-Advance (vanilla JS - works same in editor and production)
+        function initCarouselAutoAdvance() {
+            const carousels = document.querySelectorAll('.carousel-container');
+
+            carousels.forEach(carousel => {
                 // Skip if already initialized
                 if(carousel._carouselInitialized) return;
                 carousel._carouselInitialized = true;
@@ -4919,82 +4918,89 @@ for(let colIndex = 0; colIndex < numCols; colIndex++) { const placement_key=`col
                 const interval = parseInt(carousel.dataset.interval) || 5;
                 const slideCount = parseInt(carousel.dataset.slideCount) || 0;
 
-                if(!autoAdvance || slideCount <= 1) return; // Function to start/restart the timer function startTimer()
-                    { // Clear any existing interval if(carousel._autoAdvanceInterval) {
-                    clearInterval(carousel._autoAdvanceInterval); } // Set up auto-advance
-                    carousel._autoAdvanceInterval=setInterval(()=> {
-                    const nextBtn = carousel.querySelector('[data-carousel-next]');
-                    if(nextBtn) {
-                    nextBtn.click();
-                    } else {
-                    const carouselId = carousel.dataset.carouselId;
-                    const event = new CustomEvent('carousel-advance', {
-                    detail: {id: carouselId},
-                    bubbles: true
-                    });
-                    carousel.dispatchEvent(event);
-                    }
-                    }, interval * 1000);
-                    }
+                if(!autoAdvance || slideCount <= 1) return;
 
-                    function stopTimer() {
+                // Function to start/restart the timer
+                function startTimer() {
+                    // Clear any existing interval
                     if(carousel._autoAdvanceInterval) {
-                    clearInterval(carousel._autoAdvanceInterval);
-                    carousel._autoAdvanceInterval = null;
-                    }
+                        clearInterval(carousel._autoAdvanceInterval);
                     }
 
-                    // Start timer initially
-                    startTimer();
+                    // Set up auto-advance
+                    carousel._autoAdvanceInterval = setInterval(() => {
+                        const nextBtn = carousel.querySelector('[data-carousel-next]');
+                        if(nextBtn) {
+                            nextBtn.click();
+                        } else {
+                            const carouselId = carousel.dataset.carouselId;
+                            const event = new CustomEvent('carousel-advance', {
+                                detail: {id: carouselId},
+                                bubbles: true
+                            });
+                            carousel.dispatchEvent(event);
+                        }
+                    }, interval * 1000);
+                }
 
-                    // Reset timer when prev/next buttons are clicked
-                    const prevBtn = carousel.querySelector('[data-carousel-prev]');
-                    const nextBtn = carousel.querySelector('[data-carousel-next]');
+                function stopTimer() {
+                    if(carousel._autoAdvanceInterval) {
+                        clearInterval(carousel._autoAdvanceInterval);
+                        carousel._autoAdvanceInterval = null;
+                    }
+                }
 
-                    if(prevBtn) {
+                // Start timer initially
+                startTimer();
+
+                // Reset timer when prev/next buttons are clicked
+                const prevBtn = carousel.querySelector('[data-carousel-prev]');
+                const nextBtn = carousel.querySelector('[data-carousel-next]');
+
+                if(prevBtn) {
                     prevBtn.addEventListener('click', () => {
-                    startTimer(); // Reset timer on manual navigation
+                        startTimer(); // Reset timer on manual navigation
                     });
-                    }
+                }
 
-                    if(nextBtn) {
+                if(nextBtn) {
                     nextBtn.addEventListener('click', () => {
-                    startTimer(); // Reset timer on manual navigation
+                        startTimer(); // Reset timer on manual navigation
                     });
-                    }
+                }
 
-                    // Also reset timer when dots are clicked
-                    const dots = carousel.querySelectorAll('[data-carousel-dot]');
-                    dots.forEach(dot => {
+                // Also reset timer when dots are clicked
+                const dots = carousel.querySelectorAll('[data-carousel-dot]');
+                dots.forEach(dot => {
                     dot.addEventListener('click', () => {
-                    startTimer(); // Reset timer on dot click
+                        startTimer(); // Reset timer on dot click
                     });
-                    });
+                });
 
-                    // Pause on hover
-                    carousel.addEventListener('mouseenter', () => {
+                // Pause on hover
+                carousel.addEventListener('mouseenter', () => {
                     stopTimer();
-                    });
+                });
 
-                    carousel.addEventListener('mouseleave', () => {
+                carousel.addEventListener('mouseleave', () => {
                     if(autoAdvance && slideCount > 1) {
-                    startTimer();
+                        startTimer();
                     }
-                    });
-                    });
-                    }
+                });
+            });
+        }
 
-                    // Re-init carousels when DOM updates
-                    const carouselObserver = new MutationObserver(() => {
-                    initCarouselAutoAdvance();
-                    });
-                    carouselObserver.observe(document.body, {childList: true, subtree: true});
+        // Re-init carousels when DOM updates
+        const carouselObserver = new MutationObserver(() => {
+            initCarouselAutoAdvance();
+        });
+        carouselObserver.observe(document.body, {childList: true, subtree: true});
 
-                    // Initial init
-                    setTimeout(initCarouselAuvance000);
-                    </script>
-                    </body>
-                    {% endverbatim %}
+        // Initial init
+        setTimeout(initCarouselAuvance000);
+    </script>
+</body>
+{% endverbatim %}
 
-                    </html>
-                    ```
+</html>
+```
