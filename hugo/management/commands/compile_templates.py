@@ -90,7 +90,10 @@ class TemplateCompiler:
                     # Add dot prefix to variable if it doesn't start with one
                     if not var_name.startswith('.'):
                         var_name = f'.{var_name}'
+                    # Convert single quotes to double quotes for Hugo
+                    default_val = default_val.replace("'", '"')
                     return f'{{{{ default {var_name} {default_val} }}}}'
+
 
 
             # Ignore keywords (but not ../ parent references)
