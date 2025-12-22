@@ -1756,6 +1756,10 @@
 
                 const initIframe = () => {
                     const doc = iframe.value.contentDocument;
+                    if(!doc) return;
+
+                    // Reset body ref to force re-teleport if needed
+                    iframeBody.value = null;
 
                     // Write initial structure
                     doc.open();
@@ -1773,13 +1777,28 @@
                     `);
                     doc.close();
 
-                    // Setup body reference and styles
-                    // We need to wait for the write to take effect somewhat, but open/write/close is synchronous usually.
-                    // But loading scripts (tailwind) is async.
+                    // Wait for the document to be ready
+                    const checkBody = () => {
+                        if(doc.body) {
+                            // Ensure the body is actually part of the document
+                            iframeBody.value = doc.body;
 
-                    iframeBody.value = doc.body;
-                    updateStyles(doc);
+                            // Initialize styles and theme
+                            if(props.theme) doc.documentElement.setAttribute('data-theme', props.theme);
+                            updateStyles(doc);
+                        } else {
+                            setTimeout(checkBody, 10);
+                        }
+                    };
+
+                    setTimeout(checkBody, 10);
                 };
+
+                watch(() => props.theme, (newTheme) => {
+                    if(iframe.value && iframe.value.contentDocument) {
+                        iframe.value.contentDocument.documentElement.setAttribute('data-theme', newTheme);
+                    }
+                });
 
                 watch(() => props.customCss, () => {
                     if(iframe.value && iframe.value.contentDocument) {
