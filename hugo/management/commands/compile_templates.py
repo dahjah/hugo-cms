@@ -32,6 +32,8 @@ class TemplateCompiler:
         safe_source = re.sub(r'\{\{#each\s+([a-zA-Z0-9_.]+)\s*\}\}', r'{{ range $index, $element := .\1 }}{{ with $element }}', safe_source)
         
         # 2. Handle {{#if var}} -> {{ if .var }}
+        # For parent context (../var), we need to access from outside the 'with' block
+        safe_source = re.sub(r'\{\{#if\s+\.\./([a-zA-Z0-9_.]+)\s*\}\}', r'{{ if $.\1 }}', safe_source)
         safe_source = re.sub(r'\{\{#if\s+([a-zA-Z0-9_.]+)\s*\}\}', r'{{ if .\1 }}', safe_source)
         
         # 2b. Handle {{#unless var}} -> {{ if not .var }}
@@ -79,8 +81,8 @@ class TemplateCompiler:
                  parts = content.split()
                  return f'{{{{ substr .{parts[1]} {parts[2]} 1 }}}}'
 
-            # Ignore keywords
-            if content.startswith('.') or content.startswith('if ') or content.startswith('range ') or content.startswith('with ') or content == 'end' or content.startswith('partial ') or content.startswith('else') or content == '$index':
+            # Ignore keywords (but not ../ parent references)
+            if (content.startswith('.') and not content.startswith('../')) or content.startswith('if ') or content.startswith('range ') or content.startswith('with ') or content == 'end' or content.startswith('partial ') or content.startswith('else') or content == '$index':
                 return match.group(0)
             
             # Handle @index special var
@@ -90,6 +92,11 @@ class TemplateCompiler:
             # Handle {{ this }}
             if content == 'this':
                 return '{{ . }}'
+            
+            # Handle parent context {{ ../var }} -> {{ $.var }}
+            if content.startswith('../'):
+                var_name = content[3:]  # Remove ../
+                return f'{{{{ $.{var_name} }}}}'
                 
             return f'{{{{ .{content} }}}}'
 

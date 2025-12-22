@@ -3,7 +3,11 @@
     <div class="space-y-4">
         {{#each items}}
         <div class="collapse collapse-arrow bg-base-100 border border-base-200 rounded-box">
-            <input type="radio" name="accordion-{{ ../id }}" {{#if ../allow_multiple}}type="checkbox" {{/if}} />
+            {{#if ../allow_multiple}}
+            <input type="checkbox" />
+            {{else}}
+            <input type="radio" name="accordion-{{ ../id }}" />
+            {{/if}}
             <div class="collapse-title text-xl font-medium text-base-content">
                 {{ title }}
             </div>
