@@ -80,6 +80,18 @@ class TemplateCompiler:
             if content.startswith('charAt '):
                  parts = content.split()
                  return f'{{{{ substr .{parts[1]} {parts[2]} 1 }}}}'
+            
+            # Helper: default var defaultValue
+            if content.startswith('default '):
+                parts = content.split(maxsplit=2)  # Split into at most 3 parts
+                if len(parts) >= 3:
+                    var_name = parts[1]
+                    default_val = parts[2]
+                    # Add dot prefix to variable if it doesn't start with one
+                    if not var_name.startswith('.'):
+                        var_name = f'.{var_name}'
+                    return f'{{{{ default {var_name} {default_val} }}}}'
+
 
             # Ignore keywords (but not ../ parent references)
             if (content.startswith('.') and not content.startswith('../')) or content.startswith('if ') or content.startswith('range ') or content.startswith('with ') or content == 'end' or content.startswith('partial ') or content.startswith('else') or content == '$index':
