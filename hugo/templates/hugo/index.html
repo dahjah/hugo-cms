@@ -868,9 +868,9 @@
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
                     </div>
 
-                    <!-- Iframe Preview (provides true viewport for fixed/sticky positioning) -->
-                    <iframe v-if="previewUrl" :src="previewUrl" class="w-full max-w-6xl bg-white shadow-xl"
-                        style="height: calc(100vh - 200px); border: none;" @load="isPreviewLoading = false">
+                    <!-- Iframe Preview with srcdoc (avoids HTTP calls, provides true viewport) -->
+                    <iframe :srcdoc="previewHTML" class="w-full max-w-6xl bg-white shadow-xl"
+                        style="height: calc(100vh - 200px); border: none;">
                     </iframe>
                 </div>
 
