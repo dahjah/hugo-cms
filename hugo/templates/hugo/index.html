@@ -868,49 +868,10 @@
                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
                     </div>
 
-                    <!-- Preview Viewport Container (scoped for sticky/fixed positioning) -->
-                    <div data-preview-scope class="w-full max-w-6xl bg-white shadow-xl overflow-y-auto"
-                        style="height: calc(100vh - 200px); position: relative;">
-
-                        <!-- Inject site styles within this scope -->
-                        <link v-if="currentWebsite && currentWebsite.id"
-                            :href="`${API_BASE_URL}sites/${currentWebsite.id}/preview/css/styles.css`" rel="stylesheet">
-
-                        <!-- Header Zone (Global) -->
-                        <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
-                            :style="{ order: getZoneConfig('header')?.order || 0 }">
-                            <block-renderer v-for="block in activeContent.header" :key="block.id" :block="block"
-                                :is-selected="false" :is-editable="false">
-                            </block-renderer>
-                        </div>
-
-                        <!-- Main Content Canvas -->
-                        <div class="flex flex-1" style="display: flex; min-height: 100%;">
-                            <!--Sidebar Zone -->
-                            <div v-if="getZoneConfig('sidebar')"
-                                :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
-                                :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
-                                <block-renderer v-for="block in activeContent.sidebar" :key="block.id" :block="block"
-                                    :is-selected="false" :is-editable="false">
-                                </block-renderer>
-                            </div>
-
-                            <!-- Page Content Zone -->
-                            <div class="flex-1" :style="{ order: getZoneConfig('main')?.order || 2 }">
-                                <block-renderer v-for="block in activeContent.main" :key="block.id" :block="block"
-                                    :is-selected="false" :is-editable="false">
-                                </block-renderer>
-                            </div>
-                        </div>
-
-                        <!-- Footer Zone (Global) -->
-                        <div v-if="getZoneConfig('footer')" :class="getZoneConfig('footer')?.cssClasses || ''"
-                            :style="{ order: getZoneConfig('footer')?.order || 0 }">
-                            <block-renderer v-for="block in activeContent.footer" :key="block.id" :block="block"
-                                :is-selected="false" :is-editable="false">
-                            </block-renderer>
-                        </div>
-                    </div>
+                    <!-- Iframe Preview (provides true viewport for fixed/sticky positioning) -->
+                    <iframe v-if="previewUrl" :src="previewUrl" class="w-full max-w-6xl bg-white shadow-xl"
+                        style="height: calc(100vh - 200px); border: none;" @load="isPreviewLoading = false">
+                    </iframe>
                 </div>
 
                 <!-- Editor View -->
