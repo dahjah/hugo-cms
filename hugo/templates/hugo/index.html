@@ -2486,195 +2486,7 @@
                         </figure>
                     </div>
 
-                    <div v-else-if="block.type === 'markdown'" class="p-6 bg-white border border-slate-100 rounded-lg">
-                        <div class="font-mono text-sm text-slate-800 whitespace-pre-wrap">{{ block.params.md }}</div>
-                    </div>
 
-                    <!-- YouTube Embed -->
-                    <div v-else-if="block.type === 'youtube'" class="p-4">
-                        <div :style="{ width: block.params.width || '100%', margin: '0 auto' }" class="relative group/resize">
-                            <div class="relative w-full" :style="{ paddingBottom: block.params.aspect_ratio === '4/3' ? '75%' : '56.25%' }">
-                                <iframe 
-                                    :src="'https://www.youtube.com/embed/' + block.params.videoId" 
-                                    :title="block.params.title || 'YouTube video'"
-                                    class="absolute inset-0 w-full h-full rounded-lg shadow-lg"
-                                    frameborder="0" 
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                    allowfullscreen>
-                                </iframe>
-                            </div>
-                            
-                            <!-- Resize Handles -->
-                            <div v-if="isEditable"
-                                 class="absolute top-0 left-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/resize:opacity-100 transition-opacity z-20"
-                                 @mousedown="startBlockResize($event, block, 'left')"
-                                 @touchstart="startBlockResize($event, block, 'left')">
-                                <div class="w-1.5 h-8 bg-white border border-slate-300 rounded-full shadow-sm"></div>
-                            </div>
-                            <div v-if="isEditable"
-                                 class="absolute top-0 right-0 bottom-0 w-4 cursor-col-resize flex items-center justify-center opacity-0 group-hover/resize:opacity-100 transition-opacity z-20"
-                                 @mousedown="startBlockResize($event, block, 'right')"
-                                 @touchstart="startBlockResize($event, block, 'right')">
-                                <div class="w-1.5 h-8 bg-white border border-slate-300 rounded-full shadow-sm"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Theme Hero -->
-                    <div v-else-if="block.type === 'theme_hero'" class="relative h-80 w-full flex items-center justify-center text-center text-white overflow-hidden rounded-lg shadow-xl">
-                        <div class="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 z-10"></div>
-                        <div v-if="block.params.background_url" class="absolute inset-0 z-0">
-                            <img :src="block.params.background_url" alt="Background" class="w-full h-full object-cover opacity-30" />
-                        </div>
-                        <div class="relative z-20 p-8 max-w-3xl">
-                            <h1 class="text-5xl font-extrabold mb-4 drop-shadow-lg">{{ block.params.title }}</h1>
-                            <p class="text-xl opacity-95 drop-shadow">{{ block.params.subtitle }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Theme Features -->
-                    <div v-else-if="block.type === 'theme_features'" class="p-8 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg">
-                        <h2 class="text-3xl font-bold text-center text-slate-800 mb-8">{{ block.params.title || 'Features' }}</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <div v-for="(item, index) in (block.params.items || [])" :key="index" 
-                                class="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                                <div class="flex items-center space-x-3 mb-3">
-                                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                        <icon :name="item.icon || 'box'" :size="20" class="text-indigo-600"></icon>
-                                    </div>
-                                    <h3 class="font-semibold text-slate-800">{{ item.text }}</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Alert Box -->
-                    <div v-else-if="block.type === 'alert'" class="p-4">
-                        <div :class="[
-                            'p-4 rounded-lg border-l-4',
-                            (block.params.alert_type || block.params.type) === 'warning' ? 'bg-amber-50 border-amber-500 text-amber-900' :
-                            (block.params.alert_type || block.params.type) === 'error' ? 'bg-red-50 border-red-500 text-red-900' :
-                            (block.params.alert_type || block.params.type) === 'success' ? 'bg-emerald-50 border-emerald-500 text-emerald-900' :
-                            'bg-blue-50 border-blue-500 text-blue-900'
-                        ]">
-                            <div class="flex items-start space-x-3">
-                                <icon :name="(block.params.alert_type || block.params.type) === 'warning' ? 'alert-triangle' : 
-                                            (block.params.alert_type || block.params.type) === 'error' ? 'x-circle' :
-                                            (block.params.alert_type || block.params.type) === 'success' ? 'check-circle' : 'info'"
-                                      :size="20" class="mt-0.5 flex-shrink-0"></icon>
-                                <p class="flex-1 font-medium">{{ block.params.message }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Blockquote -->
-                    <div v-else-if="block.type === 'quote'" class="p-6">
-                        <blockquote class="border-l-4 border-indigo-500 pl-6 py-4 bg-slate-50 rounded-r-lg">
-                            <p class="text-lg italic text-slate-700 mb-3">"{{ block.params.text }}"</p>
-                            <footer class="text-sm text-slate-500">
-                                <cite class="font-semibold not-italic">— {{ block.params.author }}</cite>
-                            </footer>
-                        </blockquote>
-                    </div>
-
-                    <!-- HTML Block -->
-                    <div v-else-if="block.type === 'html'" class="p-4">
-                        <div class="html-block" v-html="block.params.html"></div>
-                    </div>
-
-                    <!-- CTA Hero Block -->
-                    <div v-else-if="block.type === 'cta_hero'" class="relative overflow-hidden rounded-lg shadow-lg" style="min-height: 300px;">
-                        <div v-if="block.params.background_image" class="absolute inset-0 z-0">
-                            <img :src="block.params.background_image" alt="Background" class="w-full h-full object-cover"/>
-                            <div class="absolute inset-0 bg-black/50"></div>
-                        </div>
-                        <div :class="['relative z-10 text-center py-16 px-6', block.params.background_image ? 'text-white' : 'text-slate-900']">
-                            <h1 class="text-4xl font-bold mb-4">{{ block.params.headline || 'Headline' }}</h1>
-                            <p class="text-xl mb-6 opacity-90">{{ block.params.subheadline || 'Subheadline' }}</p>
-                            <div class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold shadow-lg">
-                                {{ block.params.cta_text || 'Call to Action' }}
-                            </div>
-                        </div>
-                    </div>
-
-
-
-                    <!-- Social Links Block -->
-
-
-                    <!-- Stats Counter Block -->
-                    <div v-else-if="block.type === 'stats'" class="p-6 bg-white rounded-lg">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                            <div v-for="(item, idx) in (block.params.items || [])" :key="idx" class="p-4 rounded-lg bg-slate-50 border border-slate-100">
-                                <div class="text-3xl font-bold text-indigo-600 mb-1">
-                                    {{ item.value }}<span v-if="item.suffix" class="text-lg text-indigo-400 ml-1">{{ item.suffix }}</span>
-                                </div>
-                                <div class="text-sm font-semibold text-slate-600 uppercase tracking-wide">{{ item.label }}</div>
-                            </div>
-                        </div>
-                        <div v-if="!block.params.items || block.params.items.length === 0" class="text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-lg">
-                            Add stats via the sidebar editor
-                        </div>
-                    </div>
-
-                    <!-- Embed Block -->
-                    <div v-else-if="block.type === 'embed'" class="w-full">
-                        <div v-if="block.params.embed_type === 'iframe'" :style="{ height: (block.params.height || '400') + 'px' }" class="w-full bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
-                             <iframe v-if="block.params.src" :src="block.params.src" :title="block.params.title || 'Embed'" class="w-full h-full" frameborder="0"></iframe>
-                             <div v-else class="flex items-center justify-center h-full text-slate-400">Enter a URL to display iframe</div>
-                        </div>
-                        <div v-else-if="block.params.embed_type === 'script'" class="p-8 bg-slate-50 rounded-lg border border-slate-200 text-center">
-                            <div class="mb-2 font-mono text-xs p-2 bg-slate-200 rounded text-slate-600 inline-block">Script Embed</div>
-                            <div class="text-slate-500 text-sm mb-2">Script embeds are not executed in preview mode.</div>
-                             <div class="text-xs text-slate-400 truncate max-w-md mx-auto">{{ block.params.src || 'No source URL' }}</div>
-                        </div>
-                        <div v-else class="p-8 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-lg">
-                            Select embed type and configure options
-                        </div>
-                    </div>
-
-                    <!-- Brand Logo Block -->
-                    <div v-else-if="block.type === 'brand_logo'" class="p-6 bg-white rounded-lg">
-                        <a :href="block.params.link_url || '/'" class="inline-flex items-center gap-3 no-underline hover:opacity-85 transition-opacity">
-                            <img v-if="block.params.logo_image" 
-                                 :src="block.params.logo_image" 
-                                 :alt="block.params.brand_name"
-                                 :style="{ width: (block.params.logo_size || 80) + 'px', height: (block.params.logo_size || 80) + 'px', objectFit: 'contain' }"
-                                 class="rounded">
-                            <div v-else class="flex items-center justify-center bg-slate-100 rounded" 
-                                 :style="{ width: (block.params.logo_size || 80) + 'px', height: (block.params.logo_size || 80) + 'px' }">
-                                <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                            <div class="flex flex-col gap-0.5">
-                                <div class="font-serif font-bold text-xl text-slate-800" style="line-height: 1.2;">
-                                    {{ block.params.brand_name || 'Brand Name' }}
-                                </div>
-                                <div v-if="block.params.tagline" class="text-xs text-slate-500 tracking-wider uppercase font-medium" style="line-height: 1;">
-                                    {{ block.params.tagline }}
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-
-                    <!-- Button Block -->
-                    <div v-else-if="block.type === 'button'" class="p-6 bg-white rounded-lg">
-                        <a :href="block.params.url || '#'" 
-                           :target="block.params.new_tab ? '_blank' : '_self'"
-                           :class="[
-                               'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 no-underline',
-                               block.params.full_width ? 'w-full' : '',
-                               block.params.size === 'small' ? 'px-4 py-2 text-sm' : 
-                               block.params.size === 'large' ? 'px-8 py-4 text-lg' : 'px-6 py-3 text-base',
-                               block.params.style === 'secondary' ? 'bg-slate-600 text-white hover:bg-slate-700 shadow-md' :
-                               block.params.style === 'outline' ? 'border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50' :
-                               block.params.style === 'ghost' ? 'text-indigo-600 hover:bg-indigo-50' :
-                               'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md'
-                           ]">
-                            {{ block.params.text || 'Button' }}
-                        </a>
-                    </div>
 
 
 
@@ -2980,6 +2792,33 @@
                         for(let i = 0; i < r; i++) html += '<span>★</span>';
                         for(let i = r; i < 5; i++) html += '<span class="text-slate-300">★</span>';
                         return html;
+                    });
+                }
+                if(!Handlebars.helpers.default) {
+                    Handlebars.registerHelper('default', function(value, defaultValue) {
+                        return value || defaultValue;
+                    });
+                }
+                if(!Handlebars.helpers.markdownify) {
+                    Handlebars.registerHelper('markdownify', function(markdown) {
+                        if(!markdown) return '';
+                        // Simple markdown to HTML conversion for preview
+                        let html = markdown
+                            // Headers
+                            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                            // Bold
+                            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                            // Italic
+                            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                            // Links
+                            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+                            // Line breaks
+                            .replace(/\n\n/g, '</p><p>')
+                            .replace(/\n/g, '<br>');
+
+                        return new Handlebars.SafeString('<p>' + html + '</p>');
                     });
                 }
 
