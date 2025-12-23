@@ -3363,10 +3363,17 @@ layout = "${activePage.value.layout}"
                 };
 
                 const fetchContent = async (pageId) => {
-                    // Check if page has unsaved changes - if so, skip fetch to preserve edits
                     const page = pages.value.find(p => p.id === pageId);
-                    if(page?.contentStatus === 'unsaved') {
-                        // Page already has unsaved edits loaded, don't overwrite from DB
+
+                    // Check if we have cached content for this page
+                    if(contentCache.has(pageId)) {
+                        // Restore from cache instead of fetching
+                        const cached = contentCache.get(pageId);
+                        contentZones.value.main = cached.main;
+                        contentZones.value.sidebar = cached.sidebar;
+                        if(page) {
+                            page.isHydrated = true;
+                        }
                         return;
                     }
 
