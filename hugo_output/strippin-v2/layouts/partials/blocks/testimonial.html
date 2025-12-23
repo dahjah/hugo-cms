@@ -1,12 +1,19 @@
-<div class="card bg-base-100 shadow-xl border border-base-200 {{ .css_classes }}">
-  <div class="card-body">
-    <div class="flex items-center gap-4 mb-4">
-        {{ if .avatar }}<div class="avatar"><div class="w-12 h-12 rounded-full"><img src="{{ .avatar }}" /></div></div>{{ end }}
-        <div>
-            <h2 class="card-title text-base">{{ .author }}</h2>
-            <p class="text-sm opacity-70">{{ .role }}</p>
+<div class="py-8 px-6 bg-base-200 rounded-lg shadow-md max-w-2xl mx-auto">
+    <div class="flex flex-col items-center text-center">
+        {{ if .image }}
+        <div class="avatar mb-4">
+            <div class="w-20 h-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                <img src="{{ .image }}" alt="{{ .author }}" class="object-cover">
+            </div>
         </div>
+        {{ end }}
+        <blockquote class="text-lg italic text-base-content mb-4">
+            "{{ .quote }}"
+        </blockquote>
+        {{ if .author }}
+        <cite class="text-sm font-semibold text-primary not-italic">
+            — {{ .author }}
+        </cite>
+        {{ end }}
     </div>
-    <p class="italic text-base-content/80">"{{ .quote | default .text }}"</p>
-  </div>
 </div>

@@ -21,7 +21,7 @@
           "link_url": "/",
           "logo_image": "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg",
           "link_url_type": "page",
-          "css_classes": "btn-neutral",
+          "css_classes": "glass",
           "id": "4ea26512-4eea-4ede-a0dd-896ea73b499e",
           "block_type": "brand_logo"
         },
@@ -74,7 +74,7 @@
               "sort_order": 0
             }
           ],
-          "css_classes": "",
+          "css_classes": "glass",
           "id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
           "block_type": "menu"
         }

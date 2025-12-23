@@ -21,7 +21,7 @@
           "link_url": "/",
           "logo_image": "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg",
           "link_url_type": "page",
-          "css_classes": "btn-neutral",
+          "css_classes": "glass",
           "id": "4ea26512-4eea-4ede-a0dd-896ea73b499e",
           "block_type": "brand_logo"
         },
@@ -74,7 +74,7 @@
               "sort_order": 0
             }
           ],
-          "css_classes": "",
+          "css_classes": "glass",
           "id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
           "block_type": "menu"
         }
@@ -148,7 +148,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "573ba4f4-627b-4225-9f21-cf0b3121b0f2"
+                  "id": "d33eb669-b1c4-4bd0-a63c-1cba63a1ce64"
                 }
               ]
             },
@@ -159,7 +159,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "f58c5399-8e20-446a-a7ea-9f96dfdb3862"
+                  "id": "3aebe1b1-dda5-4f26-bfea-e7a4c6dc68cb"
                 }
               ]
             },
@@ -170,7 +170,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/2NRRmCOMrk8WYpvYeUzPIQ/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "dfd36b8a-9878-41b4-a8f1-013954527858"
+                  "id": "4753135e-ecfd-4b31-8c18-c880c8420b5d"
                 }
               ]
             },
@@ -181,7 +181,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "bc29bc1b-394d-4236-97d5-3328cf43bf2a"
+                  "id": "423d7ed1-7a33-4425-aaa9-bd353d992be2"
                 }
               ]
             }
