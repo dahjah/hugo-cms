@@ -3363,7 +3363,6 @@ layout = "${activePage.value.layout}"
                 };
 
                 const fetchContent = async (pageId) => {
-                    isLoadingPageContent.value = true;
                     try {
                         const url = `${API_BASE_URL}pages/${pageId}/content/`;
                         const blocks = await fetchApi(url) || [];
@@ -3371,10 +3370,14 @@ layout = "${activePage.value.layout}"
                         // Populate page-specific zones in contentZones
                         contentZones.value.main = blocks.filter(b => b.placement_key === 'main' || !b.placement_key).sort((a, b) => a.sort_order - b.sort_order);
                         contentZones.value.sidebar = blocks.filter(b => b.placement_key === 'sidebar').sort((a, b) => a.sort_order - b.sort_order);
+
+                        // Mark page as hydrated after content is loaded
+                        const page = pages.value.find(p => p.id === pageId);
+                        if(page) {
+                            page.isHydrated = true;
+                        }
                     } catch(error) {
                         console.error('Error fetching content:', error);
-                    } finally {
-                        isLoadingPageContent.value = false;
                     }
                 };
 
@@ -3396,7 +3399,6 @@ layout = "${activePage.value.layout}"
                 const isPublishing = ref(false);
                 const isSavingSettings = ref(false);
                 const hasUnsavedChanges = ref(false);
-                const isLoadingPageContent = ref(false); // Track when loading content to prevent watch false positives
                 const themePreset = ref('default');
                 const carouselSlideIndexes = ref({}); // Track carousel current slides separately to avoid triggering unsaved changes
 
@@ -3627,7 +3629,7 @@ layout = "${activePage.value.layout}"
                         };
 
                         const response = await fetchApi(`${API_BASE_URL}pages/`, 'POST', newPage);
-                        pages.value.push({...response, contentStatus: 'saved'}); // Add new page with initial state
+                        pages.value.push({...response, contentStatus: 'saved', isHydrated: false}); // Add new page
                         activePageId.value = response.id;
                     } catch(error) {
                         console.error('Error creating page:', error);
