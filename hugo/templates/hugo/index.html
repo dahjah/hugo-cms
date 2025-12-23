@@ -717,11 +717,15 @@
                             class="flex-1 py-1.5 text-xs rounded border transition-colors flex items-center justify-center space-x-2"
                             :class="activePage.status === 'published' ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'">
                             <div class="w-3.5 h-3.5 flex items-center justify-center">
-                                <icon v-if="activePage.contentStatus === 'unsaved' && activePage.status === 'published'"
-                                    name="alert-triangle" size="100%" class="text-pink-500 animate-pulse"></icon>
-                                <icon v-else name="check" size="100%" :stroke="3"
-                                    :style="{ color: activePage.status === 'published' ? '#0088FF' : '#94A3B8' }">
-                                </icon>
+                                <template v-if="activePage.status === 'published'">
+                                    <icon v-if="activePage.contentStatus === 'unsaved'" name="alert-triangle"
+                                        size="100%" class="text-pink-500 animate-pulse"></icon>
+                                    <icon v-else-if="activePage.contentStatus === 'saved'" name="save" size="100%"
+                                        class="text-amber-400"></icon>
+                                    <icon v-else name="check" size="100%" :stroke="3" :style="{ color: '#0088FF' }">
+                                    </icon>
+                                </template>
+                                <icon v-else name="check" size="100%" :stroke="3" class="text-slate-300"></icon>
                             </div>
                             <span>Published</span>
                         </button>
@@ -729,10 +733,12 @@
                             class="flex-1 py-1.5 text-xs rounded border transition-colors flex items-center justify-center space-x-2"
                             :class="activePage.status === 'draft' ? 'bg-amber-50 border-amber-200 text-amber-700 font-medium' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'">
                             <div class="w-3.5 h-3.5 flex items-center justify-center">
-                                <icon v-if="activePage.contentStatus === 'unsaved' && activePage.status === 'draft'"
-                                    name="alert-triangle" size="100%" class="text-pink-500 animate-pulse"></icon>
-                                <icon v-else name="save" size="100%"
-                                    :class="activePage.status === 'draft' ? 'text-amber-400' : 'text-slate-400'"></icon>
+                                <template v-if="activePage.status === 'draft'">
+                                    <icon v-if="activePage.contentStatus === 'unsaved'" name="alert-triangle"
+                                        size="100%" class="text-pink-500 animate-pulse"></icon>
+                                    <icon v-else name="save" size="100%" class="text-amber-400"></icon>
+                                </template>
+                                <icon v-else name="save" size="100%" class="text-slate-300"></icon>
                             </div>
                             <span>Draft</span>
                         </button>
