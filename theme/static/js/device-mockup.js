@@ -1,7 +1,7 @@
 class DeviceMockup extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
+    this.attachShadow({mode: "open"});
     this._currentTheme = "light";
     this._mediaQuery = null;
   }
@@ -48,14 +48,14 @@ class DeviceMockup extends HTMLElement {
   }
 
   disconnectedCallback() {
-    if (this._mediaQuery) {
+    if(this._mediaQuery) {
       this._mediaQuery.removeEventListener("change", this._handleThemeChange);
     }
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (oldValue !== newValue) {
-      if (name === "theme") {
+    if(oldValue !== newValue) {
+      if(name === "theme") {
         this._detectTheme();
       }
       this.render();
@@ -65,7 +65,7 @@ class DeviceMockup extends HTMLElement {
   _detectTheme() {
     const themeAttr = this.getAttribute("theme") || "auto";
 
-    if (themeAttr === "auto") {
+    if(themeAttr === "auto") {
       this._currentTheme = window.matchMedia("(prefers-color-scheme: dark)")
         .matches
         ? "dark"
@@ -82,22 +82,22 @@ class DeviceMockup extends HTMLElement {
 
     // Base dimensions for each device type (widest element)
     const baseDimensions = {
-      laptop: { width: 238, height: 154 }, // laptop-base is 238px wide, total height ~154px
-      phone: { width: 126, height: 252 },
-      tablet: { width: 182, height: 238 },
+      laptop: {width: 238, height: 154}, // laptop-base is 238px wide, total height ~154px
+      phone: {width: 126, height: 252},
+      tablet: {width: 182, height: 238},
     };
 
     const base = baseDimensions[type] || baseDimensions.laptop;
 
     // If custom width is specified, calculate scale based on width
-    if (customWidth) {
+    if(customWidth) {
       // Remove 'px' suffix if present and parse as number
       const targetWidth = parseFloat(customWidth.toString().replace("px", ""));
       return targetWidth / base.width;
     }
 
     // If custom height is specified, calculate scale based on height
-    if (customHeight) {
+    if(customHeight) {
       // Remove 'px' suffix if present and parse as number
       const targetHeight = parseFloat(
         customHeight.toString().replace("px", "")
@@ -112,7 +112,7 @@ class DeviceMockup extends HTMLElement {
   _setupMediaQueryListener() {
     const themeAttr = this.getAttribute("theme") || "auto";
 
-    if (themeAttr === "auto") {
+    if(themeAttr === "auto") {
       this._mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
       this._handleThemeChange = () => {
         this._detectTheme();
@@ -123,7 +123,7 @@ class DeviceMockup extends HTMLElement {
   }
 
   _isVideoFile(src) {
-    if (!src) return false;
+    if(!src) return false;
     const videoExtensions = [
       ".mp4",
       ".webm",
@@ -138,7 +138,7 @@ class DeviceMockup extends HTMLElement {
 
   _createMediaElement(sources, isHover = false, padding = "0", fit = "") {
     const mainSrc = sources[0];
-    if (!mainSrc) return "";
+    if(!mainSrc) return "";
 
     const isVideo = this._isVideoFile(mainSrc);
     const alt = this.getAttribute("alt") || "";
@@ -146,12 +146,11 @@ class DeviceMockup extends HTMLElement {
       padding !== "0" ? `has-padding-${isHover ? "hover" : "main"}` : "";
     const fitClass = fit ? `has-fit-${isHover ? "hover" : "main"}` : "";
 
-    if (isVideo) {
+    if(isVideo) {
       return `
         <video
-          class="device-media ${
-            isHover ? "hover-media" : ""
-          } ${paddingClass} ${fitClass}"
+          class="device-media ${isHover ? "hover-media" : ""
+        } ${paddingClass} ${fitClass}"
           autoplay
           loop
           muted
@@ -160,12 +159,12 @@ class DeviceMockup extends HTMLElement {
           ${!isHover ? 'role="img"' : ""}
         >
           ${sources
-            .map((src) => {
-              const ext = src.split(".").pop().toLowerCase();
-              const mimeType = this._getMimeType(ext);
-              return `<source src="${src}" type="${mimeType}">`;
-            })
-            .join("")}
+          .map((src) => {
+            const ext = src.split(".").pop().toLowerCase();
+            const mimeType = this._getMimeType(ext);
+            return `<source src="${src}" type="${mimeType}">`;
+          })
+          .join("")}
           ${alt ? `<p>${alt}</p>` : ""}
         </video>
       `;
@@ -173,16 +172,16 @@ class DeviceMockup extends HTMLElement {
       return `
         <picture class="${paddingClass}">
           ${sources
-            .slice(0, -1)
-            .reverse()
-            .map((src) => {
-              const ext = src.split(".").pop().toLowerCase();
-              const mimeType = this._getImageMimeType(ext);
-              return mimeType
-                ? `<source srcset="${src}" type="${mimeType}">`
-                : "";
-            })
-            .join("")}
+          .slice(0, -1)
+          .reverse()
+          .map((src) => {
+            const ext = src.split(".").pop().toLowerCase();
+            const mimeType = this._getImageMimeType(ext);
+            return mimeType
+              ? `<source srcset="${src}" type="${mimeType}">`
+              : "";
+          })
+          .join("")}
           <img
             class="device-media ${isHover ? "hover-media" : ""} ${fitClass}"
             src="${sources[sources.length - 1]}"
@@ -242,9 +241,9 @@ class DeviceMockup extends HTMLElement {
     const fallback = this.getAttribute("fallback");
     const fallback2 = this.getAttribute("fallback-2");
 
-    if (src) sources.push(src);
-    if (fallback) sources.push(fallback);
-    if (fallback2) sources.push(fallback2);
+    if(src) sources.push(src);
+    if(fallback) sources.push(fallback);
+    if(fallback2) sources.push(fallback2);
 
     return sources;
   }
@@ -255,9 +254,9 @@ class DeviceMockup extends HTMLElement {
     const hoverFallback = this.getAttribute("hover-fallback");
     const hoverFallback2 = this.getAttribute("hover-fallback-2");
 
-    if (hoverSrc) sources.push(hoverSrc);
-    if (hoverFallback) sources.push(hoverFallback);
-    if (hoverFallback2) sources.push(hoverFallback2);
+    if(hoverSrc) sources.push(hoverSrc);
+    if(hoverFallback) sources.push(hoverFallback);
+    if(hoverFallback2) sources.push(hoverFallback2);
 
     return sources;
   }
@@ -277,10 +276,10 @@ class DeviceMockup extends HTMLElement {
     let mediaElement;
 
     // If mode is iframe, use iframe instead of image/video
-    if (mode === "iframe" && href) {
+    if(mode === "iframe" && href) {
       mediaElement = this._createIframeElement(href, padding);
     } else {
-      if (mediaSources.length === 0) {
+      if(mediaSources.length === 0) {
         console.warn("device-mockup: No media sources provided");
         return;
       }
@@ -294,21 +293,21 @@ class DeviceMockup extends HTMLElement {
 
     const hoverMediaElement = hasHover
       ? this._createMediaElement(
-          hoverMediaSources,
-          true,
-          hoverPadding,
-          hoverFit
-        )
+        hoverMediaSources,
+        true,
+        hoverPadding,
+        hoverFit
+      )
       : "";
 
     let template;
-    if (type === "phone") {
+    if(type === "phone") {
       template = this._getPhoneTemplate(
         mediaElement,
         hoverMediaElement,
         hasHover
       );
-    } else if (type === "tablet") {
+    } else if(type === "tablet") {
       template = this._getTabletTemplate(
         mediaElement,
         hoverMediaElement,
@@ -347,22 +346,20 @@ class DeviceMockup extends HTMLElement {
     `;
 
     // If iframe mode, don't wrap in link - iframe is the content
-    if (mode === "iframe") {
+    if(mode === "iframe") {
       return `
-        <div class="device-container laptop-container ${
-          hasHover ? "has-hover" : ""
+        <div class="device-container laptop-container ${hasHover ? "has-hover" : ""
         }">
           ${content}
         </div>
       `;
     }
 
-    if (href) {
+    if(href) {
       return `
         <a href="${href}" target="${target}" class="device-link">
-          <div class="device-container laptop-container ${
-            hasHover ? "has-hover" : ""
-          }">
+          <div class="device-container laptop-container ${hasHover ? "has-hover" : ""
+        }">
             ${content}
           </div>
         </a>
@@ -370,8 +367,7 @@ class DeviceMockup extends HTMLElement {
     }
 
     return `
-      <div class="device-container laptop-container ${
-        hasHover ? "has-hover" : ""
+      <div class="device-container laptop-container ${hasHover ? "has-hover" : ""
       }">
         ${content}
       </div>
@@ -397,22 +393,20 @@ class DeviceMockup extends HTMLElement {
     `;
 
     // If iframe mode, don't wrap in link - iframe is the content
-    if (mode === "iframe") {
+    if(mode === "iframe") {
       return `
-        <div class="device-container phone-container ${
-          hasHover ? "has-hover" : ""
+        <div class="device-container phone-container ${hasHover ? "has-hover" : ""
         }">
           ${content}
         </div>
       `;
     }
 
-    if (href) {
+    if(href) {
       return `
         <a href="${href}" target="${target}" class="device-link">
-          <div class="device-container phone-container ${
-            hasHover ? "has-hover" : ""
-          }">
+          <div class="device-container phone-container ${hasHover ? "has-hover" : ""
+        }">
             ${content}
           </div>
         </a>
@@ -420,8 +414,7 @@ class DeviceMockup extends HTMLElement {
     }
 
     return `
-      <div class="device-container phone-container ${
-        hasHover ? "has-hover" : ""
+      <div class="device-container phone-container ${hasHover ? "has-hover" : ""
       }">
         ${content}
       </div>
@@ -446,22 +439,20 @@ class DeviceMockup extends HTMLElement {
     `;
 
     // If iframe mode, don't wrap in link - iframe is the content
-    if (mode === "iframe") {
+    if(mode === "iframe") {
       return `
-        <div class="device-container tablet-container ${
-          hasHover ? "has-hover" : ""
+        <div class="device-container tablet-container ${hasHover ? "has-hover" : ""
         }">
           ${content}
         </div>
       `;
     }
 
-    if (href) {
+    if(href) {
       return `
         <a href="${href}" target="${target}" class="device-link">
-          <div class="device-container tablet-container ${
-            hasHover ? "has-hover" : ""
-          }">
+          <div class="device-container tablet-container ${hasHover ? "has-hover" : ""
+        }">
             ${content}
           </div>
         </a>
@@ -469,8 +460,7 @@ class DeviceMockup extends HTMLElement {
     }
 
     return `
-      <div class="device-container tablet-container ${
-        hasHover ? "has-hover" : ""
+      <div class="device-container tablet-container ${hasHover ? "has-hover" : ""
       }">
         ${content}
       </div>
@@ -499,14 +489,14 @@ class DeviceMockup extends HTMLElement {
     // Support both new and old attribute names for backward compatibility
     const getColor = (cssVar, attrName, deprecatedAttr, lightDefault, darkDefault) => {
       const customValue = this.style.getPropertyValue(cssVar).trim();
-      if (customValue) return customValue;
+      if(customValue) return customValue;
 
       const newAttrValue = this.getAttribute(attrName);
-      if (newAttrValue) return newAttrValue;
+      if(newAttrValue) return newAttrValue;
 
       // Check for old attribute name (silent fallback)
       const deprecatedValue = this.getAttribute(deprecatedAttr);
-      if (deprecatedValue) return deprecatedValue;
+      if(deprecatedValue) return deprecatedValue;
 
       return isDark ? darkDefault : lightDefault;
     };
@@ -525,9 +515,9 @@ class DeviceMockup extends HTMLElement {
     // Calculate actual dimensions for layout
     const type = this.getAttribute("type") || "laptop";
     const baseDimensions = {
-      laptop: { width: 238, height: 154 },
-      phone: { width: 126, height: 252 },
-      tablet: { width: 182, height: 238 },
+      laptop: {width: 238, height: 154},
+      phone: {width: 126, height: 252},
+      tablet: {width: 182, height: 238},
     };
     const base = baseDimensions[type] || baseDimensions.laptop;
     const actualWidth = base.width * defaultScale;
@@ -591,7 +581,7 @@ class DeviceMockup extends HTMLElement {
         background: var(--bezel-color);
         border-radius: 8px 8px 3px 3px;
         padding: 6px;
-        box-shadow: 0 18px 35px -8px var(--shadow-color);
+        box-shadow: 0 12px 24px -6px var(--shadow-color);
         position: relative;
       }
 
@@ -622,7 +612,7 @@ class DeviceMockup extends HTMLElement {
         background: linear-gradient(to bottom, var(--keyboard-color), var(--bezel-color));
         border-radius: 0 0 14px 14px;
         margin-top: -3px;
-        box-shadow: 0 6px 12px -3px var(--shadow-color);
+        box-shadow: 0 4px 8px -2px var(--shadow-color);
         position: relative;
       }
 

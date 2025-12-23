@@ -1783,7 +1783,7 @@
         const PreviewViewport = {
             props: ['customCss', 'theme', 'device'],
             template: `
-            <div class="w-full h-full relative" :class="{'flex items-center justify-center bg-slate-100': device !== 'desktop'}">
+            <div ref="container" class="w-full h-full relative" :class="{'flex items-center justify-center bg-slate-100 overflow-hidden': device !== 'desktop'}">
                 <!-- Desktop: Interactive Editor Mode -->
                 <iframe v-if="device === 'desktop'" ref="iframe" class="w-full h-full border-none bg-white"></iframe>
 
@@ -1794,8 +1794,8 @@
                     :alt="device + ' preview'"
                     mode="iframe" 
                     href="about:blank"
-                    class="my-4"
-                    :height="device === 'mobile' ? '600' : (device === 'tablet' ? '660' : '760')"
+                    class="transition-all duration-300"
+                    :height="responsiveHeight"
                 ></device-mockup>
                 
                 <teleport :to="iframeBody" v-if="iframeBody">
@@ -1806,9 +1806,44 @@
             </div>
             `,
             setup(props) {
+                const container = ref(null);
                 const iframe = ref(null);
                 const mockup = ref(null);
                 const iframeBody = ref(null);
+                const containerHeight = ref(800);
+                const containerWidth = ref(1000);
+                let observer = null;
+
+                const {onUnmounted} = Vue;
+
+                const debounce = (fn, delay) => {
+                    let timeoutId;
+                    return (...args) => {
+                        clearTimeout(timeoutId);
+                        timeoutId = setTimeout(() => fn.apply(this, args), delay);
+                    };
+                };
+
+                // Calculate responsive height based on container + device constraints
+                const responsiveHeight = computed(() => {
+                    const availableH = containerHeight.value - 60; // 60px buffer vertical
+                    const availableW = containerWidth.value - 60;  // 60px buffer horizontal
+
+                    if(props.device === 'mobile') {
+                        const ratio = 0.5; // w/h
+                        const heightFromW = availableW / ratio;
+                        return Math.min(availableH, heightFromW, 750);
+                    } else if(props.device === 'tablet') {
+                        const ratio = 0.76;
+                        const heightFromW = availableW / ratio;
+                        return Math.min(availableH, heightFromW, 800);
+                    } else {
+                        // Laptop
+                        const ratio = 1.55;
+                        const heightFromW = availableW / ratio;
+                        return Math.min(availableH, heightFromW, 900);
+                    }
+                });
 
                 const updateStyles = (doc) => {
                     let styleEl = doc.getElementById('custom-styles');
@@ -1873,11 +1908,19 @@
                     setTimeout(checkBody, 10);
                 };
 
-                // Re-init when device changes (iframe element changes)
+                // Re-init when device changes
                 watch(() => props.device, () => {
-                    iframeBody.value = null; // Clear old target
+                    iframeBody.value = null;
                     nextTick(() => {
                         initIframe();
+                    });
+                });
+
+                // Re-init when responsive size changes (component re-renders)
+                watch(responsiveHeight, () => {
+                    // Wait for prop update to trigger web component re-render
+                    nextTick(() => {
+                        setTimeout(initIframe, 50); // Small delay for Shadow DOM rebuild
                     });
                 });
 
@@ -1895,9 +1938,25 @@
 
                 onMounted(() => {
                     initIframe();
+
+                    if(container.value) {
+                        const debouncedResize = debounce((entries) => {
+                            for(let entry of entries) {
+                                containerHeight.value = entry.contentRect.height;
+                                containerWidth.value = entry.contentRect.width;
+                            }
+                        }, 100);
+
+                        observer = new ResizeObserver(debouncedResize);
+                        observer.observe(container.value);
+                    }
                 });
 
-                return {iframe, mockup, iframeBody};
+                onUnmounted(() => {
+                    if(observer) observer.disconnect();
+                });
+
+                return {container, iframe, mockup, iframeBody, responsiveHeight};
             }
         };
 
