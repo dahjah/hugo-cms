@@ -3691,8 +3691,8 @@ layout = "${activePage.value.layout}"
                         }, {deep: true});
 
                         if(pages.value.length > 0) {
+                            // Setting activePageId will trigger the watcher which calls fetchContent
                             activePageId.value = pages.value[0].id;
-                            await fetchContent(activePageId.value);
                         }
                     } catch(error) {
                         console.error('Failed to load CMS data:', error);
