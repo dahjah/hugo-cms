@@ -847,6 +847,26 @@
         <!-- Wrapper for Canvas + Inspector -->
         <div class="flex-1 flex overflow-hidden relative">
 
+            <!-- Device Switcher Floating Pill -->
+            <div v-if="viewMode === 'preview'"
+                class="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center bg-slate-200/80 backdrop-blur-sm rounded-lg p-1 border border-slate-200/50 shadow-sm transition-all selection-slider">
+                <button @click="previewDevice = 'desktop'"
+                    class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
+                    :class="previewDevice === 'desktop' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5' : 'text-slate-600 hover:text-slate-800'">
+                    <icon name="monitor" :size="16"></icon>
+                </button>
+                <button @click="previewDevice = 'tablet'"
+                    class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
+                    :class="previewDevice === 'tablet' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5' : 'text-slate-600 hover:text-slate-800'">
+                    <icon name="tablet" :size="16"></icon>
+                </button>
+                <button @click="previewDevice = 'mobile'"
+                    class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
+                    :class="previewDevice === 'mobile' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5' : 'text-slate-600 hover:text-slate-800'">
+                    <icon name="smartphone" :size="16"></icon>
+                </button>
+            </div>
+
             <!-- Canvas Area -->
             <div class="flex-1 overflow-auto p-8 relative" @click="selectedBlockId = null">
 
@@ -879,53 +899,152 @@
 
                 <!-- Preview View -->
                 <div v-else-if="viewMode === 'preview'"
-                    class="w-full h-full flex items-center justify-center p-8 bg-slate-100">
-                    <div v-if="isPreviewLoading"
-                        class="fixed inset-0 flex items-center justify-center bg-white/50 z-50">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+                    class="w-full h-full flex flex-col bg-slate-100 overflow-hidden">
+
+                    <!-- Device Toolbar -->
+
+
+                    <!-- Preview Viewport Container -->
+                    <div class="flex-1 overflow-auto p-8 flex justify-center items-start">
+                        <div v-if="isPreviewLoading"
+                            class="fixed inset-0 flex items-center justify-center bg-white/50 z-50">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+                        </div>
+
+                        <!-- Mobile Mockup -->
+                        <div v-if="previewDevice === 'mobile'" class="mockup-phone border-slate-800">
+                            <div class="camera"></div>
+                            <div class="display">
+                                <div
+                                    class="artboard artboard-demo bg-white overflow-hidden relative w-[390px] h-[700px]">
+                                    <preview-viewport ref="previewViewport" class="w-full h-full block overflow-y-auto"
+                                        :custom-css="customCss" :theme="themePreset || 'default'">
+                                        <!-- Header Zone (Global) -->
+                                        <div v-if="getZoneConfig('header')"
+                                            :class="getZoneConfig('header')?.cssClasses || ''"
+                                            :style="{ order: getZoneConfig('header')?.order || 0 }">
+                                            <block-renderer v-for="block in activeContent.header" :key="block.id"
+                                                :block="block" :is-selected="false" :is-editable="false">
+                                            </block-renderer>
+                                        </div>
+
+                                        <!-- Main Content Canvas -->
+                                        <div class="flex flex-col min-h-full"> <!-- Flex col for mobile -->
+                                            <!-- Sidebar Zone -->
+                                            <div v-if="getZoneConfig('sidebar')"
+                                                :class="(getZoneConfig('sidebar')?.cssClasses || '')"
+                                                :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
+                                                <block-renderer v-for="block in activeContent.sidebar" :key="block.id"
+                                                    :block="block" :is-selected="false" :is-editable="false">
+                                                </block-renderer>
+                                            </div>
+
+                                            <!-- Page Content Zone -->
+                                            <div class="flex-1 min-w-0"
+                                                :style="{ order: getZoneConfig('main')?.order || 2 }">
+                                                <block-renderer v-for="block in activeContent.main" :key="block.id"
+                                                    :block="block" :is-selected="false" :is-editable="false">
+                                                </block-renderer>
+                                            </div>
+                                        </div>
+
+                                        <!-- Footer Zone (Global) -->
+                                        <div v-if="getZoneConfig('footer')"
+                                            :class="getZoneConfig('footer')?.cssClasses || ''"
+                                            :style="{ order: getZoneConfig('footer')?.order || 0 }">
+                                            <block-renderer v-for="block in activeContent.footer" :key="block.id"
+                                                :block="block" :is-selected="false" :is-editable="false">
+                                            </block-renderer>
+                                        </div>
+                                    </preview-viewport>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tablet Mode -->
+                        <div v-else-if="previewDevice === 'tablet'"
+                            class="w-[768px] max-w-full bg-white shadow-2xl rounded-xl overflow-hidden border border-slate-300 my-4 transition-all duration-300">
+                            <preview-viewport ref="previewViewport" class="w-full h-[800px] block overflow-y-auto"
+                                :custom-css="customCss" :theme="themePreset || 'default'">
+                                <!-- Header Zone (Global) -->
+                                <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
+                                    :style="{ order: getZoneConfig('header')?.order || 0 }">
+                                    <block-renderer v-for="block in activeContent.header" :key="block.id" :block="block"
+                                        :is-selected="false" :is-editable="false">
+                                    </block-renderer>
+                                </div>
+
+                                <!-- Main Content Canvas -->
+                                <div class="flex flex-1" style="display: flex; min-height: 100%;">
+                                    <!-- Sidebar Zone -->
+                                    <div v-if="getZoneConfig('sidebar')"
+                                        :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
+                                        :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
+                                        <block-renderer v-for="block in activeContent.sidebar" :key="block.id"
+                                            :block="block" :is-selected="false" :is-editable="false">
+                                        </block-renderer>
+                                    </div>
+
+                                    <!-- Page Content Zone -->
+                                    <div class="flex-1 min-w-0" :style="{ order: getZoneConfig('main')?.order || 2 }">
+                                        <block-renderer v-for="block in activeContent.main" :key="block.id"
+                                            :block="block" :is-selected="false" :is-editable="false">
+                                        </block-renderer>
+                                    </div>
+                                </div>
+
+                                <!-- Footer Zone (Global) -->
+                                <div v-if="getZoneConfig('footer')" :class="getZoneConfig('footer')?.cssClasses || ''"
+                                    :style="{ order: getZoneConfig('footer')?.order || 0 }">
+                                    <block-renderer v-for="block in activeContent.footer" :key="block.id" :block="block"
+                                        :is-selected="false" :is-editable="false">
+                                    </block-renderer>
+                                </div>
+                            </preview-viewport>
+                        </div>
+
+                        <!-- Desktop Mode (Default) -->
+                        <preview-viewport v-else ref="previewViewport"
+                            class="w-full max-w-6xl bg-white shadow-xl transition-all duration-300"
+                            style="height: calc(100vh - 200px); display: block; overflow-y: auto;"
+                            :custom-css="customCss" :theme="themePreset || 'default'">
+
+                            <!-- Header Zone (Global) -->
+                            <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
+                                :style="{ order: getZoneConfig('header')?.order || 0 }">
+                                <block-renderer v-for="block in activeContent.header" :key="block.id" :block="block"
+                                    :is-selected="false" :is-editable="false">
+                                </block-renderer>
+                            </div>
+
+                            <!-- Main Content Canvas -->
+                            <div class="flex flex-1" style="display: flex; min-height: 100%;">
+                                <!-- Sidebar Zone -->
+                                <div v-if="getZoneConfig('sidebar')"
+                                    :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
+                                    :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
+                                    <block-renderer v-for="block in activeContent.sidebar" :key="block.id"
+                                        :block="block" :is-selected="false" :is-editable="false">
+                                    </block-renderer>
+                                </div>
+
+                                <!-- Page Content Zone -->
+                                <div class="flex-1 min-w-0" :style="{ order: getZoneConfig('main')?.order || 2 }">
+                                    <block-renderer v-for="block in activeContent.main" :key="block.id" :block="block"
+                                        :is-selected="false" :is-editable="false">
+                                    </block-renderer>
+                                </div>
+                            </div>
+
+                            <!-- Footer Zone (Global) -->
+                            <div v-if="getZoneConfig('footer')" :class="getZoneConfig('footer')?.cssClasses || ''"
+                                :style="{ order: getZoneConfig('footer')?.order || 0 }">
+                                <block-renderer v-for="block in activeContent.footer" :key="block.id" :block="block"
+                                    :is-selected="false" :is-editable="false">
+                                </block-renderer>
+                            </div>
+                        </preview-viewport>
                     </div>
-
-
-                    <!-- Preview Viewport with Shadow DOM (provides true viewport for fixed positioning) -->
-                    <preview-viewport ref="previewViewport" class="w-full max-w-6xl bg-white shadow-xl"
-                        style="height: calc(100vh - 200px); display: block; overflow-y: auto;" :custom-css="customCss"
-                        :theme="themePreset || 'default'">
-
-                        <!-- Header Zone (Global) -->
-                        <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
-                            :style="{ order: getZoneConfig('header')?.order || 0 }">
-                            <block-renderer v-for="block in activeContent.header" :key="block.id" :block="block"
-                                :is-selected="false" :is-editable="false">
-                            </block-renderer>
-                        </div>
-
-                        <!-- Main Content Canvas -->
-                        <div class="flex flex-1" style="display: flex; min-height: 100%;">
-                            <!-- Sidebar Zone -->
-                            <div v-if="getZoneConfig('sidebar')"
-                                :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
-                                :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
-                                <block-renderer v-for="block in activeContent.sidebar" :key="block.id" :block="block"
-                                    :is-selected="false" :is-editable="false">
-                                </block-renderer>
-                            </div>
-
-                            <!-- Page Content Zone -->
-                            <div class="flex-1 min-w-0" :style="{ order: getZoneConfig('main')?.order || 2 }">
-                                <block-renderer v-for="block in activeContent.main" :key="block.id" :block="block"
-                                    :is-selected="false" :is-editable="false">
-                                </block-renderer>
-                            </div>
-                        </div>
-
-                        <!-- Footer Zone (Global) -->
-                        <div v-if="getZoneConfig('footer')" :class="getZoneConfig('footer')?.cssClasses || ''"
-                            :style="{ order: getZoneConfig('footer')?.order || 0 }">
-                            <block-renderer v-for="block in activeContent.footer" :key="block.id" :block="block"
-                                :is-selected="false" :is-editable="false">
-                            </block-renderer>
-                        </div>
-                    </preview-viewport>
                 </div>
 
                 <!-- Editor View -->
@@ -1839,6 +1958,9 @@
             'image': '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
             'columns': '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="12" x2="12" y1="3" y2="21"/>',
             'save': '<g stroke-width="1.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></g>',
+            'monitor': '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line>',
+            'tablet': '<rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>',
+            'smartphone': '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>',
             'send': '<line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
             'more-vertical': '<circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>',
             'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>',
@@ -3010,6 +3132,7 @@
                 const pages = ref([]);
                 const activePageId = ref(null);
                 const viewMode = ref('editor');
+                const previewDevice = ref('desktop');
                 const selectedBlockId = ref(null);
                 const sidebarTab = ref('pages');
 
@@ -4405,6 +4528,7 @@ layout = "${activePage.value.layout}"
 
 
                 return {
+                    previewDevice,
                     previewUrl,
                     refreshPreview,
                     isPreviewLoading,
@@ -4412,6 +4536,7 @@ layout = "${activePage.value.layout}"
                     pages,
                     activePageId,
                     viewMode,
+                    previewDevice,
                     activePage,
                     activeContent,
                     selectedBlockId,
