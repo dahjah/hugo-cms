@@ -3534,7 +3534,7 @@ layout = "${activePage.value.layout}"
                         }
                         const response = await fetch(url);
                         pages.value = await response.json();
-                        // Initialize contentStatus property on each page
+                        // Initialize contentStatus and isHydrated property on each page
                         pages.value.forEach(page => {
                             if(!page.contentStatus) {
                                 // Determine initial status based on published state
@@ -3543,6 +3543,10 @@ layout = "${activePage.value.layout}"
                                 } else {
                                     page.contentStatus = 'saved';
                                 }
+                            }
+                            // Mark as not hydrated initially
+                            if(page.isHydrated === undefined) {
+                                page.isHydrated = false;
                             }
                         });
                     } catch(error) {
@@ -3580,12 +3584,12 @@ layout = "${activePage.value.layout}"
                         // Set up content change watcher AFTER initial hydration
                         // This prevents false positives during page load
                         watch(contentZones, () => {
-                            // Only trigger if not currently loading page content
-                            if(!isLoadingPageContent.value && activePageId.value) {
+                            // Only trigger if active page is hydrated (content has been loaded)
+                            const activePage = pages.value.find(p => p.id === activePageId.value);
+                            if(activePage?.isHydrated && activePageId.value) {
                                 hasUnsavedChanges.value = true;
-                                const pageToUpdate = pages.value.find(p => p.id === activePageId.value);
-                                if(pageToUpdate) {
-                                    pageToUpdate.contentStatus = 'unsaved';
+                                if(activePage) {
+                                    activePage.contentStatus = 'unsaved';
                                 }
                             }
                         }, {deep: true});
