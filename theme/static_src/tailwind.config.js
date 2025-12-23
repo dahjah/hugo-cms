@@ -9,6 +9,7 @@ module.exports = {
 
         // Hugo app templates
         '../../hugo/templates/**/*.html',
+        '../../hugo/templates/**/*.hbs',
 
         // Hugo generated HTML (MOST IMPORTANT - this is what actually gets served!)
         // This is where all the classes from hugo_stats.json are rendered into actual HTML
@@ -20,7 +21,7 @@ module.exports = {
         '../../hugo_output/**/content/**/*.md',
     ],
 
-    important: true,
+    darkMode: 'class',
 
     theme: {
         extend: {},

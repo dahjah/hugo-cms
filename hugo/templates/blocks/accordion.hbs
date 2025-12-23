@@ -4,13 +4,14 @@
         {{#each items}}
         <div class="collapse collapse-arrow bg-base-100 border border-base-200 rounded-box">
             {{#if ../allow_multiple}}
-            <input type="checkbox" />
+            <input type="checkbox" id="accordion-{{ ../id }}-{{ @index }}" />
             {{else}}
-            <input type="radio" name="accordion-{{ ../id }}" />
+            <input type="radio" name="accordion-{{ ../id }}" id="accordion-{{ ../id }}-{{ @index }}" />
             {{/if}}
-            <div class="collapse-title text-xl font-medium text-base-content">
+            <label for="accordion-{{ ../id }}-{{ @index }}"
+                class="collapse-title text-xl font-medium text-base-content cursor-pointer">
                 {{ title }}
-            </div>
+            </label>
             <div class="collapse-content text-base-content/80">
                 <p>{{ content }}</p>
             </div>
