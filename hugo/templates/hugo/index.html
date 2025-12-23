@@ -3363,6 +3363,7 @@ layout = "${activePage.value.layout}"
                 };
 
                 const fetchContent = async (pageId) => {
+                    isLoadingPageContent.value = true;
                     try {
                         const url = `${API_BASE_URL}pages/${pageId}/content/`;
                         const blocks = await fetchApi(url) || [];
@@ -3372,6 +3373,8 @@ layout = "${activePage.value.layout}"
                         contentZones.value.sidebar = blocks.filter(b => b.placement_key === 'sidebar').sort((a, b) => a.sort_order - b.sort_order);
                     } catch(error) {
                         console.error('Error fetching content:', error);
+                    } finally {
+                        isLoadingPageContent.value = false;
                     }
                 };
 
@@ -3393,6 +3396,7 @@ layout = "${activePage.value.layout}"
                 const isPublishing = ref(false);
                 const isSavingSettings = ref(false);
                 const hasUnsavedChanges = ref(false);
+                const isLoadingPageContent = ref(false); // Track when loading content to prevent watch false positives
                 const themePreset = ref('default');
                 const carouselSlideIndexes = ref({}); // Track carousel current slides separately to avoid triggering unsaved changes
 
