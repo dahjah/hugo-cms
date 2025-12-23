@@ -3377,14 +3377,15 @@ layout = "${activePage.value.layout}"
                         return;
                     }
 
-                    // Check sessionStorage for unsaved content
+                    // Check sessionStorage for unsaved content (works across browser refreshes)
                     const sessionData = loadFromSessionStorage(pageId);
-                    if(sessionData && page?.contentStatus === 'unsaved') {
+                    if(sessionData) {
                         contentZones.value.main = sessionData.main;
                         contentZones.value.sidebar = sessionData.sidebar;
                         contentCache.set(pageId, sessionData);
                         if(page) {
                             page.isHydrated = true;
+                            page.contentStatus = 'unsaved'; // Mark as unsaved since we're restoring from session
                         }
                         return;
                     }
