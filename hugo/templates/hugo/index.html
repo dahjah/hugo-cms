@@ -3491,6 +3491,27 @@ layout = "${activePage.value.layout}"
                         console.warn('Failed to clear sessionStorage:', e);
                     }
                 };
+
+                // Debounced save to sessionStorage - saves 1 second after changes stop
+                let saveDebounceTimer = null;
+                const debouncedSaveToSessionStorage = () => {
+                    if(saveDebounceTimer) {
+                        clearTimeout(saveDebounceTimer);
+                    }
+                    saveDebounceTimer = setTimeout(() => {
+                        const currentPage = pages.value.find(p => p.id === activePageId.value);
+                        if(currentPage?.contentStatus === 'unsaved' && activePageId.value) {
+                            const cacheData = {
+                                header: [...contentZones.value.header],
+                                footer: [...contentZones.value.footer],
+                                main: [...contentZones.value.main],
+                                sidebar: [...contentZones.value.sidebar]
+                            };
+                            saveToSessionStorage(activePageId.value, cacheData);
+                            console.log('[DEBUG] Auto-saved to sessionStorage');
+                        }
+                    }, 1000); // 1 second debounce
+                };
                 const themePreset = ref('default');
                 const carouselSlideIndexes = ref({}); // Track carousel current slides separately to avoid triggering unsaved changes
 
@@ -3691,6 +3712,8 @@ layout = "${activePage.value.layout}"
                                 if(activePage) {
                                     activePage.contentStatus = 'unsaved';
                                 }
+                                // Auto-save to sessionStorage after 1 second of no changes
+                                debouncedSaveToSessionStorage();
                             }
                         }, {deep: true});
 
