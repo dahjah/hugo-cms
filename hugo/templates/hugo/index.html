@@ -579,7 +579,7 @@
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="w-2 h-2 rounded-full"
-                            :class="page.hasUnsavedChanges ? 'bg-rose-400' : (page.last_published_at && new Date(page.updated_at) <= new Date(page.last_published_at) ? 'bg-emerald-400' : 'bg-amber-400')"></span>
+                            :class="page.contentStatus === 'unsaved' ? 'bg-rose-400' : (page.contentStatus === 'published' ? 'bg-emerald-400' : 'bg-amber-400')"></span>
                         <icon name="more-vertical" :size="14" class="opacity-0 group-hover:opacity-100 text-slate-400">
                         </icon>
                     </div>
@@ -3533,10 +3533,15 @@ layout = "${activePage.value.layout}"
                         }
                         const response = await fetch(url);
                         pages.value = await response.json();
-                        // Initialize hasUnsavedChanges property on each page
+                        // Initialize contentStatus property on each page
                         pages.value.forEach(page => {
-                            if(page.hasUnsavedChanges === undefined) {
-                                page.hasUnsavedChanges = false;
+                            if(!page.contentStatus) {
+                                // Determine initial status based on published state
+                                if(page.last_published_at && new Date(page.updated_at) <= new Date(page.last_published_at)) {
+                                    page.contentStatus = 'published';
+                                } else {
+                                    page.contentStatus = 'saved';
+                                }
                             }
                         });
                     } catch(error) {
@@ -3594,9 +3599,9 @@ layout = "${activePage.value.layout}"
                     if(!isFetchingContent.value && activePageId.value) {
                         hasUnsavedChanges.value = true;
                         // Mark the active page as having unsaved changes
-                        const activePage = pages.value.find(p => p.id === activePageId.value);
-                        if(activePage) {
-                            activePage.hasUnsavedChanges = true;
+                        const pageToUpdate = pages.value.find(p => p.id === activePageId.value);
+                        if(pageToUpdate) {
+                            pageToUpdate.contentStatus = 'unsaved';
                         }
                     }
                 }, {deep: true});
@@ -3621,7 +3626,7 @@ layout = "${activePage.value.layout}"
                         };
 
                         const response = await fetchApi(`${API_BASE_URL}pages/`, 'POST', newPage);
-                        pages.value.push({...response, hasUnsavedChanges: false}); // Add new page with initial state
+                        pages.value.push({...response, contentStatus: 'saved'}); // Add new page with initial state
                         activePageId.value = response.id;
                     } catch(error) {
                         console.error('Error creating page:', error);
@@ -3717,11 +3722,13 @@ layout = "${activePage.value.layout}"
 
                         showToast('Content saved successfully', 'success');
                         hasUnsavedChanges.value = false; // Reset unsaved changes flag
-                        // Clear hasUnsavedChanges on the active page
+                        // Update contentStatus on the active page to 'saved'
                         const pageToUpdate = pages.value.find(p => p.id === activePageId.value);
                         if(pageToUpdate) {
-                            pageToUpdate.hasUnsavedChanges = false;
+                            pageToUpdate.contentStatus = 'saved';
                         }
+                        // Refresh pages to update published status if needed
+                        await fetchPages();
                     } catch(error) {
                         console.error("Save Error:", error);
                         showToast('Failed to save content', 'error', error.message);
