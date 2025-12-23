@@ -3377,6 +3377,18 @@ layout = "${activePage.value.layout}"
                         return;
                     }
 
+                    // Check sessionStorage for unsaved content
+                    const sessionData = loadFromSessionStorage(pageId);
+                    if(sessionData && page?.contentStatus === 'unsaved') {
+                        contentZones.value.main = sessionData.main;
+                        contentZones.value.sidebar = sessionData.sidebar;
+                        contentCache.set(pageId, sessionData);
+                        if(page) {
+                            page.isHydrated = true;
+                        }
+                        return;
+                    }
+
                     isLoadingContent.value = true; // Prevent watch from triggering
                     // Mark page as not hydrated while loading content
                     if(page) {
@@ -3425,6 +3437,33 @@ layout = "${activePage.value.layout}"
                 const hasUnsavedChanges = ref(false);
                 const isLoadingContent = ref(false); // True during fetchContent to prevent watch triggering
                 const contentCache = new Map(); // Cache contentZones for pages with unsaved changes
+
+                // SessionStorage helper functions
+                const saveToSessionStorage = (pageId, content) => {
+                    try {
+                        sessionStorage.setItem(`cms-unsaved-content-${pageId}`, JSON.stringify(content));
+                    } catch(e) {
+                        console.warn('Failed to save to sessionStorage:', e);
+                    }
+                };
+
+                const loadFromSessionStorage = (pageId) => {
+                    try {
+                        const data = sessionStorage.getItem(`cms-unsaved-content-${pageId}`);
+                        return data ? JSON.parse(data) : null;
+                    } catch(e) {
+                        console.warn('Failed to load from sessionStorage:', e);
+                        return null;
+                    }
+                };
+
+                const clearFromSessionStorage = (pageId) => {
+                    try {
+                        sessionStorage.removeItem(`cms-unsaved-content-${pageId}`);
+                    } catch(e) {
+                        console.warn('Failed to clear sessionStorage:', e);
+                    }
+                };
                 const themePreset = ref('default');
                 const carouselSlideIndexes = ref({}); // Track carousel current slides separately to avoid triggering unsaved changes
 
@@ -3641,10 +3680,12 @@ layout = "${activePage.value.layout}"
                     if(oldId) {
                         const oldPage = pages.value.find(p => p.id === oldId);
                         if(oldPage?.contentStatus === 'unsaved') {
-                            contentCache.set(oldId, {
+                            const cacheData = {
                                 main: [...contentZones.value.main],
                                 sidebar: [...contentZones.value.sidebar]
-                            });
+                            };
+                            contentCache.set(oldId, cacheData);
+                            saveToSessionStorage(oldId, cacheData);
                         }
                     }
 
@@ -3775,6 +3816,9 @@ layout = "${activePage.value.layout}"
                         const pageToUpdate = pages.value.find(p => p.id === activePageId.value);
                         if(pageToUpdate) {
                             pageToUpdate.contentStatus = 'saved';
+                            // Clear from cache and sessionStorage
+                            contentCache.delete(pageToUpdate.id);
+                            clearFromSessionStorage(pageToUpdate.id);
                         }
                         // Refresh pages to update published status if needed
                         await fetchPages();
