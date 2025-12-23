@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 
@@ -19,6 +20,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/eclipse.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+
+    <!-- Custom Web Components -->
+    <script type="module" src="{% static 'js/device-mockup.js' %}"></script>
 
     <!-- CSRF Token for future API requests -->
     {% csrf_token %}
@@ -855,6 +859,11 @@
                     :class="previewDevice === 'desktop' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5' : 'text-slate-600 hover:text-slate-800'">
                     <icon name="monitor" :size="16"></icon>
                 </button>
+                <button @click="previewDevice = 'laptop'"
+                    class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
+                    :class="previewDevice === 'laptop' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5' : 'text-slate-600 hover:text-slate-800'">
+                    <icon name="laptop" :size="16"></icon>
+                </button>
                 <button @click="previewDevice = 'tablet'"
                     class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
                     :class="previewDevice === 'tablet' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5' : 'text-slate-600 hover:text-slate-800'">
@@ -911,103 +920,10 @@
                             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
                         </div>
 
-                        <!-- Mobile Mockup -->
-                        <div v-if="previewDevice === 'mobile'" class="mockup-phone border-slate-800">
-                            <div class="camera"></div>
-                            <div class="display">
-                                <div
-                                    class="artboard artboard-demo bg-white overflow-hidden relative w-[390px] h-[700px]">
-                                    <preview-viewport ref="previewViewport" class="w-full h-full block overflow-y-auto"
-                                        :custom-css="customCss" :theme="themePreset || 'default'">
-                                        <!-- Header Zone (Global) -->
-                                        <div v-if="getZoneConfig('header')"
-                                            :class="getZoneConfig('header')?.cssClasses || ''"
-                                            :style="{ order: getZoneConfig('header')?.order || 0 }">
-                                            <block-renderer v-for="block in activeContent.header" :key="block.id"
-                                                :block="block" :is-selected="false" :is-editable="false">
-                                            </block-renderer>
-                                        </div>
-
-                                        <!-- Main Content Canvas -->
-                                        <div class="flex flex-col min-h-full"> <!-- Flex col for mobile -->
-                                            <!-- Sidebar Zone -->
-                                            <div v-if="getZoneConfig('sidebar')"
-                                                :class="(getZoneConfig('sidebar')?.cssClasses || '')"
-                                                :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
-                                                <block-renderer v-for="block in activeContent.sidebar" :key="block.id"
-                                                    :block="block" :is-selected="false" :is-editable="false">
-                                                </block-renderer>
-                                            </div>
-
-                                            <!-- Page Content Zone -->
-                                            <div class="flex-1 min-w-0"
-                                                :style="{ order: getZoneConfig('main')?.order || 2 }">
-                                                <block-renderer v-for="block in activeContent.main" :key="block.id"
-                                                    :block="block" :is-selected="false" :is-editable="false">
-                                                </block-renderer>
-                                            </div>
-                                        </div>
-
-                                        <!-- Footer Zone (Global) -->
-                                        <div v-if="getZoneConfig('footer')"
-                                            :class="getZoneConfig('footer')?.cssClasses || ''"
-                                            :style="{ order: getZoneConfig('footer')?.order || 0 }">
-                                            <block-renderer v-for="block in activeContent.footer" :key="block.id"
-                                                :block="block" :is-selected="false" :is-editable="false">
-                                            </block-renderer>
-                                        </div>
-                                    </preview-viewport>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tablet Mode -->
-                        <div v-else-if="previewDevice === 'tablet'"
-                            class="w-[768px] max-w-full bg-white shadow-2xl rounded-xl overflow-hidden border border-slate-300 my-4 transition-all duration-300">
-                            <preview-viewport ref="previewViewport" class="w-full h-[800px] block overflow-y-auto"
-                                :custom-css="customCss" :theme="themePreset || 'default'">
-                                <!-- Header Zone (Global) -->
-                                <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
-                                    :style="{ order: getZoneConfig('header')?.order || 0 }">
-                                    <block-renderer v-for="block in activeContent.header" :key="block.id" :block="block"
-                                        :is-selected="false" :is-editable="false">
-                                    </block-renderer>
-                                </div>
-
-                                <!-- Main Content Canvas -->
-                                <div class="flex flex-1" style="display: flex; min-height: 100%;">
-                                    <!-- Sidebar Zone -->
-                                    <div v-if="getZoneConfig('sidebar')"
-                                        :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
-                                        :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
-                                        <block-renderer v-for="block in activeContent.sidebar" :key="block.id"
-                                            :block="block" :is-selected="false" :is-editable="false">
-                                        </block-renderer>
-                                    </div>
-
-                                    <!-- Page Content Zone -->
-                                    <div class="flex-1 min-w-0" :style="{ order: getZoneConfig('main')?.order || 2 }">
-                                        <block-renderer v-for="block in activeContent.main" :key="block.id"
-                                            :block="block" :is-selected="false" :is-editable="false">
-                                        </block-renderer>
-                                    </div>
-                                </div>
-
-                                <!-- Footer Zone (Global) -->
-                                <div v-if="getZoneConfig('footer')" :class="getZoneConfig('footer')?.cssClasses || ''"
-                                    :style="{ order: getZoneConfig('footer')?.order || 0 }">
-                                    <block-renderer v-for="block in activeContent.footer" :key="block.id" :block="block"
-                                        :is-selected="false" :is-editable="false">
-                                    </block-renderer>
-                                </div>
-                            </preview-viewport>
-                        </div>
-
-                        <!-- Desktop Mode (Default) -->
-                        <preview-viewport v-else ref="previewViewport"
-                            class="w-full max-w-6xl bg-white shadow-xl transition-all duration-300"
-                            style="height: calc(100vh - 200px); display: block; overflow-y: auto;"
-                            :custom-css="customCss" :theme="themePreset || 'default'">
+                        <preview-viewport ref="previewViewport" class="w-full max-w-6xl transition-all duration-300"
+                            style="height: calc(100vh - 200px);"
+                            :class="previewDevice === 'desktop' ? 'bg-white shadow-xl overflow-y-auto' : ''"
+                            :device="previewDevice" :custom-css="customCss" :theme="themePreset || 'default'">
 
                             <!-- Header Zone (Global) -->
                             <div v-if="getZoneConfig('header')" :class="getZoneConfig('header')?.cssClasses || ''"
@@ -1018,10 +934,10 @@
                             </div>
 
                             <!-- Main Content Canvas -->
-                            <div class="flex flex-1" style="display: flex; min-height: 100%;">
+                            <div class="flex flex-col md:flex-row min-h-full">
                                 <!-- Sidebar Zone -->
-                                <div v-if="getZoneConfig('sidebar')"
-                                    :class="getZoneConfig('sidebar')?.width + ' ' + (getZoneConfig('sidebar')?.cssClasses || '')"
+                                <div v-if="getZoneConfig('sidebar')" class="w-full md:w-auto"
+                                    :class="(getZoneConfig('sidebar')?.cssClasses || '')"
                                     :style="{ order: getZoneConfig('sidebar')?.order || 0 }">
                                     <block-renderer v-for="block in activeContent.sidebar" :key="block.id"
                                         :block="block" :is-selected="false" :is-editable="false">
@@ -1865,10 +1781,23 @@
 
         // --- PREVIEW VIEWPORT COMPONENT ---
         const PreviewViewport = {
-            props: ['customCss', 'theme'],
+            props: ['customCss', 'theme', 'device'],
             template: `
-            <div class="w-full h-full relative">
-                <iframe ref="iframe" class="w-full h-full border-none bg-white"></iframe>
+            <div class="w-full h-full relative" :class="{'flex items-center justify-center bg-slate-100': device !== 'desktop'}">
+                <!-- Desktop: Interactive Editor Mode -->
+                <iframe v-if="device === 'desktop'" ref="iframe" class="w-full h-full border-none bg-white"></iframe>
+
+                <!-- Device Mode: Laptop/Tablet/Mobile -->
+                <device-mockup v-else ref="mockup" 
+                    :key="device"
+                    :type="device === 'mobile' ? 'phone' : (device === 'tablet' ? 'tablet' : 'laptop')" 
+                    :alt="device + ' preview'"
+                    mode="iframe" 
+                    href="about:blank"
+                    class="my-4"
+                    :height="device === 'mobile' ? '600' : (device === 'tablet' ? '660' : '760')"
+                ></device-mockup>
+                
                 <teleport :to="iframeBody" v-if="iframeBody">
                     <div :data-theme="theme" class="min-h-screen bg-base-100 text-base-content font-sans antialiased">
                          <slot></slot>
@@ -1878,6 +1807,7 @@
             `,
             setup(props) {
                 const iframe = ref(null);
+                const mockup = ref(null);
                 const iframeBody = ref(null);
 
                 const updateStyles = (doc) => {
@@ -1891,10 +1821,28 @@
                 };
 
                 const initIframe = () => {
-                    const doc = iframe.value.contentDocument;
-                    if(!doc) return;
+                    // Determine target iframe
+                    let targetIframe = null;
 
-                    // Reset body ref to force re-teleport if needed
+                    if(props.device === 'desktop') {
+                        targetIframe = iframe.value;
+                    } else if(mockup.value && mockup.value.shadowRoot) {
+                        targetIframe = mockup.value.shadowRoot.querySelector('iframe');
+                    }
+
+                    if(!targetIframe) {
+                        // Retry if not ready yet (especially for shadow DOM)
+                        setTimeout(initIframe, 50);
+                        return;
+                    }
+
+                    const doc = targetIframe.contentDocument;
+                    if(!doc) {
+                        setTimeout(initIframe, 50);
+                        return;
+                    }
+
+                    // Reset body ref
                     iframeBody.value = null;
 
                     // Write initial structure
@@ -1913,32 +1861,35 @@
                     `);
                     doc.close();
 
-                    // Wait for the document to be ready
                     const checkBody = () => {
                         if(doc.body) {
-                            // Ensure the body is actually part of the document
                             iframeBody.value = doc.body;
-
-                            // Initialize styles and theme
                             if(props.theme) doc.documentElement.setAttribute('data-theme', props.theme);
                             updateStyles(doc);
                         } else {
                             setTimeout(checkBody, 10);
                         }
                     };
-
                     setTimeout(checkBody, 10);
                 };
 
+                // Re-init when device changes (iframe element changes)
+                watch(() => props.device, () => {
+                    iframeBody.value = null; // Clear old target
+                    nextTick(() => {
+                        initIframe();
+                    });
+                });
+
                 watch(() => props.theme, (newTheme) => {
-                    if(iframe.value && iframe.value.contentDocument) {
-                        iframe.value.contentDocument.documentElement.setAttribute('data-theme', newTheme);
+                    if(iframeBody.value && iframeBody.value.ownerDocument) {
+                        iframeBody.value.ownerDocument.documentElement.setAttribute('data-theme', newTheme);
                     }
                 });
 
                 watch(() => props.customCss, () => {
-                    if(iframe.value && iframe.value.contentDocument) {
-                        updateStyles(iframe.value.contentDocument);
+                    if(iframeBody.value && iframeBody.value.ownerDocument) {
+                        updateStyles(iframeBody.value.ownerDocument);
                     }
                 });
 
@@ -1946,7 +1897,7 @@
                     initIframe();
                 });
 
-                return {iframe, iframeBody};
+                return {iframe, mockup, iframeBody};
             }
         };
 
@@ -1959,6 +1910,7 @@
             'columns': '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="12" x2="12" y1="3" y2="21"/>',
             'save': '<g stroke-width="1.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></g>',
             'monitor': '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line>',
+            'laptop': '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="20" x2="22" y2="20"></line>',
             'tablet': '<rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>',
             'smartphone': '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>',
             'send': '<line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
