@@ -3364,6 +3364,10 @@ layout = "${activePage.value.layout}"
 
                 const fetchContent = async (pageId) => {
                     isFetchingContent.value = true;
+                    // Clear unsaved changes indicator for this page since we're loading fresh content
+                    if(pageId) {
+                        pagesWithUnsavedChanges.value.delete(pageId);
+                    }
                     try {
                         const url = `${API_BASE_URL}pages/${pageId}/content/`;
                         const blocks = await fetchApi(url) || [];
