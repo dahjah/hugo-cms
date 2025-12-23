@@ -736,15 +736,27 @@
                             <span>{{ isPublishing && activePage.contentStatus !== 'published' ? 'Publishing...' :
                                 'Published' }}</span>
                         </button>
-                        <button @click="activePage.status = 'draft'"
-                            class="flex-1 py-1.5 text-xs rounded border transition-colors flex items-center justify-center space-x-2"
+                        <button
+                            @click="activePage.status = 'draft'; if(activePage.contentStatus === 'unsaved') savePageContent();"
+                            :disabled="isSaving"
+                            class="flex-1 py-1.5 text-xs rounded border transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             :class="activePage.contentStatus !== 'published' ? 'bg-amber-50 border-amber-200 text-amber-700 font-medium' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'">
                             <div class="w-3.5 h-3.5 flex items-center justify-center">
-                                <icon name="save" size="100%"
+                                <icon v-if="!isSaving || activePage.contentStatus === 'published'" name="save"
+                                    size="100%"
                                     :class="activePage.contentStatus !== 'published' ? 'text-amber-400' : 'text-slate-400'">
                                 </icon>
+                                <svg v-else class="animate-spin h-3.5 w-3.5 text-amber-600"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
                             </div>
-                            <span>Draft</span>
+                            <span>{{ isSaving && activePage.contentStatus !== 'published' ? 'Saving...' : 'Draft'
+                                }}</span>
                         </button>
                     </div>
                 </div>
@@ -824,10 +836,19 @@
                     <icon name="globe" :size="20"></icon>
                 </a>
 
-                <button @click="savePageContent" title="Save Draft" v-if="currentWebsite"
-                    class="p-2 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors flex items-center justify-center relative">
-                    <icon name="save" :size="20"></icon>
-                    <span v-if="hasUnsavedChanges"
+                <button @click="savePageContent" :disabled="isSaving"
+                    :title="hasUnsavedChanges ? 'Save Unsaved Changes' : 'Save Draft'" v-if="currentWebsite"
+                    class="p-2 bg-indigo-50 text-indigo-600 rounded-md hover:bg-indigo-100 transition-colors flex items-center justify-center relative disabled:opacity-50">
+                    <icon v-if="!isSaving" name="save" :size="20"></icon>
+                    <svg v-else class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    <span v-if="hasUnsavedChanges && !isSaving"
                         class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
                 </button>
                 <!-- Publish Button Group -->
@@ -3473,6 +3494,7 @@ layout = "${activePage.value.layout}"
                 const showSettingsModal = ref(false);
                 const showPublishDropdown = ref(false);
                 const isPublishing = ref(false);
+                const isSaving = ref(false);
                 const isSavingSettings = ref(false);
                 const hasUnsavedChanges = ref(false);
                 const isLoadingContent = ref(false); // True during fetchContent to prevent watch triggering
@@ -3811,8 +3833,8 @@ layout = "${activePage.value.layout}"
                     }
                 };
                 const savePageContent = async () => {
-                    if(!activePage.value) return;
-
+                    if(!activePage.value || isSaving.value) return;
+                    isSaving.value = true;
                     try {
                         const pageId = activePage.value.id;
                         const metadataPayload = {
@@ -3912,6 +3934,8 @@ layout = "${activePage.value.layout}"
                     } catch(error) {
                         console.error("Save Error:", error);
                         showToast('Failed to save content', 'error', error.message);
+                    } finally {
+                        isSaving.value = false;
                     }
                 };
 
@@ -4772,6 +4796,7 @@ layout = "${activePage.value.layout}"
                     showCreateWebsiteModal,
                     showPublishDropdown,
                     isPublishing,
+                    isSaving,
                     isSavingSettings,
                     hasUnsavedChanges,
                     publishCurrentPage,
