@@ -3628,6 +3628,11 @@ layout = "${activePage.value.layout}"
                                     page.contentStatus = 'saved';
                                 }
                             }
+                            // Check if there's unsaved content in sessionStorage for this page
+                            // This will auto-invalidate if DB has newer data
+                            if(loadFromSessionStorage(page.id, page.updated_at)) {
+                                page.contentStatus = 'unsaved';
+                            }
                             // Mark as not hydrated initially
                             if(page.isHydrated === undefined) {
                                 page.isHydrated = false;
