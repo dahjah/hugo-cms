@@ -3363,9 +3363,15 @@ layout = "${activePage.value.layout}"
                 };
 
                 const fetchContent = async (pageId) => {
+                    // Check if page has unsaved changes - if so, skip fetch to preserve edits
+                    const page = pages.value.find(p => p.id === pageId);
+                    if(page?.contentStatus === 'unsaved') {
+                        // Page already has unsaved edits loaded, don't overwrite from DB
+                        return;
+                    }
+
                     isLoadingContent.value = true; // Prevent watch from triggering
                     // Mark page as not hydrated while loading content
-                    const page = pages.value.find(p => p.id === pageId);
                     if(page) {
                         page.isHydrated = false;
                     }
