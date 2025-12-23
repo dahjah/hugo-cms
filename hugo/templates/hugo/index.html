@@ -580,13 +580,13 @@
                     <div class="flex items-center space-x-2">
                         <div class="w-5 h-5 flex items-center justify-center">
                             <template v-if="page.contentStatus === 'unsaved'">
-                                <icon name="alert-triangle" size="100%" class="text-red-500 animate-pulse"></icon>
+                                <icon name="alert-triangle" size="100%" class="text-pink-500 animate-pulse"></icon>
                             </template>
                             <template v-else-if="page.contentStatus === 'saved'">
                                 <icon name="save" size="100%" class="text-amber-400"></icon>
                             </template>
                             <template v-else-if="page.contentStatus === 'published'">
-                                <icon name="check" size="100%" :stroke="3" :style="{ color: '#00BF7F' }"></icon>
+                                <icon name="check" size="100%" :stroke="3" :style="{ color: '#0088FF' }"></icon>
                             </template>
                         </div>
                         <icon name="more-vertical" :size="14" class="opacity-0 group-hover:opacity-100 text-slate-400">
