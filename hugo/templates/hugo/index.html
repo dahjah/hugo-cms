@@ -1796,7 +1796,7 @@
                     href="about:blank"
                     class="transition-all duration-300"
                     :width="device === 'tablet-landscape' ? '238' : undefined"
-                    :height="device === 'tablet-landscape' ? '182' : (responsiveHeight || undefined)"
+                    :height="device === 'tablet-landscape' ? undefined : responsiveHeight"
                 ></device-mockup>
                 
                 <teleport :to="iframeBody" v-if="iframeBody">
