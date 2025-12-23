@@ -3375,7 +3375,11 @@ layout = "${activePage.value.layout}"
                         // Reset unsaved changes flag after content load
                         await nextTick();
                         hasUnsavedChanges.value = false;
-                        // Note: Don't remove from pagesWithUnsavedChanges here - only remove when actually saved
+                        // Clear hasUnsavedChanges for the page being loaded
+                        const pageToUpdate = pages.value.find(p => p.id === pageId);
+                        if(pageToUpdate) {
+                            pageToUpdate.hasUnsavedChanges = false;
+                        }
                     } finally {
                         isFetchingContent.value = false;
                     }
@@ -3719,9 +3723,9 @@ layout = "${activePage.value.layout}"
                         showToast('Content saved successfully', 'success');
                         hasUnsavedChanges.value = false; // Reset unsaved changes flag
                         // Clear hasUnsavedChanges on the active page
-                        const activePage = pages.value.find(p => p.id === activePageId.value);
-                        if(activePage) {
-                            activePage.hasUnsavedChanges = false;
+                        const pageToUpdate = pages.value.find(p => p.id === activePageId.value);
+                        if(pageToUpdate) {
+                            pageToUpdate.hasUnsavedChanges = false;
                         }
                     } catch(error) {
                         console.error("Save Error:", error);
