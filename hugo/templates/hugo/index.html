@@ -3366,6 +3366,7 @@ layout = "${activePage.value.layout}"
                     // Mark page as not hydrated while loading content
                     const page = pages.value.find(p => p.id === pageId);
                     if(page) {
+                        console.log('[fetchContent] Setting isHydrated=false for page:', pageId, page.title);
                         page.isHydrated = false;
                     }
 
@@ -3379,6 +3380,7 @@ layout = "${activePage.value.layout}"
 
                         // Mark page as hydrated AFTER content is loaded and zones are populated
                         if(page) {
+                            console.log('[fetchContent] Setting isHydrated=true for page:', pageId, page.title);
                             page.isHydrated = true;
                         }
                     } catch(error) {
@@ -3591,11 +3593,15 @@ layout = "${activePage.value.layout}"
                         watch(contentZones, () => {
                             // Only trigger if active page is hydrated (content has been loaded)
                             const activePage = pages.value.find(p => p.id === activePageId.value);
+                            console.log('[watch] contentZones changed. activePageId:', activePageId.value, 'activePage:', activePage?.title, 'isHydrated:', activePage?.isHydrated);
                             if(activePage?.isHydrated && activePageId.value) {
+                                console.log('[watch] TRIGGERING unsaved status');
                                 hasUnsavedChanges.value = true;
                                 if(activePage) {
                                     activePage.contentStatus = 'unsaved';
                                 }
+                            } else {
+                                console.log('[watch] NOT triggering - isHydrated is false or no activePage');
                             }
                         }, {deep: true});
                     } catch(error) {
