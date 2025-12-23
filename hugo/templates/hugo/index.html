@@ -3417,6 +3417,7 @@ layout = "${activePage.value.layout}"
                 const isSavingSettings = ref(false);
                 const hasUnsavedChanges = ref(false);
                 const isLoadingContent = ref(false); // True during fetchContent to prevent watch triggering
+                const contentCache = new Map(); // Cache contentZones for pages with unsaved changes
                 const themePreset = ref('default');
                 const carouselSlideIndexes = ref({}); // Track carousel current slides separately to avoid triggering unsaved changes
 
@@ -3627,8 +3628,20 @@ layout = "${activePage.value.layout}"
                     initialLoad();
                 });
 
-                // Watch activePageId to load new main content
-                watch(activePageId, async (newId) => {
+                // Watch activePageId to load new main content and cache previous page
+                watch(activePageId, async (newId, oldId) => {
+                    // Save current page's content to cache if it has unsaved changes
+                    if(oldId) {
+                        const oldPage = pages.value.find(p => p.id === oldId);
+                        if(oldPage?.contentStatus === 'unsaved') {
+                            contentCache.set(oldId, {
+                                main: [...contentZones.value.main],
+                                sidebar: [...contentZones.value.sidebar]
+                            });
+                        }
+                    }
+
+                    // Load new page
                     if(newId) {
                         await fetchContent(newId);
                     }
