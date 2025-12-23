@@ -3670,8 +3670,8 @@ layout = "${activePage.value.layout}"
                         await fetchPages();
 
                         // Set up content change watcher BEFORE loading content
-                        // Watch ONLY main and sidebar zones (not header/footer which are global)
-                        watch(() => ({main: contentZones.value.main, sidebar: contentZones.value.sidebar}), () => {
+                        // Watch all zones (header, footer, main, sidebar) for changes
+                        watch(contentZones, () => {
                             console.log('[DEBUG] Watch fired - isLoadingContent=', isLoadingContent.value);
                             // Don't trigger during fetchContent
                             if(isLoadingContent.value) {
