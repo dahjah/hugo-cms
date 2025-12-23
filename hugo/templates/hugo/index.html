@@ -3363,6 +3363,7 @@ layout = "${activePage.value.layout}"
                 };
 
                 const fetchContent = async (pageId) => {
+                    isLoadingContent.value = true; // Prevent watch from triggering
                     // Mark page as not hydrated while loading content
                     const page = pages.value.find(p => p.id === pageId);
                     if(page) {
@@ -3385,6 +3386,8 @@ layout = "${activePage.value.layout}"
                         }
                     } catch(error) {
                         console.error('Error fetching content:', error);
+                    } finally {
+                        isLoadingContent.value = false; // Allow watch to trigger again
                     }
                 };
 
@@ -3406,6 +3409,7 @@ layout = "${activePage.value.layout}"
                 const isPublishing = ref(false);
                 const isSavingSettings = ref(false);
                 const hasUnsavedChanges = ref(false);
+                const isLoadingContent = ref(false); // True during fetchContent to prevent watch triggering
                 const themePreset = ref('default');
                 const carouselSlideIndexes = ref({}); // Track carousel current slides separately to avoid triggering unsaved changes
 
@@ -3591,6 +3595,11 @@ layout = "${activePage.value.layout}"
                         // Set up content change watcher AFTER initial hydration
                         // This prevents false positives during page load
                         watch(contentZones, () => {
+                            // Don't trigger during fetchContent
+                            if(isLoadingContent.value) {
+                                console.log('[watch] SKIPPING - isLoadingContent is true');
+                                return;
+                            }
                             // Only trigger if active page is hydrated (content has been loaded)
                             const activePage = pages.value.find(p => p.id === activePageId.value);
                             console.log('[watch] contentZones changed. activePageId:', activePageId.value, 'activePage:', activePage?.title, 'isHydrated:', activePage?.isHydrated);
