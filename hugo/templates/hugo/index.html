@@ -3654,6 +3654,11 @@ layout = "${activePage.value.layout}"
                         websites.value = data.websites || [];
                         currentWebsite.value = data.current_website;
 
+                        // Initialize theme from current website
+                        if(currentWebsite.value) {
+                            themePreset.value = currentWebsite.value.theme_preset || 'default';
+                        }
+
                         // Fetch providers for UI
                         const providersResponse = await fetch(`${API_BASE_URL}deployment-providers/`);
                         if(providersResponse.ok) {
@@ -4377,6 +4382,9 @@ layout = "${activePage.value.layout}"
 
                 // Watch currentWebsite to reload styles when it changes
                 watch(currentWebsite, (newSite) => {
+                    // Sync theme preset when site changes
+                    themePreset.value = newSite?.theme_preset || 'default';
+
                     if(newSite?.id && viewMode.value === 'preview') {
                         nextTick(() => {
                             const previewEl = document.querySelector('preview-viewport');
