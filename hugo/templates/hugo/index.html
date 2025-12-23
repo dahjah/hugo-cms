@@ -3377,8 +3377,7 @@ layout = "${activePage.value.layout}"
                         contentZones.value.main = blocks.filter(b => b.placement_key === 'main' || !b.placement_key).sort((a, b) => a.sort_order - b.sort_order);
                         contentZones.value.sidebar = blocks.filter(b => b.placement_key === 'sidebar').sort((a, b) => a.sort_order - b.sort_order);
 
-                        // Mark page as hydrated after content is loaded
-                        const page = pages.value.find(p => p.id === pageId);
+                        // Mark page as hydrated AFTER content is loaded and zones are populated
                         if(page) {
                             page.isHydrated = true;
                         }
