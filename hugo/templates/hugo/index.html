@@ -578,8 +578,13 @@
                         <span class="truncate">{{ page.title }}</span>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <span class="w-2 h-2 rounded-full"
-                            :class="page.contentStatus === 'unsaved' ? 'bg-amber-400' : (page.contentStatus === 'published' ? 'bg-emerald-500' : 'bg-blue-600')"></span>
+                        <template v-if="page.contentStatus === 'unsaved'">
+                            <icon name="alert-circle" :size="14" class="text-fuchsia-600 animate-pulse"></icon>
+                        </template>
+                        <template v-else>
+                            <span class="w-2 h-2 rounded-full"
+                                :class="page.contentStatus === 'published' ? 'bg-emerald-500' : 'bg-orange-500'"></span>
+                        </template>
                         <icon name="more-vertical" :size="14" class="opacity-0 group-hover:opacity-100 text-slate-400">
                         </icon>
                     </div>
