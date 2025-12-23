@@ -3375,11 +3375,6 @@ layout = "${activePage.value.layout}"
                         // Reset unsaved changes flag after content load
                         await nextTick();
                         hasUnsavedChanges.value = false;
-                        // Clear hasUnsavedChanges for the page being loaded
-                        const pageToUpdate = pages.value.find(p => p.id === pageId);
-                        if(pageToUpdate) {
-                            pageToUpdate.hasUnsavedChanges = false;
-                        }
                     } finally {
                         isFetchingContent.value = false;
                     }
