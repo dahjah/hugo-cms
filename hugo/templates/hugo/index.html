@@ -3578,7 +3578,8 @@ layout = "${activePage.value.layout}"
                         // Set up content change watcher AFTER initial hydration
                         // This prevents false positives during page load
                         watch(contentZones, () => {
-                            if(activePageId.value) {
+                            // Only trigger if not currently loading page content
+                            if(!isLoadingPageContent.value && activePageId.value) {
                                 hasUnsavedChanges.value = true;
                                 const pageToUpdate = pages.value.find(p => p.id === activePageId.value);
                                 if(pageToUpdate) {
