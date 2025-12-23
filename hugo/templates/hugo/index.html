@@ -3670,11 +3670,8 @@ layout = "${activePage.value.layout}"
                             await fetchContent(activePageId.value);
                         }
 
-                        // Wait for all async operations to complete before setting up watch
-                        await nextTick();
 
-                        // Set up content change watcher AFTER initial hydration
-                        // This prevents false positives during page load
+                        // Set up content change watcher - isLoadingContent flag prevents false positives
                         watch(contentZones, () => {
                             // Don't trigger during fetchContent
                             if(isLoadingContent.value) {
