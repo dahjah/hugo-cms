@@ -3375,6 +3375,8 @@ layout = "${activePage.value.layout}"
                         // Reset unsaved changes flag after content load
                         await nextTick();
                         hasUnsavedChanges.value = false;
+                        // Wait one more tick to ensure all watch callbacks have fired
+                        await nextTick();
                         isFetchingContent.value = false; // Set to false AFTER content is loaded and nextTick
                     } catch(error) {
                         console.error('Error fetching content:', error);
