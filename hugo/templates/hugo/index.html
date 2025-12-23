@@ -3363,7 +3363,6 @@ layout = "${activePage.value.layout}"
                 };
 
                 const fetchContent = async (pageId) => {
-                    isFetchingContent.value = true;
                     try {
                         const url = `${API_BASE_URL}pages/${pageId}/content/`;
                         const blocks = await fetchApi(url) || [];
@@ -3371,16 +3370,8 @@ layout = "${activePage.value.layout}"
                         // Populate page-specific zones in contentZones
                         contentZones.value.main = blocks.filter(b => b.placement_key === 'main' || !b.placement_key).sort((a, b) => a.sort_order - b.sort_order);
                         contentZones.value.sidebar = blocks.filter(b => b.placement_key === 'sidebar').sort((a, b) => a.sort_order - b.sort_order);
-
-                        // Reset unsaved changes flag after content load
-                        await nextTick();
-                        hasUnsavedChanges.value = false;
-                        // Wait one more tick to ensure all watch callbacks have fired
-                        await nextTick();
-                        isFetchingContent.value = false; // Set to false AFTER content is loaded and nextTick
                     } catch(error) {
                         console.error('Error fetching content:', error);
-                        isFetchingContent.value = false; // Also reset on error
                     }
                 };
 
@@ -3404,7 +3395,7 @@ layout = "${activePage.value.layout}"
                 const hasUnsavedChanges = ref(false);
                 const themePreset = ref('default');
                 const carouselSlideIndexes = ref({}); // Track carousel current slides separately to avoid triggering unsaved changes
-                const isFetchingContent = ref(false);
+
                 const customCss = ref('');
                 const websiteSlug = ref('');
                 const cssEditorRef = ref(null);
@@ -3579,6 +3570,18 @@ layout = "${activePage.value.layout}"
                             activePageId.value = pages.value[0].id;
                             await fetchContent(activePageId.value);
                         }
+
+                        // Set up content change watcher AFTER initial hydration
+                        // This prevents false positives during page load
+                        watch(contentZones, () => {
+                            if(activePageId.value) {
+                                hasUnsavedChanges.value = true;
+                                const pageToUpdate = pages.value.find(p => p.id === activePageId.value);
+                                if(pageToUpdate) {
+                                    pageToUpdate.contentStatus = 'unsaved';
+                                }
+                            }
+                        }, {deep: true});
                     } catch(error) {
                         console.error('Failed to load CMS data:', error);
                     } finally {
@@ -3598,17 +3601,6 @@ layout = "${activePage.value.layout}"
                     }
                 });
 
-                // Watch for content changes
-                watch(contentZones, () => {
-                    if(!isFetchingContent.value && activePageId.value) {
-                        hasUnsavedChanges.value = true;
-                        // Mark the active page as having unsaved changes
-                        const pageToUpdate = pages.value.find(p => p.id === activePageId.value);
-                        if(pageToUpdate) {
-                            pageToUpdate.contentStatus = 'unsaved';
-                        }
-                    }
-                }, {deep: true});
 
                 // --- ACTIONS ---
                 const setActivePage = (id) => {
