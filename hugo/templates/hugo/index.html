@@ -3369,6 +3369,8 @@ layout = "${activePage.value.layout}"
                     if(contentCache.has(pageId)) {
                         // Restore from cache instead of fetching
                         const cached = contentCache.get(pageId);
+                        if(cached.header) contentZones.value.header = cached.header;
+                        if(cached.footer) contentZones.value.footer = cached.footer;
                         contentZones.value.main = cached.main;
                         contentZones.value.sidebar = cached.sidebar;
                         if(page) {
@@ -3380,6 +3382,8 @@ layout = "${activePage.value.layout}"
                     // Check sessionStorage for unsaved content (works across browser refreshes)
                     const sessionData = loadFromSessionStorage(pageId, page?.updated_at);
                     if(sessionData) {
+                        if(sessionData.header) contentZones.value.header = sessionData.header;
+                        if(sessionData.footer) contentZones.value.footer = sessionData.footer;
                         contentZones.value.main = sessionData.main;
                         contentZones.value.sidebar = sessionData.sidebar;
                         contentCache.set(pageId, sessionData);
@@ -3713,6 +3717,8 @@ layout = "${activePage.value.layout}"
                         const oldPage = pages.value.find(p => p.id === oldId);
                         if(oldPage?.contentStatus === 'unsaved') {
                             const cacheData = {
+                                header: [...contentZones.value.header],
+                                footer: [...contentZones.value.footer],
                                 main: [...contentZones.value.main],
                                 sidebar: [...contentZones.value.sidebar]
                             };
