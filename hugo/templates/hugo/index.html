@@ -859,10 +859,10 @@
                     :class="previewDevice === 'desktop' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5' : 'text-slate-600 hover:text-slate-800'">
                     <icon name="monitor" :size="16"></icon>
                 </button>
-                <button @click="previewDevice = 'laptop'"
+                <button @click="previewDevice = 'tablet-landscape'"
                     class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
-                    :class="previewDevice === 'laptop' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5' : 'text-slate-600 hover:text-slate-800'">
-                    <icon name="laptop" :size="16"></icon>
+                    :class="previewDevice === 'tablet-landscape' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-black/5' : 'text-slate-600 hover:text-slate-800'">
+                    <icon name="tablet-landscape" :size="16"></icon>
                 </button>
                 <button @click="previewDevice = 'tablet'"
                     class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center space-x-2"
@@ -1787,15 +1787,16 @@
                 <!-- Desktop: Interactive Editor Mode -->
                 <iframe v-if="device === 'desktop'" ref="iframe" class="w-full h-full border-none bg-white"></iframe>
 
-                <!-- Device Mode: Laptop/Tablet/Mobile -->
+                <!-- Device Mode: Tablet-Landscape/Tablet/Mobile -->
                 <device-mockup v-else ref="mockup" 
                     :key="device"
-                    :type="device === 'mobile' ? 'phone' : (device === 'tablet' ? 'tablet' : 'laptop')" 
+                    :type="device === 'mobile' ? 'phone' : 'tablet'" 
                     :alt="device + ' preview'"
                     mode="iframe" 
                     href="about:blank"
                     class="transition-all duration-300"
-                    :height="responsiveHeight"
+                    :width="device === 'tablet-landscape' ? '238' : undefined"
+                    :height="device === 'tablet-landscape' ? '182' : (responsiveHeight || undefined)"
                 ></device-mockup>
                 
                 <teleport :to="iframeBody" v-if="iframeBody">
@@ -1969,7 +1970,7 @@
             'columns': '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="12" x2="12" y1="3" y2="21"/>',
             'save': '<g stroke-width="1.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></g>',
             'monitor': '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line>',
-            'laptop': '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="20" x2="22" y2="20"></line>',
+            'tablet-landscape': '<rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="18" y1="12" x2="18.01" y2="12"></line>',
             'tablet': '<rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>',
             'smartphone': '<rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>',
             'send': '<line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
