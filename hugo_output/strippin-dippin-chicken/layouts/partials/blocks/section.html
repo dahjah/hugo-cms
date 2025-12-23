@@ -1,7 +1,5 @@
-
-{{ $style := .style | default "welcome" }}
-<div class="section-{{ $style }} {{ .css_classes }}">
-    <div class="container">
+<div class="section py-12 {{ .css_classes }}" style="width:{{ .width | default "100%" }};margin:0 auto">
+    <div class="container mx-auto px-4">
         {{ range .blocks }}
             {{ partial "blocks/render-block.html" . }}
         {{ end }}

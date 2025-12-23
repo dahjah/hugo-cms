@@ -1,14 +1,19 @@
-
-<div class="bg-gradient-to-r from-indigo-50 to-slate-50 py-12 px-8 rounded-lg shadow-sm mb-8 {{ .css_classes }}">
-    <div class="max-w-2xl mx-auto text-center">
-        <p class="text-2xl font-serif italic text-slate-700 mb-6">"{{ .quote }}"</p>
-        <div class="flex items-center justify-center gap-4">
-            {{ if .image }}
-            <img src="{{ .image }}" alt="{{ .author }}" class="w-12 h-12 rounded-full object-cover shadow">
-            {{ end }}
-            {{ if .author }}
-            <span class="font-semibold text-slate-800">{{ .author }}</span>
-            {{ end }}
+<div class="py-8 px-6 bg-base-200 rounded-lg shadow-md max-w-2xl mx-auto">
+    <div class="flex flex-col items-center text-center">
+        {{ if .image }}
+        <div class="avatar mb-4">
+            <div class="w-20 h-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                <img src="{{ .image }}" alt="{{ .author }}" class="object-cover">
+            </div>
         </div>
+        {{ end }}
+        <blockquote class="text-lg italic text-base-content mb-4">
+            "{{ .quote }}"
+        </blockquote>
+        {{ if .author }}
+        <cite class="text-sm font-semibold text-primary not-italic">
+            — {{ .author }}
+        </cite>
+        {{ end }}
     </div>
 </div>

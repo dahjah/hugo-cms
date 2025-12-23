@@ -1,81 +1,56 @@
-
-{{ $autoAdvance := .auto_advance | default false }}
-{{ $interval := .interval_seconds | default 5 }}
-{{ $showDots := .show_dots | default true }}
-{{ $showArrows := .show_arrows | default true }}
-{{ $uniqueId := .id | default (now.UnixNano | printf "%d") }}
-
+{{ $carouselId := now.UnixNano }}
 <div class="carousel-container py-8 {{ .css_classes }}" 
-     data-carousel-id="{{ $uniqueId }}"
-     data-auto-advance="{{ $autoAdvance }}"
-     data-interval="{{ $interval }}">
-    
-    <!-- Carousel Wrapper -->
+     data-carousel-id="{{ $carouselId }}"
+     data-auto-advance="{{ .auto_advance | default true }}"
+     data-interval="{{ .interval_seconds | default 5 }}">
+    {{ if .slides }}
     <div class="relative" style="display: grid; grid-template-areas: 'stack'; place-items: center; min-height: 300px; overflow: hidden;">
-        {{ range $index, $block := .blocks }}
-        <div class="carousel-slide" 
-             data-slide-index="{{ $index }}"
-             style="grid-area: stack; width: 85%; max-width: 900px; transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out; {{ if eq $index 0 }}transform: translateX(0); opacity: 1;{{ else }}transform: translateX(100%); opacity: 0; pointer-events: none;{{ end }}">
-             {{ partial "blocks/render-block.html" $block }}
+        {{ range $index, $slide := .slides }}
+        <div class="carousel-slide" data-slide-index="{{ $index }}" style="grid-area: stack; width: 85%; max-width: 900px; transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out; transform: translateX({{ if eq $index 0 }}0{{ else }}100%{{ end }}); opacity: {{ if eq $index 0 }}1{{ else }}0{{ end }}; pointer-events: {{ if eq $index 0 }}auto{{ else }}none{{ end }};">
+            <div class="bg-base-100 rounded-lg shadow-md p-6">
+                {{ range $slide.children }}
+                    {{ partial "blocks/render-block.html" . }}
+                {{ end }}
+            </div>
         </div>
         {{ end }}
         
-        {{ if not .blocks }}
-        <div class="py-16 px-8 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 rounded-lg">
-            No slides added
-        </div>
-        {{ end }}
-        
-        <!-- Arrows -->
-        {{ if and $showArrows .blocks (gt (len .blocks) 1) }}
-        <button data-carousel-prev
-                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
-                class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
-            <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-            </svg>
+        {{ if gt (len .slides) 1 }}
+        <button data-carousel-prev style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;" class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-base-100/80 hover:bg-base-200 border border-base-200 backdrop-blur text-base-content hover:text-primary">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
         </button>
-        <button data-carousel-next
-                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"
-                class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-slate-100/80 hover:bg-slate-200 border border-slate-200 backdrop-blur">
-            <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
+        <button data-carousel-next style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10;" class="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-base-100/80 hover:bg-base-200 border border-base-200 backdrop-blur text-base-content hover:text-primary">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
         </button>
         {{ end }}
     </div>
     
-    <!-- Dots -->
-    {{ if and $showDots .blocks (gt (len .blocks) 1) }}
+    {{ if gt (len .slides) 1 }}
     <div class="flex justify-center gap-3 mt-6">
-        {{ range $index, $block := .blocks }}
-        <button data-carousel-dot="{{ $index }}"
-                class="transition-all duration-200 border-0 cursor-pointer p-0"
-                style="{{ if eq $index 0 }}width: 32px; border-radius: 6px; background: var(--color-primary, #6366f1);{{ else }}width: 12px; border-radius: 50%; background: #e2e8f0;{{ end }} height: 12px;">
-        </button>
+        {{ range $index, $slide := .slides }}
+        <button data-carousel-dot="{{ $index }}" class="transition-all duration-300 h-3 rounded-full {{ if eq $index 0 }}w-8 bg-primary{{ else }}w-3 bg-base-300 hover:bg-primary/50{{ end }}"></button>
         {{ end }}
     </div>
     {{ end }}
-</div>
-
+    
 <script>
 (function() {
-    const carousel = document.querySelector('[data-carousel-id="{{ $uniqueId }}"]');
-    if (!carousel) return;
+    const container = document.querySelector('[data-carousel-id="{{ $carouselId }}"]');
+    if (!container) return;
     
-    const slides = carousel.querySelectorAll('.carousel-slide');
-    const dots = carousel.querySelectorAll('[data-carousel-dot]');
-    const prevBtn = carousel.querySelector('[data-carousel-prev]');
-    const nextBtn = carousel.querySelector('[data-carousel-next]');
-    const autoAdvance = carousel.dataset.autoAdvance === 'true';
-    const interval = parseInt(carousel.dataset.interval) || 5;
+    const slides = container.querySelectorAll('.carousel-slide');
+    const dots = container.querySelectorAll('[data-carousel-dot]');
+    const prevBtn = container.querySelector('[data-carousel-prev]');
+    const nextBtn = container.querySelector('[data-carousel-next]');
+    const autoAdvance = container.dataset.autoAdvance === 'true';
+    const interval = parseInt(container.dataset.interval) || 5;
     
     if (slides.length <= 1) return;
     
-    let currentSlide = 0;
-    let autoAdvanceTimer = null;
+    let currentIndex = 0;
+    let autoTimer = null;
     
-    function goToSlide(index) {
+    function showSlide(index) {
         slides.forEach((slide, i) => {
             if (i === index) {
                 slide.style.transform = 'translateX(0)';
@@ -94,44 +69,48 @@
         
         dots.forEach((dot, i) => {
             if (i === index) {
-                dot.style.width = '32px';
-                dot.style.borderRadius = '6px';
-                dot.style.background = 'var(--color-primary, #6366f1)';
+                dot.classList.remove('w-3', 'bg-base-300', 'hover:bg-primary/50');
+                dot.classList.add('w-8', 'bg-primary');
             } else {
-                dot.style.width = '12px';
-                dot.style.borderRadius = '50%';
-                dot.style.background = '#e2e8f0';
+                dot.classList.remove('w-8', 'bg-primary');
+                dot.classList.add('w-3', 'bg-base-300', 'hover:bg-primary/50');
             }
         });
         
-        currentSlide = index;
+        currentIndex = index;
         resetTimer();
     }
     
     function nextSlide() {
-        goToSlide((currentSlide + 1) % slides.length);
+        showSlide((currentIndex + 1) % slides.length);
     }
     
     function prevSlide() {
-        goToSlide((currentSlide - 1 + slides.length) % slides.length);
+        showSlide((currentIndex - 1 + slides.length) % slides.length);
     }
     
     function resetTimer() {
-        if (autoAdvanceTimer) clearInterval(autoAdvanceTimer);
+        if (autoTimer) clearInterval(autoTimer);
         if (autoAdvance) {
-            autoAdvanceTimer = setInterval(nextSlide, interval * 1000);
+            autoTimer = setInterval(nextSlide, interval * 1000);
         }
     }
     
     if (prevBtn) prevBtn.addEventListener('click', prevSlide);
     if (nextBtn) nextBtn.addEventListener('click', nextSlide);
-    dots.forEach((dot, i) => dot.addEventListener('click', () => goToSlide(i)));
     
-    carousel.addEventListener('mouseenter', () => {
-        if (autoAdvanceTimer) clearInterval(autoAdvanceTimer);
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => showSlide(index));
     });
-    carousel.addEventListener('mouseleave', resetTimer);
+    
+    container.addEventListener('mouseenter', () => {
+        if (autoTimer) clearInterval(autoTimer);
+    });
+    
+    container.addEventListener('mouseleave', resetTimer);
     
     resetTimer();
 })();
 </script>
+    {{ end }}
+</div>

@@ -1,27 +1,4 @@
-
-{{ $justify := .justify | default "start" }}
-{{ $align := .align | default "stretch" }}
-{{ $gap := .gap | default "4" }}
-{{ $flexMode := or (eq .flex_mode true) (eq .flex_mode "true") }}
-
-{{ $justifyClass := "" }}
-{{ if eq $justify "start" }}{{ $justifyClass = "justify-start" }}{{ end }}
-{{ if eq $justify "center" }}{{ $justifyClass = "justify-center" }}{{ end }}
-{{ if eq $justify "end" }}{{ $justifyClass = "justify-end" }}{{ end }}
-{{ if eq $justify "between" }}{{ $justifyClass = "justify-between" }}{{ end }}
-{{ if eq $justify "around" }}{{ $justifyClass = "justify-around" }}{{ end }}
-{{ if eq $justify "evenly" }}{{ $justifyClass = "justify-evenly" }}{{ end }}
-
-{{ $alignClass := "" }}
-{{ if eq $align "start" }}{{ $alignClass = "items-start" }}{{ end }}
-{{ if eq $align "center" }}{{ $alignClass = "items-center" }}{{ end }}
-{{ if eq $align "end" }}{{ $alignClass = "items-end" }}{{ end }}
-{{ if eq $align "stretch" }}{{ $alignClass = "items-stretch" }}{{ end }}
-
-{{ $wrapClass := "flex-wrap" }}
-{{ if $flexMode }}{{ $wrapClass = "flex-nowrap" }}{{ end }}
-
-<div class="flex {{ $wrapClass }} gap-{{ $gap }} {{ $justifyClass }} {{ $alignClass }} {{ .css_classes }}">
+<div class="flex flex-wrap md:flex-nowrap justify-{{ .justify | default "start" }} items-{{ .align | default "stretch" }} gap-{{ .gap | default "4" }} {{ .css_classes | default .class }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}

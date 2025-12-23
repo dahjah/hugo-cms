@@ -1,5 +1,4 @@
-
-<div class="flex flex-col gap-4 {{ .css_classes }}" {{ with .width_percent }}style="width: {{ . }}%; flex-shrink: 0;"{{ end }}>
+<div class="{{ if .width_percent }}w-full md:w-[{{ .width_percent }}%]{{ else }}flex-initial w-full md:w-auto{{ end }} {{ .css_classes }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}

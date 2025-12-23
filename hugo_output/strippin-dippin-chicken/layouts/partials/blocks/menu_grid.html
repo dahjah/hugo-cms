@@ -1,31 +1,19 @@
-
-<div class="py-12 px-4 {{ .css_classes }}">
-    {{ if .title }}
-    <h2 class="text-3xl font-bold text-center mb-10" style="color: var(--color-text, #1f2937);">{{ .title }}</h2>
-    {{ end }}
-    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {{ range .items }}
-        <div class="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border border-slate-100 flex flex-col h-full">
-            {{ if .image }}
-            <div class="relative h-48 overflow-hidden bg-gray-100">
-                <img src="{{ .image }}" alt="{{ .name }}" 
-                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                     onerror="this.onerror=null;this.parentElement.style.display='none';"/>
-            </div>
-            {{ end }}
-            <div class="p-5 flex-1 flex flex-col">
-                <div class="flex justify-between items-start mb-2">
-                    <h4 class="text-lg font-bold text-slate-900 leading-tight">{{ .name }}</h4>
-                </div>
-                {{ if .description }}
-                <p class="text-sm text-slate-500 leading-snug flex-1">{{ .description }}</p>
-                {{ end }}
-                <div class="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between text-xs font-medium text-slate-400 uppercase tracking-wider">
-                     <span>Menu Item</span>
-                     <span class="text-red-600">Order Now</span>
-                </div>
+<div class="p-6 bg-base-100 rounded-lg">
+    {{ if .title }}<h2 class="text-2xl font-bold text-center mb-8 text-base-content">{{ .title }}</h2>{{ end }}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {{ range $index, $element := .items }}{{ with $element }}
+        <div class="bg-base-100 rounded-lg overflow-hidden shadow-md">
+            {{ if .image }}<img src="{{ .image }}" alt="{{ .name }}" class="w-full h-32 object-cover" />{{ end }}
+            <div class="p-3">
+                <h4 class="font-semibold text-base-content mb-1">{{ .name }}</h4>
+                {{ if .description }}<p class="text-xs text-base-content/70">{{ .description }}</p>{{ end }}
             </div>
         </div>
-        {{ end }}
+        {{ end }}{{ end }}
     </div>
+    {{ if not .items }}
+    <div class="text-center text-base-content/40 py-8">
+        No menu items added yet
+    </div>
+    {{ end }}
 </div>

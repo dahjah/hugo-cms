@@ -1,53 +1,9 @@
-
-{{ $style := .style | default "primary" }}
-{{ $size := .size | default "medium" }}
-{{ $fullWidth := .full_width | default false }}
-{{ $newTab := .new_tab | default false }}
-
-{{ $baseClasses := "inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-200 no-underline" }}
-
-{{ $sizeClasses := "" }}
-{{ if eq $size "small" }}
-    {{ $sizeClasses = "px-4 py-2 text-sm" }}
-{{ else if eq $size "large" }}
-    {{ $sizeClasses = "px-8 py-4 text-lg" }}
-{{ else }}
-    {{ $sizeClasses = "px-6 py-3 text-base" }}
-{{ end }}
-
-{{ $widthClass := "" }}
-{{ if $fullWidth }}
-    {{ $widthClass = "w-full" }}
-{{ end }}
-
-<div class="mb-4 {{ .css_classes }}">
-    {{ if eq $style "primary" }}
-    <a href="{{ .url | default "#" }}" 
-       class="{{ $baseClasses }} {{ $sizeClasses }} {{ $widthClass }} text-white shadow-md hover:shadow-lg"
-       style="background: var(--color-primary, #f59e0b);"
-       {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
-        {{ .text | default "Button" }}
+<div class="p-6 text-center">
+    <a href="{{ .url }}" target="{{ if .new_tab }}_blank{{else}}_self{{ end }}"
+        class="btn {{ if .full_width }}btn-block{{ end }} 
+              {{ if eq .size "small" }}btn-sm{{ end }} 
+              {{ if eq .size "large" }}btn-lg{{ end }} 
+              {{ if eq .style "secondary" }}btn-secondary{{ else if eq .style "outline" }}btn-outline{{ else if eq .style "ghost" }}btn-ghost{{else}}btn-primary{{ end }}">
+        {{ .text }}
     </a>
-    {{ else if eq $style "secondary" }}
-    <a href="{{ .url | default "#" }}" 
-       class="{{ $baseClasses }} {{ $sizeClasses }} {{ $widthClass }} text-white shadow-md hover:shadow-lg"
-       style="background: var(--color-secondary, #1f2937);"
-       {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
-        {{ .text | default "Button" }}
-    </a>
-    {{ else if eq $style "outline" }}
-    <a href="{{ .url | default "#" }}" 
-       class="{{ $baseClasses }} {{ $sizeClasses }} {{ $widthClass }} border-2"
-       style="border-color: var(--color-primary, #f59e0b); color: var(--color-primary, #f59e0b);"
-       {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
-        {{ .text | default "Button" }}
-    </a>
-    {{ else }}
-    <a href="{{ .url | default "#" }}" 
-       class="{{ $baseClasses }} {{ $sizeClasses }} {{ $widthClass }}"
-       style="color: var(--color-primary, #f59e0b);"
-       {{ if $newTab }}target="_blank" rel="noopener noreferrer"{{ end }}>
-        {{ .text | default "Button" }}
-    </a>
-    {{ end }}
 </div>

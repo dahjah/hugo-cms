@@ -1,13 +1,23 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.LanguageCode }}">
+<html lang="{{ .Site.LanguageCode }}" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
     <title>{{ .Title }} | {{ .Site.Title }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/custom.css">
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="bg-base-200 text-base-content font-sans min-h-screen flex flex-col">
+    <div id="debug-info" data-theme="default" style="background: #333; color: #fff; padding: 10px; font-family: monospace; z-index: 9999; position: relative; display: none;">
+        <strong>DEBUG INFO:</strong> <span class="badge badge-primary">Theme: default</span><br>
+        Theme Preset: [{{ site.Params.theme_preset }}]<br>
+    </div>
+    <script>
+        if (new URLSearchParams(window.location.search).get('debug') === 'true') {
+            document.getElementById('debug-info').style.display = 'block';
+        }
+    </script>
     {{ block "main" . }}{{ end }}
 </body>
 </html>

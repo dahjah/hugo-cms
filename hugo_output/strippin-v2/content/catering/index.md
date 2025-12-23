@@ -9,7 +9,7 @@
       "align": "center",
       "gap": "0",
       "position": "sticky",
-      "css_classes": "",
+      "css_classes": "testing",
       "opacity": 60,
       "id": "70a917c7-8505-490b-9643-810a834a44ed",
       "block_type": "navbar",
@@ -74,7 +74,7 @@
               "sort_order": 0
             }
           ],
-          "css_classes": "glass",
+          "css_classes": "",
           "id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
           "block_type": "menu"
         }
@@ -90,38 +90,6 @@
       "cta_url": "",
       "id": "306818cb-35e0-4fbe-aaca-a0422eb2d67f",
       "block_type": "hero"
-    },
-    {
-      "content": "At Strippin Dippin Chicken, we are passionate about bringing the best street food to you. Fresh Chicken strips, Handcut French fries and \"Awesome\" hand-made dipping sauces. Whether you're grabbing a quick lunch or planning an event, we're here to serve you.",
-      "id": "6abc9c3d-f9eb-4ee3-8691-104c2c521277",
-      "block_type": "markdown"
-    },
-    {
-      "items": [
-        {
-          "title": "Do you travel for private events?",
-          "content": "Yes! We love bringing our truck to weddings, parties, and corporate events."
-        },
-        {
-          "title": "What is the minimum spend?",
-          "content": "Our minimums vary by location and date. Please contact us for a custom quote."
-        },
-        {
-          "title": "Do I need to provide power?",
-          "content": "We are fully self-sufficient with our own generator."
-        },
-        {
-          "title": "How far in advance should I book?",
-          "content": "We recommend booking at least 2-3 months in advance."
-        }
-      ],
-      "id": "10ceaf9e-ec62-4fa5-b274-fdeab1f53f0f",
-      "block_type": "accordion"
-    },
-    {
-      "content": "<h2></h2><p></p>",
-      "id": "fb8f112c-4baa-478c-a18a-9ed1560ffecd",
-      "block_type": "text"
     },
     {
       "style": "default",
@@ -156,35 +124,6 @@
           "block_type": "features_grid"
         }
       ]
-    },
-    {
-      "items": [
-        {
-          "title": "Fresh & Made to Order",
-          "description": "Experience the taste of fresh, never frozen Chicken Shop, prepared right when you order.",
-          "icon": "leaf"
-        },
-        {
-          "title": "Fast & Friendly",
-          "description": "We bring the flavor to you! Perfect for quick lunches, events, and catering needs.",
-          "icon": "truck"
-        },
-        {
-          "title": "Local Favorite",
-          "description": "A staple of the local food scene, serving up delicious bites for everyone to enjoy.",
-          "icon": "map-pin"
-        }
-      ],
-      "columns": 3,
-      "id": "b63dc222-6973-4289-8ee8-4cc87a01e60f",
-      "block_type": "features_grid"
-    },
-    {
-      "text": "Contact Us",
-      "url": "/contact",
-      "style": "primary",
-      "id": "35c4ca84-9a14-47a0-b5dc-55f9c47d0379",
-      "block_type": "button"
     },
     {
       "style": "alt",
