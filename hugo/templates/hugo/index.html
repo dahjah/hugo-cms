@@ -3395,11 +3395,9 @@ layout = "${activePage.value.layout}"
                     }
 
                     isLoadingContent.value = true; // Prevent watch from triggering
-                    console.log('[DEBUG] fetchContent START - isLoadingContent=true, pageId=', pageId);
                     // Mark page as not hydrated while loading content
                     if(page) {
                         page.isHydrated = false;
-                        console.log('[DEBUG] Set isHydrated=false for page', pageId);
                     }
 
                     try {
@@ -3413,7 +3411,6 @@ layout = "${activePage.value.layout}"
                         // Mark page as hydrated AFTER content is loaded and zones are populated
                         if(page) {
                             page.isHydrated = true;
-                            console.log('[DEBUG] Set isHydrated=true for page', pageId);
                         }
                     } catch(error) {
                         console.error('Error fetching content:', error);
@@ -3422,7 +3419,6 @@ layout = "${activePage.value.layout}"
                     // Delay resetting flag to ensure watch callback sees it as true
                     setTimeout(() => {
                         isLoadingContent.value = false;
-                        console.log('[DEBUG] fetchContent END - isLoadingContent=false, pageId=', pageId);
                     }, 100);
                 };
 
@@ -3508,7 +3504,6 @@ layout = "${activePage.value.layout}"
                                 sidebar: [...contentZones.value.sidebar]
                             };
                             saveToSessionStorage(activePageId.value, cacheData);
-                            console.log('[DEBUG] Auto-saved to sessionStorage');
                         }
                     }, 1000); // 1 second debounce
                 };
@@ -3697,17 +3692,13 @@ layout = "${activePage.value.layout}"
                         // Set up content change watcher BEFORE loading content
                         // Watch all zones (header, footer, main, sidebar) for changes
                         watch(contentZones, () => {
-                            console.log('[DEBUG] Watch fired - isLoadingContent=', isLoadingContent.value);
                             // Don't trigger during fetchContent
                             if(isLoadingContent.value) {
-                                console.log('[DEBUG] Watch blocked by isLoadingContent');
                                 return;
                             }
                             // Only trigger if active page is hydrated
                             const activePage = pages.value.find(p => p.id === activePageId.value);
-                            console.log('[DEBUG] Watch check - activePageId=', activePageId.value, 'isHydrated=', activePage?.isHydrated);
                             if(activePage?.isHydrated && activePageId.value) {
-                                console.log('[DEBUG] Watch MARKING AS UNSAVED');
                                 hasUnsavedChanges.value = true;
                                 if(activePage) {
                                     activePage.contentStatus = 'unsaved';
