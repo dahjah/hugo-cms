@@ -586,7 +586,7 @@
                                 <icon name="save" size="100%" class="text-amber-400"></icon>
                             </template>
                             <template v-else-if="page.contentStatus === 'published'">
-                                <icon name="check" size="100%" :style="{ color: '#00BF7F' }"></icon>
+                                <icon name="check" size="100%" :stroke="3" :style="{ color: '#00BF7F' }"></icon>
                             </template>
                         </div>
                         <icon name="more-vertical" :size="14" class="opacity-0 group-hover:opacity-100 text-slate-400">
@@ -1860,7 +1860,7 @@
         };
 
         const Icon = {
-            props: ['name', 'size'],
+            props: ['name', 'size', 'stroke'],
             template: `
                 <svg 
                     xmlns="http://www.w3.org/2000/svg" 
@@ -1869,7 +1869,7 @@
                     viewBox="0 0 24 24" 
                     fill="none" 
                     stroke="currentColor" 
-                    stroke-width="2" 
+                    :stroke-width="stroke || 2" 
                     stroke-linecap="round" 
                     stroke-linejoin="round"
                     v-html="path"
