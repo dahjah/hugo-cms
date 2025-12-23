@@ -3363,6 +3363,12 @@ layout = "${activePage.value.layout}"
                 };
 
                 const fetchContent = async (pageId) => {
+                    // Mark page as not hydrated while loading content
+                    const page = pages.value.find(p => p.id === pageId);
+                    if(page) {
+                        page.isHydrated = false;
+                    }
+
                     try {
                         const url = `${API_BASE_URL}pages/${pageId}/content/`;
                         const blocks = await fetchApi(url) || [];
