@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hugo CMS Editor</title>
+    <meta name="color-scheme" content="light">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.min.js"></script>
@@ -26,6 +27,11 @@
         const getCsrfToken = () => document.querySelector('[name=csrfmiddlewaretoken]').value;
         const API_BASE_URL = '/api/'; // Django API root
         const WEBSITE_ID = "{{ website_id|default_if_none:'' }}";
+
+        // Force Tailwind to light mode
+        tailwind.config = {
+            darkMode: 'class'
+        }
     </script>
 
     <style>
