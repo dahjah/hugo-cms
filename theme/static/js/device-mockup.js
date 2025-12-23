@@ -58,7 +58,25 @@ class DeviceMockup extends HTMLElement {
       if(name === "theme") {
         this._detectTheme();
       }
-      this.render();
+
+      // If only dimensions or theme changed, just update styles
+      if(["width", "height", "theme"].includes(name)) {
+        this._updateAllStyles();
+      } else {
+        this.render();
+      }
+    }
+  }
+
+  _updateAllStyles() {
+    const padding = this.getAttribute("padding") || "0";
+    const hoverPadding = this.getAttribute("hover-padding") || padding;
+    const fit = this.getAttribute("fit") || "cover";
+    const hoverFit = this.getAttribute("hover-fit") || "cover";
+
+    const styleEl = this.shadowRoot.querySelector('style');
+    if(styleEl) {
+      styleEl.textContent = this._getStyles(padding, hoverPadding, fit, hoverFit);
     }
   }
 
@@ -478,8 +496,8 @@ class DeviceMockup extends HTMLElement {
 
     // Calculate iframe scales when padding is present
     const paddingPx = parseFloat(padding);
-    const laptopScaleX = (212 - paddingPx * 2) / 1280;
-    const laptopScaleY = (128 - paddingPx * 2) / 800;
+    const laptopScaleX = (224 - paddingPx * 2) / 1280;
+    const laptopScaleY = (146 - paddingPx * 2) / 800;
     const phoneScaleX = (110 - paddingPx * 2) / 375;
     const phoneScaleY = (238 - paddingPx * 2) / 812;
     const tabletScaleX = (166 - paddingPx * 2) / 768;
@@ -577,10 +595,10 @@ class DeviceMockup extends HTMLElement {
 
       .laptop-frame {
         width: 224px;
-        height: 140px;
+        height: 146px;
         background: var(--bezel-color);
         border-radius: 8px 8px 3px 3px;
-        padding: 6px;
+        padding: 8px;
         box-shadow: 0 12px 24px -6px var(--shadow-color);
         position: relative;
       }
@@ -744,7 +762,7 @@ class DeviceMockup extends HTMLElement {
       .laptop-screen .device-iframe {
         width: 1280px;
         height: 800px;
-        transform: scale(0.165625);
+        transform: scale(0.1625);
       }
 
       /* Phone iframe scaling */
