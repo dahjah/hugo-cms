@@ -3378,7 +3378,7 @@ layout = "${activePage.value.layout}"
                     }
 
                     // Check sessionStorage for unsaved content (works across browser refreshes)
-                    const sessionData = loadFromSessionStorage(pageId);
+                    const sessionData = loadFromSessionStorage(pageId, page?.updated_at);
                     if(sessionData) {
                         contentZones.value.main = sessionData.main;
                         contentZones.value.sidebar = sessionData.sidebar;
@@ -3442,16 +3442,34 @@ layout = "${activePage.value.layout}"
                 // SessionStorage helper functions
                 const saveToSessionStorage = (pageId, content) => {
                     try {
-                        sessionStorage.setItem(`cms-unsaved-content-${pageId}`, JSON.stringify(content));
+                        const dataWithTimestamp = {
+                            content,
+                            timestamp: Date.now()
+                        };
+                        sessionStorage.setItem(`cms-unsaved-content-${pageId}`, JSON.stringify(dataWithTimestamp));
                     } catch(e) {
                         console.warn('Failed to save to sessionStorage:', e);
                     }
                 };
 
-                const loadFromSessionStorage = (pageId) => {
+                const loadFromSessionStorage = (pageId, pageUpdatedAt = null) => {
                     try {
                         const data = sessionStorage.getItem(`cms-unsaved-content-${pageId}`);
-                        return data ? JSON.parse(data) : null;
+                        if(!data) return null;
+
+                        const parsed = JSON.parse(data);
+
+                        // Cache invalidation: if page was updated in DB after cache was created, clear stale cache
+                        if(pageUpdatedAt && parsed.timestamp) {
+                            const dbUpdateTime = new Date(pageUpdatedAt).getTime();
+                            if(dbUpdateTime > parsed.timestamp) {
+                                // DB has newer data, invalidate cache
+                                clearFromSessionStorage(pageId);
+                                return null;
+                            }
+                        }
+
+                        return parsed.content || parsed; // Support both old and new format
                     } catch(e) {
                         console.warn('Failed to load from sessionStorage:', e);
                         return null;
