@@ -579,7 +579,7 @@
                     </div>
                     <div class="flex items-center space-x-2">
                         <span class="w-2 h-2 rounded-full"
-                            :class="hasUnsavedChanges && activePageId === page.id ? 'bg-rose-400' : (page.last_published_at && new Date(page.updated_at) <= new Date(page.last_published_at) ? 'bg-emerald-400' : 'bg-amber-400')"></span>
+                            :class="pagesWithUnsavedChanges.has(page.id) ? 'bg-rose-400' : (page.last_published_at && new Date(page.updated_at) <= new Date(page.last_published_at) ? 'bg-emerald-400' : 'bg-amber-400')"></span>
                         <icon name="more-vertical" :size="14" class="opacity-0 group-hover:opacity-100 text-slate-400">
                         </icon>
                     </div>
@@ -3375,6 +3375,7 @@ layout = "${activePage.value.layout}"
                         // Reset unsaved changes flag after content load
                         await nextTick();
                         hasUnsavedChanges.value = false;
+                        // Note: Don't remove from pagesWithUnsavedChanges here - only remove when actually saved
                     } finally {
                         isFetchingContent.value = false;
                     }
@@ -3398,6 +3399,7 @@ layout = "${activePage.value.layout}"
                 const isPublishing = ref(false);
                 const isSavingSettings = ref(false);
                 const hasUnsavedChanges = ref(false);
+                const pagesWithUnsavedChanges = ref(new Set()); // Track which pages have unsaved changes
                 const themePreset = ref('default');
                 const carouselSlideIndexes = ref({}); // Track carousel current slides separately to avoid triggering unsaved changes
                 const isFetchingContent = ref(false);
@@ -3585,8 +3587,9 @@ layout = "${activePage.value.layout}"
 
                 // Watch for content changes
                 watch(contentZones, () => {
-                    if(!isFetchingContent.value) {
+                    if(!isFetchingContent.value && activePageId.value) {
                         hasUnsavedChanges.value = true;
+                        pagesWithUnsavedChanges.value.add(activePageId.value);
                     }
                 }, {deep: true});
 
@@ -3706,6 +3709,9 @@ layout = "${activePage.value.layout}"
 
                         showToast('Content saved successfully', 'success');
                         hasUnsavedChanges.value = false; // Reset unsaved changes flag
+                        if(activePageId.value) {
+                            pagesWithUnsavedChanges.value.delete(activePageId.value);
+                        }
                     } catch(error) {
                         console.error("Save Error:", error);
                         showToast('Failed to save content', 'error', error.message);
