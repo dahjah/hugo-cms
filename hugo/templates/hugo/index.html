@@ -3368,8 +3368,6 @@ layout = "${activePage.value.layout}"
                     if(page) {
                         page.isHydrated = false;
                     }
-                    // Wait for Vue to process reactivity before loading content
-                    await nextTick();
 
                     try {
                         const url = `${API_BASE_URL}pages/${pageId}/content/`;
