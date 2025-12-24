@@ -1646,6 +1646,59 @@ class PageViewSet(viewsets.ModelViewSet):
                         parent=block_instance
                     )
 
+    @action(detail=True, methods=['post'])
+    def clone(self, request, pk=None):
+        """
+        Clones a page and all its blocks.
+        """
+        original_page = self.get_object()
+        
+        try:
+            with transaction.atomic():
+                # 1. Clone Page
+                new_page = Page.objects.get(pk=original_page.pk)
+                new_page.pk = None
+                new_page.title = f"{original_page.title} (copy)"
+                new_page.status = 'draft'
+                new_page.last_published_at = None
+                
+                # Handle slug uniqueness
+                base_slug = f"{original_page.slug}-copy"
+                new_slug = base_slug
+                counter = 1
+                while Page.objects.filter(website=original_page.website, slug=new_slug).exists():
+                    new_slug = f"{base_slug}-{counter}"
+                    counter += 1
+                new_page.slug = new_slug
+                new_page.save()
+                
+                # 2. Clone Blocks (Recursive)
+                def clone_block_recursive(original_block, parent_block=None):
+                    # Get fresh copy of the block data
+                    new_block = BlockInstance.objects.get(pk=original_block.pk)
+                    new_block.pk = None # Reset ID to create new instance
+                    new_block.page = new_page
+                    new_block.parent = parent_block
+                    new_block.save()
+                    
+                    # Clone children
+                    children = BlockInstance.objects.filter(parent=original_block).order_by('sort_order')
+                    for child in children:
+                        clone_block_recursive(child, parent_block=new_block)
+
+                # Clone top-level blocks
+                top_level_blocks = BlockInstance.objects.filter(page=original_page, parent=None).order_by('sort_order')
+                for block in top_level_blocks:
+                    clone_block_recursive(block)
+                    
+                serializer = PageDetailSerializer(new_page)
+                return Response(serializer.data)
+                
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({'error': str(e)}, status=500)
+
     @action(detail=False, methods=['post'])
     def import_theme(self, request):
         """
