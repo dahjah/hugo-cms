@@ -1,5 +1,0 @@
-<div class="{{ if .width_percent }}w-full md:w-[{{ .width_percent }}%]{{ else }}flex-initial w-full md:w-auto{{ end }} {{ .css_classes }}">
-    {{ range .blocks }}
-        {{ partial "blocks/render-block.html" . }}
-    {{ end }}
-</div>

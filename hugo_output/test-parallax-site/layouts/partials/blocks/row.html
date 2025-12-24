@@ -1,5 +1,0 @@
-<div class="flex flex-wrap md:flex-nowrap justify-{{ .justify | default "start" }} items-{{ .align | default "stretch" }} gap-{{ .gap | default "4" }} {{ .css_classes | default .class }}">
-    {{ range .blocks }}
-        {{ partial "blocks/render-block.html" . }}
-    {{ end }}
-</div>

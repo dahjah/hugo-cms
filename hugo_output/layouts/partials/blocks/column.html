@@ -1,5 +1,0 @@
-<div class="{{ .Params.class }}" style="width: {{ .Params.width | default "100%" }}; flex: 0 0 auto;">
-    {{ range .Params.blocks }}
-        {{ partial "blocks/render-block.html" . }}
-    {{ end }}
-</div>

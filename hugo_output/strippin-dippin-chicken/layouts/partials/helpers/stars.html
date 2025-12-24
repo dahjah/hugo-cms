@@ -1,3 +1,0 @@
-{{ $rating := .rating | int }}
-{{ range seq $rating }}<span>★</span>{{ end }}
-{{ range seq (sub 5 $rating) }}<span class="text-slate-300">★</span>{{ end }}

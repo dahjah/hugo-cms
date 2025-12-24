@@ -1,5 +1,0 @@
-<div class="flex-1 {{ .css_classes }}" style="{{ if .width_percent }}flex-basis: {{ .width_percent }}%;{{ end }}">
-    {{ range .blocks }}
-        {{ partial "blocks/render-block.html" . }}
-    {{ end }}
-</div>

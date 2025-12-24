@@ -1,8 +1,0 @@
-
-{{ $ratio := .ratio | default "50-50" }}
-{{ $reverse := .reverse | default false }}
-<div class="two-col col-{{ $ratio }}{{ if $reverse }} reverse{{ end }} {{ .css_classes }}">
-    {{ range .blocks }}
-        {{ partial "blocks/render-block.html" . }}
-    {{ end }}
-</div>
