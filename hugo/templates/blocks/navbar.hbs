@@ -1,0 +1,5 @@
+<div class="flex flex-wrap md:flex-nowrap navbar {{#if (eq position "sticky")}}sticky top-0 z-50{{/if}} {{#if (eq position "overlayed")}}absolute top-0 left-0 right-0 z-50{{/if}} {{#if opacity}}bg-base-100/{{opacity}}{{else}}bg-base-100{{/if}} justify-{{default justify "between"}} items-{{default align "center"}} gap-{{default gap "0"}} {{css_classes}}">
+    {{#each blocks}}
+        {{partial "blocks/render-block.html" .}}
+    {{/each}}
+</div>

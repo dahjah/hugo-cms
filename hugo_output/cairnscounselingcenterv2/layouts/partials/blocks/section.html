@@ -1,9 +1,0 @@
-
-{{ $style := .style | default "welcome" }}
-<div class="section-{{ $style }} {{ .css_classes }}">
-    <div class="container">
-        {{ range .blocks }}
-            {{ partial "blocks/render-block.html" . }}
-        {{ end }}
-    </div>
-</div>

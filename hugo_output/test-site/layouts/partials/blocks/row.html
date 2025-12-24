@@ -1,5 +1,0 @@
-<div class="flex flex-wrap {{ if .gap }}gap-{{ .gap }}{{ else }}gap-4{{ end }} {{ .justify | default "justify-start" }} {{ .align | default "items-start" }} {{ .css_classes }}">
-    {{ range .blocks }}
-        {{ partial "blocks/render-block.html" . }}
-    {{ end }}
-</div>

@@ -1,6 +1,0 @@
-baseURL = "https://example.com/"
-languageCode = "en-us"
-title = "Cairn's Counseling Center"
-
-[params]
-  description = "A site built with Hugo CMS"

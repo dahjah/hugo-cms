@@ -1,9 +1,0 @@
-{{/* Accordion - Expandable details/summary items */}}
-<div class="accordion-block" data-allow-multiple="{{ .allow_multiple | default false }}">
-    {{ range .items }}
-    <details class="accordion-item">
-        <summary class="accordion-header">{{ .title }}</summary>
-        <div class="accordion-body">{{ .description | markdownify }}</div>
-    </details>
-    {{ end }}
-</div>

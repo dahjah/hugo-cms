@@ -1,0 +1,19 @@
+<div class="py-8 px-6 bg-base-200 rounded-lg shadow-md max-w-2xl mx-auto">
+    <div class="flex flex-col items-center text-center">
+        {{#if image}}
+        <div class="avatar mb-4">
+            <div class="w-20 h-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                <img src="{{ image }}" alt="{{ author }}" class="object-cover">
+            </div>
+        </div>
+        {{/if}}
+        <blockquote class="text-lg italic text-base-content mb-4">
+            "{{ quote }}"
+        </blockquote>
+        {{#if author}}
+        <cite class="text-sm font-semibold text-primary not-italic">
+            — {{ author }}
+        </cite>
+        {{/if}}
+    </div>
+</div>

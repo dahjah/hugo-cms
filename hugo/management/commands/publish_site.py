@@ -7,6 +7,7 @@ import shutil
 import os
 import json
 import uuid
+from hugo.management.commands.compile_templates import TemplateCompiler
 
 
 class Command(BaseCommand):
@@ -14,9 +15,14 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('slug', type=str, help='Website slug')
+        parser.add_argument('--keep-existing', action='store_true', help='Skip cleaning the output directory and use incremental build')
+        parser.add_argument('--page-id', type=str, help='Specific Page ID to publish (incremental)')
 
     def handle(self, *args, **options):
         slug = options['slug']
+        keep_existing = options.get('keep_existing')
+        page_id = options.get('page_id')
+
         try:
             website = Website.objects.get(slug=slug)
         except Website.DoesNotExist:
@@ -30,25 +36,31 @@ class Command(BaseCommand):
         content_dir = output_dir / 'content'
         static_dir = output_dir / 'static'
         
-        # Clean
-        if output_dir.exists():
-            shutil.rmtree(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        content_dir.mkdir(parents=True, exist_ok=True)
-        static_dir.mkdir(parents=True, exist_ok=True)
+        # Clean (Unless incremental)
+        if not keep_existing:
+             if output_dir.exists():
+                 shutil.rmtree(output_dir)
+             output_dir.mkdir(parents=True, exist_ok=True)
+             content_dir.mkdir(parents=True, exist_ok=True)
+             static_dir.mkdir(parents=True, exist_ok=True)
+        else:
+             # Ensure they exist anyway
+             output_dir.mkdir(parents=True, exist_ok=True)
+             content_dir.mkdir(parents=True, exist_ok=True)
+             static_dir.mkdir(parents=True, exist_ok=True)
         
         # 1. Generate Site Config (hugo.toml)
         self.generate_config(output_dir, website)
 
         # 2. Generate Layouts (Templates)
         self.generate_layouts(output_dir, website)
-        self.generate_fixed_templates(output_dir) # Overwrite with fixed ones if needed
+        self.generate_fixed_templates(output_dir)
 
-        # 3. Generate Pages (Using ORIGINAL views.py logic)
-        self.generate_pages_original(website, content_dir)
+        # 3. Generate Pages
+        self.generate_pages_original(website, content_dir, page_id=page_id)
         
-        # 4. Copy Media (The Fix)
-        self.copy_media(website, static_dir)
+        # 4. Copy Media (Incremental-aware)
+        self.copy_media(website, static_dir, incremental=keep_existing)
         
         # 5. Run Hugo build to generate hugo_stats.json
         self.run_hugo_build(output_dir)
@@ -57,6 +69,80 @@ class Command(BaseCommand):
         self.compile_css(static_dir, website)
         
         self.stdout.write(self.style.SUCCESS(f"Site generated in {output_dir}"))
+
+    # ... generate_config, generate_layouts ...
+
+    def generate_pages_original(self, website, content_dir, page_id=None):
+        import json
+        from django.utils import timezone
+        now = timezone.now()
+        
+        pages = website.pages.all()
+        if page_id:
+            pages = pages.filter(id=page_id)
+        
+        for page in pages:
+            page_data = self._build_page_dict(page)
+            
+            # Serialize to JSON (valid YAML) wrapped in ---
+            frontmatter = json.dumps(page_data, indent=2)
+            content = f"---\n{frontmatter}\n---\n"
+            
+            if page.slug == '/' or page.slug == '':
+                path = content_dir / '_index.md'
+            else:
+                 path = content_dir / page.slug.strip('/') / 'index.md'
+                 path.parent.mkdir(parents=True, exist_ok=True)
+            
+            with open(path, 'w') as f: f.write(content)
+
+    def _build_page_dict(self, page):
+        # Build dictionary structure for the page
+        data = {
+            'title': page.title,
+            'draft': page.status != 'published'
+        }
+        
+        if page.description:
+            data['description'] = page.description
+            
+        is_homepage = (page.slug == '/' or page.slug == '')
+        if is_homepage:
+            data['type'] = page.layout
+        else:
+            data['layout'] = page.layout
+
+    # ... other methods ...
+
+    def copy_media(self, website, static_dir, incremental=False):
+        media_root = Path(settings.MEDIA_ROOT)
+        static_media = static_dir / 'media'
+        static_media.mkdir(parents=True, exist_ok=True)
+        
+        count = 0
+        skipped = 0
+        for uf in website.files.all():
+             src = media_root / uf.file_path
+             if src.exists():
+                 dest = static_media / uf.file_path
+                 dest.parent.mkdir(parents=True, exist_ok=True)
+                 
+                 should_copy = True
+                 if incremental and dest.exists():
+                     # Only copy if source is newer or different size
+                     if src.stat().st_mtime <= dest.stat().st_mtime and src.stat().st_size == dest.stat().st_size:
+                         should_copy = False
+                 
+                 if should_copy:
+                     shutil.copy2(src, dest)
+                     count += 1
+                 else:
+                     skipped += 1
+                     
+        msg = f"Copied {count} media files."
+        if incremental:
+            msg += f" (Skipped {skipped} unchanged)"
+        self.stdout.write(msg)
 
     def generate_config(self, output_dir, website):
         # Basic config generation
@@ -149,12 +235,13 @@ theme = []
         with open(defaults / 'single.html', 'w') as f: f.write(single)
         with open(defaults / 'list.html', 'w') as f: f.write(single)
         
-        # Render Block Partial
         with open(blocks / 'render-block.html', 'w') as f:
              f.write("""{{ if .block_type }}
     {{ $partialPath := printf "blocks/%s.html" .block_type }}
     {{ if templates.Exists (printf "partials/%s" $partialPath) }}
-        {{ partial $partialPath . }}
+        <div class="cms-block-wrapper" data-block-id="{{ .id }}" style="display: contents;">
+            {{ partial $partialPath . }}
+        </div>
     {{ else }}
         <div class="p-4 border border-red-200 bg-red-50 text-red-700 rounded my-4">
             <strong>Missing Block Template:</strong> {{ .block_type }}
@@ -327,7 +414,7 @@ theme = []
     {{ end }}
 </div>"""
 
-        column_tpl = """<div class="{{ if .width_percent }}flex-none w-full{{ else }}flex-initial w-full md:w-auto{{ end }} {{ .css_classes }}" style="{{ if .width_percent }}width: {{ .width_percent }}%; flex-basis: {{ .width_percent }}%;{{ end }}">
+        column_tpl = """<div class="{{ if .width_percent }}w-full md:w-[{{ .width_percent }}%]{{ else }}flex-initial w-full md:w-auto{{ end }} {{ .css_classes }}">
     {{ range .blocks }}
         {{ partial "blocks/render-block.html" . }}
     {{ end }}
@@ -337,15 +424,8 @@ theme = []
         with open(blocks / 'row.html', 'w') as f: f.write(row_tpl)
         with open(blocks / 'column.html', 'w') as f: f.write(column_tpl)
         
-        # Navbar (DaisyUI styled row)
-        navbar_tpl = """<div class="flex flex-wrap md:flex-nowrap navbar bg-base-100/{{ .opacity | default 100 }} {{ if eq .position \"sticky\" }}sticky top-0 z-50 {{ end }}{{ if eq .position \"overlayed\" }}absolute top-0 left-0 right-0 z-50 {{ end }}justify-{{ .justify | default \"between\" }} items-{{ .align | default \"center\" }} gap-{{ .gap | default \"0\" }} {{ .css_classes }}">
-    {{ range .blocks }}
-        {{ partial "blocks/render-block.html" . }}
-    {{ end }}
-</div>"""
-        with open(blocks / 'navbar.html', 'w') as f: f.write(navbar_tpl)
-        
         # --- CONTENT BLOCKS ---
+
         hero_tpl = """{{ $heroId := .id | default now.UnixNano }}
 <div class="relative overflow-hidden w-full {{ .css_classes }} hero-section" 
      id="hero-{{ $heroId }}"
@@ -483,6 +563,23 @@ theme = []
 .my-rotate-y-180 { transform: rotateY(180deg); }
 </style>"""
 
+        flex_columns_tpl = """{{ $widths := split (.col_widths | default "100") "," }}
+<div class="grid grid-cols-1 md:grid-cols-{{ len $widths }} gap-6 mb-8 {{ .css_classes }}">
+    {{ range $index, $width := $widths }}
+        {{ $colKey := printf "col_%d" $index }}
+        <div class="flex flex-col gap-4">
+            {{/* Access the dynamic column key from the parent context */}}
+            {{ $colData := index $ $colKey }}
+            {{ if $colData }}
+                {{ range $colData }}
+                    {{ partial "blocks/render-block.html" . }}
+                {{ end }}
+            {{ end }}
+        </div>
+    {{ end }}
+</div>"""
+        
+
         quote_tpl = """<blockquote class="border-l-4 border-primary pl-4 py-2 mb-8 italic text-base-content/80 {{ .css_classes }}">
     <p class="text-lg">"{{ .text }}"</p>
     {{ if .author }}<cite class="block mt-2 text-sm font-semibold text-base-content">- {{ .author }}</cite>{{ end }}
@@ -610,7 +707,7 @@ theme = []
     {{ end }}
 </div>"""
 
-        with open(blocks / 'hero.html', 'w') as f: f.write(hero_tpl)
+        # with open(blocks / 'hero.html', 'w') as f: f.write(hero_tpl)
         with open(blocks / 'markdown.html', 'w') as f: f.write(markdown_tpl)
         with open(blocks / 'button.html', 'w') as f: f.write(button_tpl)
         with open(blocks / 'accordion.html', 'w') as f: f.write(accordion_tpl)
@@ -623,7 +720,7 @@ theme = []
         with open(blocks / 'html.html', 'w') as f: f.write(html_tpl)
         with open(blocks / 'process_steps.html', 'w') as f: f.write(process_steps_tpl)
         with open(blocks / 'flip_cards.html', 'w') as f: f.write(flip_cards_tpl)
-        
+                
 
         gallery_tpl = """<div class="py-12 {{ .css_classes }}">
     {{ if .title }}<h2 class="text-3xl font-bold text-center mb-8 text-base-content">{{ .title }}</h2>{{ end }}
@@ -927,12 +1024,15 @@ theme = []
 {{ else if eq $alignment "between" }}
     {{ $justifyClass = "justify-between" }}
 {{ end }}
-{{ $classes := "bg-white shadow-sm border-b border-slate-200 mb-8" }}
-{{ if eq $position "overlay" }}
-    {{ $classes = "absolute top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-sm shadow-md" }}
+{{ $classes := (printf "bg-white shadow-sm border-b border-slate-200 mb-8 bg-base-100/%d" (int (.opacity | default 100))) }}
+{{ if eq $position "sticky" }}
+    {{ $classes = printf "sticky top-0 z-40 shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
+{{ else if or (eq $position "overlayed") (eq $position "overlay") }}
+    {{ $classes = printf "absolute top-0 left-0 right-0 z-40 backdrop-blur-sm shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
 {{ else if eq $position "fixed" }}
-    {{ $classes = "fixed top-0 left-0 right-0 z-40 bg-white shadow-md" }}
+    {{ $classes = printf "fixed top-0 left-0 right-0 z-40 shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
 {{ end }}
+
 
 <nav class="{{ $classes }} {{ .css_classes }}">
     <div class="container mx-auto px-4">
@@ -1065,12 +1165,15 @@ theme = []
     {{ $navbarEndClass = "flex-none" }}
 {{ end }}
 
-{{ $classes := "navbar shadow-sm z-40 w-auto" }}
-{{ if eq $position "overlay" }}
-    {{ $classes = "navbar absolute top-0 left-0 right-0 z-40 bg-base-100/90 backdrop-blur-sm shadow-md w-full" }}
+{{ $classes := (printf "navbar shadow-sm z-40 w-auto bg-base-100/%d" (int (.opacity | default 100))) }}
+{{ if eq $position "sticky" }}
+    {{ $classes = printf "navbar sticky top-0 z-40 shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
+{{ else if or (eq $position "overlayed") (eq $position "overlay") }}
+    {{ $classes = printf "navbar absolute top-0 left-0 right-0 z-40 backdrop-blur-sm shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
 {{ else if eq $position "fixed" }}
-    {{ $classes = "navbar fixed top-0 left-0 right-0 z-40 shadow-md w-full" }}
+    {{ $classes = printf "navbar fixed top-0 left-0 right-0 z-40 shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
 {{ end }}
+
 
 <div class="{{ $classes }} {{ .css_classes }}">
     <!-- Navbar Start (Logo or Hamburger for sidebar) -->
@@ -1240,33 +1343,31 @@ theme = []
         
         # Write generic fallback for others if they don't exist
         for name in ['text', 'gallery', 'stats', 'embed', 'cta_hero', 'social_links', 'faq', 'google_reviews', 'flip_cards', 'process_steps']:
-             if not (blocks / f'{name}.html').exists():
                  with open(blocks / f'{name}.html', 'w') as f: f.write(f'<div class="{name}">{{{{ . | jsonify }}}}</div>')
 
+        # Compile Handlebars blocks (overwriting hardcoded ones if match)
+        print("DEBUG: Compiling Handlebars templates...")
 
-    def generate_pages_original(self, website, content_dir):
-        import json
-        for page in website.pages.all():
-            page_data = self._build_page_dict(page)
-            
-            # Serialize to JSON (valid YAML) wrapped in ---
-            # This is the safest way to handle complex nested content without syntax errors
-            frontmatter = json.dumps(page_data, indent=2)
-            content = f"---\n{frontmatter}\n---\n"
-            
-            if page.slug == '/' or page.slug == '':
-                path = content_dir / '_index.md'
-            else:
-                 path = content_dir / page.slug.strip('/') / 'index.md'
-                 path.parent.mkdir(parents=True, exist_ok=True)
-            
-            with open(path, 'w') as f: f.write(content)
+        # Copy Helper Partials (icons, stars, etc)
+        src_helpers = Path(settings.BASE_DIR) / 'theme' / 'layouts' / 'partials' / 'helpers'
+        dest_helpers = output_dir / 'layouts' / 'partials' / 'helpers'
+        if src_helpers.exists():
+            if dest_helpers.exists():
+                shutil.rmtree(dest_helpers)
+            shutil.copytree(src_helpers, dest_helpers)
+
+        src_blocks = Path(settings.BASE_DIR) / 'hugo' / 'templates' / 'blocks'
+        dest_blocks = output_dir / 'layouts' / 'partials' / 'blocks'
+        TemplateCompiler.compile_all(src_blocks, dest_blocks)
+
+
+
 
     def _build_page_dict(self, page):
         # Build dictionary structure for the page
         data = {
             'title': page.title,
-            # 'params': {} # Flattened now
+            'draft': page.status != 'published'
         }
         
         if page.description:
@@ -1293,7 +1394,7 @@ theme = []
                     has_legacy_keys = any(child.placement_key and child.placement_key.startswith('col_') for child in fc_children)
                     
                     row_block = {
-                        'type': 'row',
+                        'block_type': 'row',
                         'flex_mode': True,
                         'gap': "2",
                         'blocks': [] # Will hold columns or content
@@ -1322,7 +1423,7 @@ theme = []
                             col_children = children_by_col.get(col_key, [])
                             
                             col_block = {
-                                'type': 'column',
+                                'block_type': 'column',
                                 'width_percent': width,
                                 'blocks': []
                             }
@@ -1405,8 +1506,6 @@ theme = []
                 out_blocks.append(block_data)
                 
             return out_blocks
-                
-            return out_blocks
 
         # Build Zones
         # Combine page-specific and global blocks for header/footer
@@ -1433,21 +1532,7 @@ theme = []
         
         return data
         
-    def copy_media(self, website, static_dir):
-        media_root = Path(settings.MEDIA_ROOT)
-        static_media = static_dir / 'media'
-        static_media.mkdir(parents=True, exist_ok=True)
-        
-        count = 0
-        for uf in website.files.all():
-             src = media_root / uf.file_path
-             if src.exists():
-                 # Destination: static/media/uploads/filename.ext
-                 dst = static_media / uf.file_path
-                 dst.parent.mkdir(parents=True, exist_ok=True)
-                 shutil.copy2(src, dst)
-                 count += 1
-        self.stdout.write(f"Copied {count} media files.")
+
     
     def compile_css(self, static_dir, website):
         """Compile Tailwind CSS - theme will be auto-detected from HTML"""
@@ -1490,7 +1575,7 @@ theme = []
             return
 
         result = subprocess.run(
-            [str(hugo_bin), '--source', str(output_dir)],
+            [str(hugo_bin), '--source', str(output_dir), '--cleanDestinationDir'],
             capture_output=True,
             text=True
         )

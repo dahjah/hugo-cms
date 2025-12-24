@@ -70,13 +70,13 @@ class PageListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for the Sidebar list"""
     class Meta:
         model = Page
-        fields = ['id', 'title', 'slug', 'status', 'layout', 'website', 'last_published_at', 'updated_at']
+        fields = ['id', 'title', 'slug', 'status', 'layout', 'website', 'last_published_at', 'updated_at', 'sort_order']
 
 class PageDetailSerializer(serializers.ModelSerializer):
     """Full serializer for the Editor Canvas metadata tab"""
     class Meta:
         model = Page
-        fields = ['id', 'title', 'slug', 'status', 'layout', 'date', 'description', 'tags', 'website']
+        fields = ['id', 'title', 'slug', 'status', 'layout', 'date', 'description', 'tags', 'website', 'sort_order']
 
 class SiteConfigSerializer(serializers.Serializer):
     """

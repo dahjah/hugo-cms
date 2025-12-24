@@ -19,6 +19,7 @@ class DeploymentProvider(models.Model):
     name = models.CharField(max_length=200, default="New Provider")
     provider_type = models.CharField(max_length=50, choices=PROVIDER_TYPES, default='cloudflare_pages')
     enabled = models.BooleanField(default=False, help_text="Enable automatic deployment on publish")
+    is_default = models.BooleanField(default=False, help_text="Make this the default provider for new websites")
     
     # Cloudflare configuration (shared between Pages and R2)
     cf_account_id = models.CharField(max_length=200, blank=True, help_text="Cloudflare Account ID")
@@ -43,6 +44,12 @@ class DeploymentProvider(models.Model):
     
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            # Unset is_default for all other providers
+            DeploymentProvider.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
 
 
 class DeploymentHistory(models.Model):

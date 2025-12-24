@@ -42,3 +42,20 @@ class BlockInstanceAdmin(admin.ModelAdmin):
     list_filter = ['placement_key', 'definition']
     search_fields = ['id']
     ordering = ['sort_order']
+
+from .deployment_models import DeploymentProvider, DeploymentHistory
+
+@admin.register(DeploymentProvider)
+class DeploymentProviderAdmin(admin.ModelAdmin):
+    list_display = ['name', 'provider_type', 'enabled', 'is_default', 'created_at']
+    list_filter = ['provider_type', 'enabled', 'is_default']
+    search_fields = ['name', 'cf_account_id', 'pages_project_name']
+    list_editable = ['enabled', 'is_default']
+
+@admin.register(DeploymentHistory)
+class DeploymentHistoryAdmin(admin.ModelAdmin):
+    list_display = ['website', 'deployment_provider', 'status', 'started_at', 'hugo_version', 'build_duration_seconds']
+    list_filter = ['status', 'deployment_provider', 'started_at']
+    search_fields = ['website__name', 'error_message']
+    readonly_fields = ['build_output', 'error_traceback']
+

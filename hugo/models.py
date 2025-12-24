@@ -67,6 +67,13 @@ class Website(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if not self.deployment_provider:
+            default_provider = DeploymentProvider.objects.filter(is_default=True).first()
+            if default_provider:
+                self.deployment_provider = default_provider
+        super().save(*args, **kwargs)
+
 class Page(models.Model):
     """
     Represents a single URL/Page in the Hugo site.
@@ -82,6 +89,7 @@ class Page(models.Model):
     slug = models.CharField(max_length=200, help_text="URL path (e.g., '/about')")
     layout = models.CharField(max_length=100, default='single', help_text="Hugo layout template name")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    sort_order = models.IntegerField(default=0, help_text="Order in the sidebar")
     
     # Hugo Metadata
     date = models.DateField(blank=True, null=True) 

@@ -1,8 +1,14 @@
 *.sqlite3
+db.sqlite3.*
 
-__pycache__
-*/__pycache__/*
-*.pyc
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
 
+# Content/Media
 hugo_output/
 media/
+static/media/

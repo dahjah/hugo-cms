@@ -1,0 +1,9 @@
+<div class="p-6 text-center">
+    <a href="{{ url }}" target="{{#if new_tab}}_blank{{else}}_self{{/if}}"
+        class="btn {{#if full_width}}btn-block{{/if}} 
+              {{#if (eq size 'small')}}btn-sm{{/if}} 
+              {{#if (eq size 'large')}}btn-lg{{/if}} 
+              {{#if (eq style 'secondary')}}btn-secondary{{else if (eq style 'outline')}}btn-outline{{else if (eq style 'ghost')}}btn-ghost{{else}}btn-primary{{/if}}">
+        {{ text }}
+    </a>
+</div>
