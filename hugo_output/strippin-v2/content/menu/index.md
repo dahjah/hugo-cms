@@ -99,7 +99,7 @@
     },
     {
       "style": "default",
-      "width": "49.8%",
+      "width": "90.8%",
       "id": "38c58042-dcff-4771-9bd2-5b8a81f8cb59",
       "block_type": "section",
       "blocks": [
@@ -149,7 +149,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "f7f77741-324a-48b1-8fed-ee986fb3f5f2"
+                  "id": "a4f37f49-92e0-429b-99c5-02f05591fc35"
                 }
               ]
             },
@@ -160,7 +160,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "37120754-eb44-4e87-91d3-02bef13bf687"
+                  "id": "5db0991e-09c2-4896-915a-2089fe073be8"
                 }
               ]
             },
@@ -171,7 +171,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/2NRRmCOMrk8WYpvYeUzPIQ/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "755adb86-4b7e-4124-b06d-04721d48d958"
+                  "id": "c61ede6a-e672-4b73-9e32-144124d33cc0"
                 }
               ]
             },
@@ -182,7 +182,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "98559057-0c88-400f-bbc6-c034d77205f9"
+                  "id": "d1db3e18-b0ef-45b2-9d79-8ae8583d8743"
                 }
               ]
             }

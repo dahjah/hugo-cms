@@ -4080,7 +4080,8 @@ layout = "${activePage.value.layout}"
                             date: new Date().toISOString().split('T')[0],
                             description: '',
                             tags: [],
-                            website: currentWebsite.value?.id  // Add current website
+                            website: currentWebsite.value?.id,
+                            sort_order: pages.value.length  // Place at bottom of list
                         };
 
                         const response = await fetchApi(`${API_BASE_URL}pages/`, 'POST', newPage);
@@ -4474,6 +4475,14 @@ layout = "${activePage.value.layout}"
 
                         insertIntoCorrectPosition(mutationList, movedBlock, targetZone, targetIndex);
                     }
+
+                    // Mark page as having unsaved changes
+                    hasUnsavedChanges.value = true;
+                    const activePage = pages.value.find(p => p.id === activePageId.value);
+                    if(activePage) {
+                        activePage.contentStatus = 'unsaved';
+                    }
+                    debouncedSaveToSessionStorage();
                 };
 
                 const closeInspector = () => {
@@ -4501,6 +4510,14 @@ layout = "${activePage.value.layout}"
                     } else {
                         selectedBlockId.value = null;
                     }
+
+                    // Mark page as having unsaved changes
+                    hasUnsavedChanges.value = true;
+                    const activePage = pages.value.find(p => p.id === activePageId.value);
+                    if(activePage) {
+                        activePage.contentStatus = 'unsaved';
+                    }
+                    debouncedSaveToSessionStorage();
                 };
 
                 // --- UTILITIES ---
