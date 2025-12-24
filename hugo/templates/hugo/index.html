@@ -4211,8 +4211,9 @@ layout = "${activePage.value.layout}"
                 const clonePage = async (pageId) => {
                     try {
                         const clonedPage = await fetchApi(`${API_BASE_URL}pages/${pageId}/clone/`, 'POST');
-                        pages.value.push(clonedPage);
+                        pages.value.push({...clonedPage, contentStatus: 'saved'});
                         pages.value.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+                        setActivePage(clonedPage.id);
                         showToast('Page cloned successfully', 'success');
                     } catch(err) {
                         console.error('Failed to clone page:', err);

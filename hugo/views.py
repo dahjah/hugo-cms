@@ -1661,6 +1661,14 @@ class PageViewSet(viewsets.ModelViewSet):
                 new_page.title = f"{original_page.title} (copy)"
                 new_page.status = 'draft'
                 new_page.last_published_at = None
+
+                # Allow frontend to specify sort_order
+                # Handle sort order
+                from django.db.models import Max
+                max_order = Page.objects.filter(website=original_page.website).aggregate(Max('sort_order'))['sort_order__max']
+                new_page.sort_order = (max_order or 0) + 1
+                
+
                 
                 # Handle slug uniqueness
                 base_slug = f"{original_page.slug}-copy"
