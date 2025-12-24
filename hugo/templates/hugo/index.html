@@ -4102,6 +4102,14 @@ layout = "${activePage.value.layout}"
                         activePageMenuId.value = null;
                     });
 
+                    // Warn on unsaved changes
+                    window.addEventListener('beforeunload', (e) => {
+                        if(pages.value.some(p => p.contentStatus === 'unsaved') || hasUnsavedChanges.value) {
+                            e.preventDefault();
+                            e.returnValue = '';
+                        }
+                    });
+
                     // Handle browser back/forward navigation
                     window.addEventListener('popstate', (event) => {
                         // Get page ID from state (full UUID) or short ID from path
