@@ -67,6 +67,13 @@ class Website(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if not self.deployment_provider:
+            default_provider = DeploymentProvider.objects.filter(is_default=True).first()
+            if default_provider:
+                self.deployment_provider = default_provider
+        super().save(*args, **kwargs)
+
 class Page(models.Model):
     """
     Represents a single URL/Page in the Hugo site.
