@@ -42,5 +42,12 @@
       <guid>/api/sites/91d65f1a-3991-42f0-8948-be2aaa45ea13/preview/menu/</guid>
       <description></description>
     </item>
+    <item>
+      <title>New Page</title>
+      <link>/api/sites/91d65f1a-3991-42f0-8948-be2aaa45ea13/preview/new-page-1766541502233/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>/api/sites/91d65f1a-3991-42f0-8948-be2aaa45ea13/preview/new-page-1766541502233/</guid>
+      <description></description>
+    </item>
   </channel>
 </rss>

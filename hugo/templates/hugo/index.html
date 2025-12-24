@@ -604,9 +604,37 @@
                             <div class="w-5 h-5 flex items-center justify-center">
                                 <page-status-icon :status="page.contentStatus"></page-status-icon>
                             </div>
-                            <icon name="more-vertical" :size="14"
-                                class="opacity-0 group-hover:opacity-100 text-slate-400">
-                            </icon>
+                            <!-- Kebab Menu -->
+                            <div class="relative w-5 h-5 flex items-center justify-center cursor-pointer hover:bg-slate-200 rounded transition-colors"
+                                :class="{ 'opacity-100': activePageMenuId === page.id, 'opacity-0 group-hover:opacity-100': activePageMenuId !== page.id }"
+                                @click.stop="togglePageMenu(page.id)">
+                                <icon name="more-vertical" :size="14" class="text-slate-400"></icon>
+
+                                <div v-if="activePageMenuId === page.id"
+                                    class="absolute right-0 top-6 w-40 bg-white rounded-md shadow-xl border border-slate-100 z-50 py-1 flex flex-col"
+                                    @click.stop>
+
+                                    <button @click="openSettings(page)"
+                                        class="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center space-x-2">
+                                        <icon name="settings" :size="14"></icon>
+                                        <span>Settings</span>
+                                    </button>
+
+                                    <button @click="publishPage(page)"
+                                        class="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center space-x-2">
+                                        <icon name="send" :size="14"></icon>
+                                        <span>Publish</span>
+                                    </button>
+
+                                    <div class="h-px w-full bg-slate-100 my-1"></div>
+
+                                    <button @click="deletePage(page.id)"
+                                        class="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center space-x-2">
+                                        <icon name="trash-2" :size="14"></icon>
+                                        <span>Delete</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </template>
@@ -3270,11 +3298,12 @@
                 const componentLibrary = ref([]);
                 const layoutTemplates = ref([]);
                 const pages = ref([]);
+                const sidebarTab = ref('pages'); // pages, blocks, meta
                 const activePageId = ref(null);
+                const activePageMenuId = ref(null); // For kebab menu state
                 const viewMode = ref('editor');
                 const previewDevice = ref('desktop');
                 const selectedBlockId = ref(null);
-                const sidebarTab = ref('pages');
 
                 // Page drag-and-drop state
                 const draggedPageIndex = ref(null);
@@ -3669,6 +3698,10 @@ layout = "${activePage.value.layout}"
                     if(!response.ok) {
                         throw new Error(`API Error: ${response.statusText}`);
                     }
+                    // Handle 204 No Content
+                    if(response.status === 204) {
+                        return null;
+                    }
                     return response.json();
                 };
 
@@ -4057,6 +4090,11 @@ layout = "${activePage.value.layout}"
                 onMounted(() => {
                     initialLoad();
 
+                    // Close page menu on outside click
+                    window.addEventListener('click', () => {
+                        activePageMenuId.value = null;
+                    });
+
                     // Handle browser back/forward navigation
                     window.addEventListener('popstate', (event) => {
                         // Get page ID from state (full UUID) or short ID from path
@@ -4137,6 +4175,58 @@ layout = "${activePage.value.layout}"
                     } catch(error) {
                         console.error('Error creating page:', error);
                         alert('Failed to create new page. Please try again.');
+                    }
+                };
+
+                // --- PAGE MENU ACTIONS ---
+                const togglePageMenu = (id) => {
+                    activePageMenuId.value = activePageMenuId.value === id ? null : id;
+                };
+
+                const openSettings = (page) => {
+                    if(activePageId.value !== page.id) {
+                        setActivePage(page.id);
+                    }
+                    sidebarTab.value = 'meta';
+                    activePageMenuId.value = null;
+                };
+
+                const publishPage = async (page) => {
+                    if(activePageId.value !== page.id) {
+                        setActivePage(page.id);
+                        await nextTick();
+                    }
+
+                    await publishCurrentPage();
+                    activePageMenuId.value = null;
+                };
+
+                const deletePage = async (pageId) => {
+                    if(!confirm('Are you sure you want to delete this page? This action cannot be undone.')) return;
+
+                    try {
+                        await fetchApi(`${API_BASE_URL}pages/${pageId}/`, 'DELETE');
+
+                        // Remove from list
+                        const index = pages.value.findIndex(p => p.id === pageId);
+                        if(index > -1) {
+                            pages.value.splice(index, 1);
+                        }
+
+                        // If deleted page was active, switch to first available
+                        if(activePageId.value === pageId) {
+                            if(pages.value.length > 0) {
+                                setActivePage(pages.value[0].id);
+                            } else {
+                                activePageId.value = null;
+                            }
+                        }
+
+                    } catch(err) {
+                        console.error('Failed to delete page:', err);
+                        alert('Failed to delete page.');
+                    } finally {
+                        activePageMenuId.value = null;
                     }
                 };
 
@@ -4856,6 +4946,11 @@ layout = "${activePage.value.layout}"
                     generateConfig,
                     setActivePage,
                     createNewPage,
+                    togglePageMenu,
+                    openSettings,
+                    publishPage,
+                    deletePage,
+                    activePageMenuId,
                     draggedPageIndex,
                     dragOverPageIndex,
                     handlePageDragStart,
