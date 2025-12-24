@@ -845,7 +845,7 @@
             <div class="flex items-center space-x-3 z-20">
                 <!-- View Site Button -->
                 <a v-if="selectedProviderId && availableProviders.find(p => p.id === selectedProviderId)?.custom_domain && currentWebsite"
-                    :href="'https://' + currentWebsite.slug + '.' + availableProviders.find(p => p.id === selectedProviderId).custom_domain"
+                    :href="'https://' + currentWebsite.slug + '.' + availableProviders.find(p => p.id === selectedProviderId).custom_domain + (activePage?.slug ? '/' + activePage.slug.replace(/^\//, '') : '')"
                     target="_blank" title="View Published Site"
                     class="p-2 bg-white border border-slate-200 text-slate-500 rounded-md hover:bg-slate-50 transition-colors flex items-center justify-center text-decoration-none">
                     <icon name="globe" :size="20"></icon>
