@@ -459,11 +459,9 @@
                                     <p class="text-xs text-slate-600">Once you delete a website, there is no going back.
                                         This will permanently delete all pages, blocks, and settings for this site.</p>
                                 </div>
-                                <button @click="confirmDeleteWebsite"
-                                    class="ml-4 px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors flex items-center space-x-2">
-                                    <icon name="trash-2" :size="14"></icon>
-                                    <span>Delete Website</span>
-                                </button>
+                                <delete-button @click="confirmDeleteWebsite" variant="solid" text="Delete Website"
+                                    class="ml-4">
+                                </delete-button>
                             </div>
                         </div>
                     </div>
@@ -732,6 +730,21 @@
                             :icon-class="activePage.contentStatus !== 'published' ? 'text-amber-400' : 'text-slate-400'"
                             size="14">
                         </async-button>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="mt-8 pt-6 border-t border-red-100">
+                    <h4 class="text-xs font-semibold text-slate-600 mb-2 flex items-center text-red-600">
+                        <icon name="alert-triangle" :size="14" class="mr-1"></icon>
+                        Danger Zone
+                    </h4>
+                    <div class="bg-red-50 p-3 rounded-lg border border-red-200">
+                        <p class="text-xs text-slate-600 mb-3">Permanently delete this page. This action cannot be
+                            undone.</p>
+                        <delete-button @click="confirmDeletePage" variant="outlined" text="Delete Page" size="sm"
+                            :full-width="true">
+                        </delete-button>
                     </div>
                 </div>
 
@@ -1737,11 +1750,9 @@
 
                 <!-- Danger Zone -->
                 <div class="mt-8 pt-6 border-t border-slate-100">
-                    <button @click="deleteBlock(selectedBlock.id)"
-                        class="w-full py-2 bg-red-50 text-red-600 border border-red-100 rounded-md hover:bg-red-100 transition-colors flex items-center justify-center space-x-2">
-                        <icon name="trash-2" :size="14"></icon>
-                        <span class="text-xs font-semibold">Delete Block</span>
-                    </button>
+                    <delete-button @click="deleteBlock(selectedBlock.id)" variant="outlined" text="Delete Block"
+                        size="sm" :full-width="true">
+                    </delete-button>
                 </div>
 
         </div>
@@ -2041,6 +2052,67 @@
                     </div>
                     <span v-if="text">{{ loading ? (loadingText || text) : text }}</span>
                     <slot></slot>
+                </button>
+            `
+        };
+
+        const DeleteButton = {
+            props: {
+                variant: {
+                    type: String,
+                    default: 'outlined',
+                    validator: (value) => ['solid', 'outlined'].includes(value)
+                },
+                text: {
+                    type: String,
+                    default: 'Delete'
+                },
+                size: {
+                    type: String,
+                    default: 'md',
+                    validator: (value) => ['sm', 'md', 'lg'].includes(value)
+                },
+                fullWidth: {
+                    type: Boolean,
+                    default: false
+                }
+            },
+            components: {Icon},
+            computed: {
+                buttonClasses() {
+                    const baseClasses = 'rounded-md font-medium transition-colors flex items-center justify-center space-x-2';
+                    const widthClass = this.fullWidth ? 'w-full' : '';
+
+                    // Size classes
+                    let sizeClasses = '';
+                    if(this.size === 'sm') {
+                        sizeClasses = 'px-3 py-1.5 text-xs';
+                    } else if(this.size === 'md') {
+                        sizeClasses = 'px-4 py-2 text-sm';
+                    } else {
+                        sizeClasses = 'px-5 py-2.5 text-base';
+                    }
+
+                    // Variant classes
+                    let variantClasses = '';
+                    if(this.variant === 'solid') {
+                        variantClasses = 'bg-red-600 text-white hover:bg-red-700';
+                    } else {
+                        variantClasses = 'bg-red-50 text-red-600 border border-red-100 hover:bg-red-100';
+                    }
+
+                    return `${baseClasses} ${widthClass} ${sizeClasses} ${variantClasses}`;
+                },
+                iconSize() {
+                    if(this.size === 'sm') return 12;
+                    if(this.size === 'md') return 14;
+                    return 16;
+                }
+            },
+            template: `
+                <button :class="buttonClasses">
+                    <icon name="trash-2" :size="iconSize"></icon>
+                    <span :class="size === 'sm' ? 'text-xs font-semibold' : ''">{{ text }}</span>
                 </button>
             `
         };
@@ -3146,7 +3218,7 @@
 
         // --- MAIN APP ---
         const app = createApp({
-            components: {Icon, PageStatusIcon, AsyncButton, DropZone, BlockRenderer, PreviewViewport},
+            components: {Icon, PageStatusIcon, AsyncButton, DeleteButton, DropZone, BlockRenderer, PreviewViewport},
 
             setup() {
                 // --- CONSTANTS ---
@@ -4879,6 +4951,61 @@ layout = "${activePage.value.layout}"
                         } catch(error) {
                             console.error('Error deleting website:', error);
                             showToast('Error deleting website', 'error');
+                        }
+                    },
+
+                    confirmDeletePage: async () => {
+                        if(!activePage.value) return;
+
+                        const pageTitle = activePage.value.title;
+                        const pageSlug = activePage.value.slug;
+
+                        // Prevent deleting the homepage
+                        if(pageSlug === '/' || pageSlug === '') {
+                            showToast('Cannot delete the homepage', 'error');
+                            return;
+                        }
+
+                        const confirmation = confirm(
+                            `Are you sure you want to delete "${pageTitle}"?\n\n` +
+                            `This will permanently delete this page and all its blocks.\n\n` +
+                            `This action cannot be undone!`
+                        );
+
+                        if(!confirmation) return;
+
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+                            const response = await fetch(`/api/pages/${activePage.value.id}/`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': csrfToken
+                                }
+                            });
+
+                            if(!response.ok) {
+                                throw new Error('Failed to delete page');
+                            }
+
+                            showToast(`Page "${pageTitle}" deleted successfully`, 'success');
+
+                            // Remove from pages list
+                            pages.value = pages.value.filter(p => p.id !== activePage.value.id);
+
+                            // Switch to pages tab
+                            sidebarTab.value = 'pages';
+
+                            // Select first available page or clear selection
+                            if(pages.value.length > 0) {
+                                setActivePage(pages.value[0].id);
+                            } else {
+                                activePageId.value = null;
+                                activePage.value = null;
+                            }
+                        } catch(error) {
+                            console.error('Error deleting page:', error);
+                            showToast('Error deleting page', 'error');
                         }
                     },
 
