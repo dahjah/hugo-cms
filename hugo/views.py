@@ -199,7 +199,7 @@ def serve_preview_asset(request, website_id, path):
         traceback.print_exc()
         raise Http404(str(e))
 
-def editor_view(request, website_id=None):
+def editor_view(request, website_id=None, page_id=None):
     """Serves the Vue.js frontend application."""
     if website_id:
         try:

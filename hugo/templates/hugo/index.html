@@ -4025,8 +4025,26 @@ layout = "${activePage.value.layout}"
                         }, {deep: true});
 
                         if(pages.value.length > 0) {
+                            // Check URL path for page ID: /site/<UUID>/<SHORT_PAGE_ID>/
+                            const pathParts = window.location.pathname.split('/').filter(p => p);
+                            // Expect: ['site', 'UUID', 'SHORT_PAGE_ID'] or ['site', 'UUID']
+                            const shortIdFromUrl = pathParts.length >= 3 && pathParts[0] === 'site'
+                                ? pathParts[2]
+                                : null;
+
+                            // Find page by matching short ID against last 8 chars of each page's UUID
+                            const targetPage = shortIdFromUrl
+                                ? pages.value.find(p => getShortId(p.id) === shortIdFromUrl)
+                                : null;
+
                             // Setting activePageId will trigger the watcher which calls fetchContent
-                            activePageId.value = pages.value[0].id;
+                            activePageId.value = targetPage ? targetPage.id : pages.value[0].id;
+
+                            // Update URL if we loaded the first page (no page ID in path)
+                            if(!shortIdFromUrl && pages.value[0] && WEBSITE_ID) {
+                                const newPath = `/site/${WEBSITE_ID}/${getShortId(pages.value[0].id)}/`;
+                                history.replaceState({pageId: pages.value[0].id}, '', newPath);
+                            }
                         }
                     } catch(error) {
                         console.error('Failed to load CMS data:', error);
@@ -4038,8 +4056,31 @@ layout = "${activePage.value.layout}"
                 // --- LIFECYCLE ---
                 onMounted(() => {
                     initialLoad();
-                });
 
+                    // Handle browser back/forward navigation
+                    window.addEventListener('popstate', (event) => {
+                        // Get page ID from state (full UUID) or short ID from path
+                        let pageId = event.state?.pageId;
+                        if(!pageId) {
+                            const pathParts = window.location.pathname.split('/').filter(p => p);
+                            if(pathParts.length >= 3 && pathParts[0] === 'site') {
+                                const shortIdFromUrl = pathParts[2];
+                                // Find page by matching short ID
+                                const targetPage = pages.value.find(p => getShortId(p.id) === shortIdFromUrl);
+                                if(targetPage) {
+                                    pageId = targetPage.id;
+                                }
+                            }
+                        }
+                        if(pageId) {
+                            const targetPage = pages.value.find(p => p.id == pageId);
+                            if(targetPage) {
+                                // Use false to prevent pushing another history entry
+                                setActivePage(targetPage.id, false);
+                            }
+                        }
+                    });
+                });
                 // Watch activePageId to load new main content and cache previous page
                 watch(activePageId, async (newId, oldId) => {
                     // Save current page's content to cache if it has unsaved changes
@@ -4065,9 +4106,15 @@ layout = "${activePage.value.layout}"
 
 
                 // --- ACTIONS ---
-                const setActivePage = (id) => {
+                const setActivePage = (id, updateUrl = true) => {
                     activePageId.value = id;
                     selectedBlockId.value = null;
+
+                    // Update URL with short page ID for routing: /site/<UUID>/<SHORT_ID>/
+                    if(updateUrl && id && WEBSITE_ID) {
+                        const newPath = `/site/${WEBSITE_ID}/${getShortId(id)}/`;
+                        history.pushState({pageId: id}, '', newPath);
+                    }
                 };
 
                 const createNewPage = async () => {
@@ -4295,6 +4342,8 @@ layout = "${activePage.value.layout}"
 
                 // Helper to generate UUIDs
                 const generateId = () => uuid.v4();
+                // Get short ID (last 8 chars of UUID) for URL-friendly page IDs
+                const getShortId = (id) => id ? String(id).slice(-8) : null;
 
                 // --- DRAG & DROP HANDLERS ---
 
