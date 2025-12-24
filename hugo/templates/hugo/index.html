@@ -4106,7 +4106,9 @@ layout = "${activePage.value.layout}"
                     window.addEventListener('beforeunload', (e) => {
                         if(pages.value.some(p => p.contentStatus === 'unsaved') || hasUnsavedChanges.value) {
                             e.preventDefault();
-                            e.returnValue = '';
+                            const msg = "You have unsaved changes! are you sure you want to exit?";
+                            e.returnValue = msg;
+                            return msg;
                         }
                     });
 
