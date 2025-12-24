@@ -46,7 +46,9 @@ class InstagramScraper(BaseScraper):
         try:
             # Extract username
             if 'instagram.com/' in identifier:
-                username = identifier.split('instagram.com/')[-1].strip('/').split('?')[0]
+                # Split query params first, then path parts, then strip
+                path_part = identifier.split('instagram.com/')[-1].split('?')[0]
+                username = path_part.strip('/')
             elif identifier.startswith('@'):
                 username = identifier[1:]
             else:

@@ -1,0 +1,14 @@
+
+baseURL = 'https://test-parallax-site.monu.dev'
+languageCode = 'en-us'
+title = 'Test Parallax Site'
+theme = []
+
+[params]
+    description = ''
+    theme_preset = 'light'
+    
+[mediaTypes]
+[mediaTypes."text/css"]
+    suffixes = ["css"]
+            

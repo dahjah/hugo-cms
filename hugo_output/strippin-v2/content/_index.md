@@ -4,12 +4,14 @@
   "type": "home",
   "header_blocks": [
     {
-      "gap": "4",
       "justify": "between",
       "align": "center",
-      "css_classes": "w-full",
-      "id": "69aac272-a4b5-4f12-ba73-6d422582ccae",
-      "block_type": "row",
+      "gap": "0",
+      "position": "sticky",
+      "css_classes": "",
+      "opacity": 60,
+      "id": "70a917c7-8505-490b-9643-810a834a44ed",
+      "block_type": "navbar",
       "blocks": [
         {
           "logo_url": "",
@@ -18,6 +20,7 @@
           "link_url": "/",
           "logo_image": "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg",
           "link_url_type": "page",
+          "css_classes": "btn-neutral",
           "id": "4ea26512-4eea-4ede-a0dd-896ea73b499e",
           "block_type": "brand_logo"
         },
@@ -46,7 +49,7 @@
           ],
           "style": "pills",
           "responsive": "true",
-          "hamburgerDirection": "dropdown",
+          "hamburgerDirection": "sidebar",
           "sidebarSide": "right",
           "alignment": "center",
           "position": "normal",
@@ -65,6 +68,7 @@
               "sort_order": 0
             }
           ],
+          "css_classes": "",
           "id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
           "block_type": "menu"
         }
@@ -357,11 +361,10 @@
               "id": "90465e6b-50c8-4191-803d-696e1484396e",
               "children": [
                 {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg",
-                    "alt": "Gallery Image"
-                  }
+                  "src": "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg",
+                  "alt": "Gallery Image",
+                  "block_type": "image",
+                  "id": "809d00d4-1454-4e68-af3a-79e5eb98c3ff"
                 }
               ]
             },
@@ -369,11 +372,10 @@
               "id": "3cb5f25f-7318-4ae8-b865-3d057eb27ec4",
               "children": [
                 {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg",
-                    "alt": "Gallery Image"
-                  }
+                  "src": "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg",
+                  "alt": "Gallery Image",
+                  "block_type": "image",
+                  "id": "707a135a-3341-43a3-a33d-de783c5c9acf"
                 }
               ]
             },
@@ -381,11 +383,10 @@
               "id": "59cdd50a-84ed-406b-9bb4-ab5ab58c4071",
               "children": [
                 {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/2NRRmCOMrk8WYpvYeUzPIQ/l.jpg",
-                    "alt": "Gallery Image"
-                  }
+                  "src": "https://s3-media0.fl.yelpcdn.com/bphoto/2NRRmCOMrk8WYpvYeUzPIQ/l.jpg",
+                  "alt": "Gallery Image",
+                  "block_type": "image",
+                  "id": "492d14eb-2352-445c-bb0d-5cd4e882ffae"
                 }
               ]
             },
@@ -393,11 +394,10 @@
               "id": "6ec3c664-72cd-4cba-a571-1c8afa03987e",
               "children": [
                 {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg",
-                    "alt": "Gallery Image"
-                  }
+                  "src": "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg",
+                  "alt": "Gallery Image",
+                  "block_type": "image",
+                  "id": "cf5221b9-efc0-4a4b-b27d-07da3409d9db"
                 }
               ]
             },
@@ -405,11 +405,10 @@
               "id": "22d345ad-cd5b-4850-808c-6e33298826b7",
               "children": [
                 {
-                  "type": "image",
-                  "params": {
-                    "src": "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg",
-                    "alt": "Gallery Image"
-                  }
+                  "src": "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg",
+                  "alt": "Gallery Image",
+                  "block_type": "image",
+                  "id": "2fcddca6-15da-42bb-9d83-9efbfce6c639"
                 }
               ]
             },
@@ -417,17 +416,11 @@
               "id": "mja59vxrkzwyrevai1",
               "children": [
                 {
-                  "id": "8fab976b-13c3-4b38-91be-53a1ddab7bb2",
-                  "type": "image",
-                  "params": {
-                    "src": "/media/uploads/strippin-v2/ee99ac37-640a-497e-a0d9-aee7aec60d5f.png",
-                    "alt": "",
-                    "caption": ""
-                  },
-                  "children": null,
-                  "placement_key": "carousel_slide_28cae8cb-3252-4e9e-b823-3368c0e5339b_5",
-                  "parent_id": "28cae8cb-3252-4e9e-b823-3368c0e5339b",
-                  "sort_order": 0
+                  "src": "/media/uploads/strippin-v2/ee99ac37-640a-497e-a0d9-aee7aec60d5f.png",
+                  "alt": "",
+                  "caption": "",
+                  "block_type": "image",
+                  "id": "8fab976b-13c3-4b38-91be-53a1ddab7bb2"
                 }
               ]
             }
