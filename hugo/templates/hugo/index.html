@@ -2269,11 +2269,14 @@
                     <div v-if="block.type === 'menu'" 
                         :class="[
                             'w-full',
-                            block.params.position === 'overlay' ? 'absolute top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-sm shadow-md' :
-                            block.params.position === 'fixed' ? 'fixed top-0 left-0 right-0 z-40 bg-white shadow-md' :
-                            ''
+                            block.params.position === 'sticky' ? 'sticky top-0 z-40 shadow-md' : 
+                            block.params.position === 'overlayed' || block.params.position === 'overlay' ? 'absolute top-0 left-0 right-0 z-40 backdrop-blur-sm shadow-md' :
+                            block.params.position === 'fixed' ? 'fixed top-0 left-0 right-0 z-40 shadow-md' :
+                            '',
+                            block.params.opacity ? 'bg-base-100/' + block.params.opacity : 'bg-base-100'
                         ]" 
                         :data-block-id="block.id">
+
                         <!-- Hamburger/Responsive Menu -->
                         <div v-if="block.params.responsive === 'true' || block.params.responsive === true">
                             <div :class="[
@@ -2458,7 +2461,20 @@
 
                     <div v-else-if="block.type === 'navbar'" 
                          :class="[
-                             'flex flex-wrap w-full relative group/navbar',
+                             isEditable ? 'p-4 border border-slate-100 rounded-lg' : '',
+                             'w-full group/navbar-wrapper',
+                             !isEditable && block.params.position === 'sticky' ? 'sticky top-0 z-50' : 
+                             !isEditable && block.params.position === 'overlayed' ? 'absolute top-0 left-0 right-0 z-50' : ''
+                         ]">
+                         
+                        <!-- Navbar Label -->
+                        <div v-if="isEditable" class="text-xs font-bold text-slate-400 uppercase mb-2">
+                            Navbar
+                        </div>
+
+                        <div :class="[
+                             'flex flex-wrap w-full md:flex-nowrap navbar group/navbar',
+                             block.params.opacity ? 'bg-base-100/' + block.params.opacity : 'bg-base-100',
                              block.params.justify === 'center' ? 'justify-center' :
                              block.params.justify === 'end' ? 'justify-end' :
                              block.params.justify === 'between' ? 'justify-between' :
@@ -2468,52 +2484,51 @@
                              block.params.align === 'center' ? 'items-center' :
                              block.params.align === 'end' ? 'items-end' : 'items-stretch'
                          ]">
-                        <!-- Navbar Label -->
-                        <div v-if="isEditable" class="text-xs font-bold text-slate-400 uppercase mb-2">
-                            Navbar
-                        </div>
-                        <!-- Drop zone wrapper for the entire navbar (horizontal mode) -->
-                        <drop-zone 
-                            v-if="isEditable"
-                            zone="children" 
-                            :blocks="block.children || []" 
-                            :is-active="isEditable"
-                            :parent-block-id="block.id"
-                            :is-nested="true"
-                            :is-horizontal="true"
-                            :horizontal-classes="[
-                                block.params.justify === 'center' ? 'justify-center' :
-                                block.params.justify === 'end' ? 'justify-end' :
-                                block.params.justify === 'between' ? 'justify-between' :
-                                block.params.justify === 'around' ? 'justify-around' :
-                                block.params.justify === 'evenly' ? 'justify-evenly' : 'justify-start',
-                                block.params.align === 'start' ? 'items-start' :
-                                block.params.align === 'center' ? 'items-center' :
-                                block.params.align === 'end' ? 'items-end' : 'items-stretch'
-                            ].join(' ')"
-                            @drop-item="handleNestedDrop"
-                            @select-block="handleSelectBlock"
-                            @drag-start-block="handleNestedDragStart"
-                            class="w-full min-h-[50px]"
-                        ></drop-zone>
-                        
-                        <!-- Non-editable view -->
-                        <template v-else>
-                            <template v-for="(child, index) in block.children" :key="child.id">
-                                <block-renderer 
-                                    :block="child" 
-                                    :is-selected="false"
-                                    :is-editable="false"
-                                    @select="$emit('select-block', $event)"
-                                ></block-renderer>
+
+                            <!-- Drop zone wrapper for the entire navbar (horizontal mode) -->
+                            <drop-zone 
+                                v-if="isEditable"
+                                zone="children" 
+                                :blocks="block.children || []" 
+                                :is-active="isEditable"
+                                :parent-block-id="block.id"
+                                :is-nested="true"
+                                :is-horizontal="true"
+                                :horizontal-classes="[
+                                    block.params.justify === 'center' ? 'justify-center' :
+                                    block.params.justify === 'end' ? 'justify-end' :
+                                    block.params.justify === 'between' ? 'justify-between' :
+                                    block.params.justify === 'around' ? 'justify-around' :
+                                    block.params.justify === 'evenly' ? 'justify-evenly' : 'justify-start',
+                                    block.params.align === 'start' ? 'items-start' :
+                                    block.params.align === 'center' ? 'items-center' :
+                                    block.params.align === 'end' ? 'items-end' : 'items-stretch'
+                                ].join(' ')"
+                                @drop-item="handleNestedDrop"
+                                @select-block="handleSelectBlock"
+                                @drag-start-block="handleNestedDragStart"
+                                class="w-full min-h-[50px]"
+                            ></drop-zone>
+                            
+                            <!-- Non-editable view -->
+                            <template v-else>
+                                <template v-for="(child, index) in block.children" :key="child.id">
+                                    <block-renderer 
+                                        :block="child" 
+                                        :is-selected="false"
+                                        :is-editable="false"
+                                        @select="$emit('select-block', $event)"
+                                    ></block-renderer>
+                                </template>
                             </template>
-                        </template>
+                        </div>
                          
                         <!-- Empty Navbar State -->
                         <div v-if="(!block.children || block.children.length === 0) && !isEditable" class="w-full p-4 border-2 border-dashed border-slate-200 rounded text-center text-slate-400">
                             Empty Navbar
                         </div>
                     </div>
+
 
                     <div v-else-if="block.type === 'column'" class="h-full">
                         <div :class="isEditable ? 'h-full border border-dashed border-slate-200 rounded-lg hover:border-indigo-300 transition-colors p-2' : ''">
@@ -3061,8 +3076,12 @@
                 }
 
                 const hasCustomTemplate = computed(() => {
+                    if(['navbar', 'row', 'column', 'section', 'flex_columns', 'carousel'].includes(props.block.type)) {
+                        return false;
+                    }
                     return blockTemplates.value && !!blockTemplates.value[props.block.type];
                 });
+
 
                 const renderedHtml = computed(() => {
                     if(!hasCustomTemplate.value) return '';
