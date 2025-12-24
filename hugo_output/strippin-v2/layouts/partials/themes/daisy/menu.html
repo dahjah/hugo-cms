@@ -19,12 +19,15 @@
     {{ $navbarEndClass = "flex-none" }}
 {{ end }}
 
-{{ $classes := "navbar shadow-sm z-40 w-auto" }}
-{{ if eq $position "overlay" }}
-    {{ $classes = "navbar absolute top-0 left-0 right-0 z-40 bg-base-100/90 backdrop-blur-sm shadow-md w-full" }}
+{{ $classes := (printf "navbar shadow-sm z-40 w-auto bg-base-100/%d" (int (.opacity | default 100))) }}
+{{ if eq $position "sticky" }}
+    {{ $classes = printf "navbar sticky top-0 z-40 shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
+{{ else if or (eq $position "overlayed") (eq $position "overlay") }}
+    {{ $classes = printf "navbar absolute top-0 left-0 right-0 z-40 backdrop-blur-sm shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
 {{ else if eq $position "fixed" }}
-    {{ $classes = "navbar fixed top-0 left-0 right-0 z-40 shadow-md w-full" }}
+    {{ $classes = printf "navbar fixed top-0 left-0 right-0 z-40 shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
 {{ end }}
+
 
 <div class="{{ $classes }} {{ .css_classes }}">
     <!-- Navbar Start (Logo or Hamburger for sidebar) -->

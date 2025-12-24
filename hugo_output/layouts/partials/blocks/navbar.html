@@ -1,6 +1,5 @@
-<div
-    class="flex flex-wrap md:flex-nowrap navbar bg-base-100/{{ default 100 .opacity }} {{ if eq .position 'sticky' }}sticky top-0 z-50 {{ end }}{{ if eq .position 'overlayed' }}absolute top-0 left-0 right-0 z-50 {{ end }}justify-{{ default "between" .justify }} items-{{ default "center" .align }} gap-{{ default "0" .gap }} {{ .css_classes }}">
+<div class="flex flex-wrap md:flex-nowrap navbar {{ if eq .position "sticky" }}sticky top-0 z-50{{ end }} {{ if eq .position "overlayed" }}absolute top-0 left-0 right-0 z-50{{ end }} {{ if .opacity }}bg-base-100/{{ .opacity }}{{else}}bg-base-100{{ end }} justify-{{ default "between" .justify }} items-{{ default "center" .align }} gap-{{ default 0 .gap }} {{ .css_classes }}">
     {{ range $index, $element := .blocks }}{{ with $element }}
-    {{ partial "blocks/render-block.html" . }}
+        {{partial "blocks/render-block.html" .}}
     {{ end }}{{ end }}
 </div>

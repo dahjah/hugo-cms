@@ -21,7 +21,7 @@
           "link_url": "/",
           "logo_image": "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg",
           "link_url_type": "page",
-          "css_classes": "glass",
+          "css_classes": "bg-base-100/60",
           "id": "4ea26512-4eea-4ede-a0dd-896ea73b499e",
           "block_type": "brand_logo"
         },
@@ -74,7 +74,7 @@
               "sort_order": 0
             }
           ],
-          "css_classes": "",
+          "css_classes": "bg-base-100/100",
           "id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
           "block_type": "menu"
         }
@@ -100,7 +100,7 @@
     {
       "style": "default",
       "id": "292f16de-a5a7-4e27-9112-a4d8123505f8",
-      "width": "100%",
+      "width": "59.7%",
       "block_type": "section",
       "blocks": [
         {
@@ -377,7 +377,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/q9XshFAkMaQLOlRKlS7RwQ/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "902bd4aa-aa58-45c7-aaf8-cb170bd1627d"
+                  "id": "3c31bd76-8e09-48fd-9840-2217299bc365"
                 }
               ]
             },
@@ -388,7 +388,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/c5ugvGu6ShLBLPPwvNPWdQ/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "a6f9a90a-93d6-48bf-a9f6-3ed7fbd85c2f"
+                  "id": "990f7f2b-8b8e-4498-9b24-d85e41ecf943"
                 }
               ]
             },
@@ -399,7 +399,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/2NRRmCOMrk8WYpvYeUzPIQ/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "3072498a-a519-44a1-8f74-a44385a31e0c"
+                  "id": "8a89dc1b-dc2a-4ebd-a7c7-b7daea7b35ce"
                 }
               ]
             },
@@ -410,7 +410,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/Zd-C4aaz8oKoTaB0KPuUew/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "a1f4f7a4-c7b3-4520-bb9c-181e66ac17ae"
+                  "id": "320a1172-9758-4b47-a93a-3a5875ee3360"
                 }
               ]
             },
@@ -421,7 +421,7 @@
                   "src": "https://s3-media0.fl.yelpcdn.com/bphoto/SGLgHKRKqPF27Sj5aciZdw/l.jpg",
                   "alt": "Gallery Image",
                   "block_type": "image",
-                  "id": "a67ae332-fc01-4fc7-8708-1fa12a641e5b"
+                  "id": "e9b5c503-ba69-4972-a15a-6fab86320bbc"
                 }
               ]
             },

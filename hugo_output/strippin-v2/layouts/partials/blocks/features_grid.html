@@ -4,7 +4,7 @@
         {{ range $index, $element := .features }}{{ with $element }}
         <div class="text-center p-4 rounded-lg hover:shadow-md transition-shadow">
             <div class="w-12 h-12 mx-auto mb-3 bg-primary/10 rounded-full flex items-center justify-center">
-                {{ partial "helpers/icon.html" (dict "name" "check-circle") | safeHTML }}
+                {{ partial "helpers/icon.html" (dict "name" "(") | safeHTML }}
             </div>
             <h4 class="text-lg font-semibold mb-2 text-base-content">{{ .title }}</h4>
             <p class="text-sm text-base-content/70">{{ .description }}</p>
@@ -13,7 +13,7 @@
         {{ range $index, $element := .items }}{{ with $element }}
         <div class="text-center p-4 rounded-lg hover:shadow-md transition-shadow">
             <div class="w-12 h-12 mx-auto mb-3 bg-primary/10 rounded-full flex items-center justify-center">
-                {{ partial "helpers/icon.html" (dict "name" "check-circle") | safeHTML }}
+                {{ partial "helpers/icon.html" (dict "name" "(") | safeHTML }}
             </div>
             <h4 class="text-lg font-semibold mb-2 text-base-content">{{ .title }}</h4>
             <p class="text-sm text-base-content/70">{{ .description }}</p>

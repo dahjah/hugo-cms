@@ -9,7 +9,7 @@
       "align": "center",
       "gap": "0",
       "position": "sticky",
-      "css_classes": "",
+      "css_classes": "testing",
       "opacity": 60,
       "id": "70a917c7-8505-490b-9643-810a834a44ed",
       "block_type": "navbar",
@@ -21,7 +21,7 @@
           "link_url": "/",
           "logo_image": "/media/uploads/e3187daf-c430-4279-a31a-737a0b2f87e0.jpg",
           "link_url_type": "page",
-          "css_classes": "glass",
+          "css_classes": "bg-base-100/60",
           "id": "4ea26512-4eea-4ede-a0dd-896ea73b499e",
           "block_type": "brand_logo"
         },
@@ -74,7 +74,7 @@
               "sort_order": 0
             }
           ],
-          "css_classes": "glass",
+          "css_classes": "bg-base-100/100",
           "id": "37c9bec8-8ee4-409e-aea0-e4dc3e4bbba2",
           "block_type": "menu"
         }

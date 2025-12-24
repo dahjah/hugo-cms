@@ -6,7 +6,7 @@ theme = []
 
 [params]
     description = ''
-    theme_preset = 'cyberpunk'
+    theme_preset = 'fantasy'
     
 [build]
     writeStats = true

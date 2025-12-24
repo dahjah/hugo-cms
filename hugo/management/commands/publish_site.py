@@ -424,15 +424,8 @@ theme = []
         with open(blocks / 'row.html', 'w') as f: f.write(row_tpl)
         with open(blocks / 'column.html', 'w') as f: f.write(column_tpl)
         
-        # Navbar (DaisyUI styled row)
-        navbar_tpl = """<div class="flex flex-wrap md:flex-nowrap navbar bg-base-100/{{ .opacity | default 100 }} {{ if eq .position \"sticky\" }}sticky top-0 z-50 {{ end }}{{ if eq .position \"overlayed\" }}absolute top-0 left-0 right-0 z-50 {{ end }}justify-{{ .justify | default \"between\" }} items-{{ .align | default \"center\" }} gap-{{ .gap | default \"0\" }} {{ .css_classes }}">
-    {{ range .blocks }}
-        {{ partial "blocks/render-block.html" . }}
-    {{ end }}
-</div>"""
-        with open(blocks / 'navbar.html', 'w') as f: f.write(navbar_tpl)
-        
         # --- CONTENT BLOCKS ---
+
         hero_tpl = """{{ $heroId := .id | default now.UnixNano }}
 <div class="relative overflow-hidden w-full {{ .css_classes }} hero-section" 
      id="hero-{{ $heroId }}"
@@ -1031,12 +1024,15 @@ theme = []
 {{ else if eq $alignment "between" }}
     {{ $justifyClass = "justify-between" }}
 {{ end }}
-{{ $classes := "bg-white shadow-sm border-b border-slate-200 mb-8" }}
-{{ if eq $position "overlay" }}
-    {{ $classes = "absolute top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-sm shadow-md" }}
+{{ $classes := (printf "bg-white shadow-sm border-b border-slate-200 mb-8 bg-base-100/%d" (int (.opacity | default 100))) }}
+{{ if eq $position "sticky" }}
+    {{ $classes = printf "sticky top-0 z-40 shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
+{{ else if or (eq $position "overlayed") (eq $position "overlay") }}
+    {{ $classes = printf "absolute top-0 left-0 right-0 z-40 backdrop-blur-sm shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
 {{ else if eq $position "fixed" }}
-    {{ $classes = "fixed top-0 left-0 right-0 z-40 bg-white shadow-md" }}
+    {{ $classes = printf "fixed top-0 left-0 right-0 z-40 shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
 {{ end }}
+
 
 <nav class="{{ $classes }} {{ .css_classes }}">
     <div class="container mx-auto px-4">
@@ -1169,12 +1165,15 @@ theme = []
     {{ $navbarEndClass = "flex-none" }}
 {{ end }}
 
-{{ $classes := "navbar shadow-sm z-40 w-auto" }}
-{{ if eq $position "overlay" }}
-    {{ $classes = "navbar absolute top-0 left-0 right-0 z-40 bg-base-100/90 backdrop-blur-sm shadow-md w-full" }}
+{{ $classes := (printf "navbar shadow-sm z-40 w-auto bg-base-100/%d" (int (.opacity | default 100))) }}
+{{ if eq $position "sticky" }}
+    {{ $classes = printf "navbar sticky top-0 z-40 shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
+{{ else if or (eq $position "overlayed") (eq $position "overlay") }}
+    {{ $classes = printf "navbar absolute top-0 left-0 right-0 z-40 backdrop-blur-sm shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
 {{ else if eq $position "fixed" }}
-    {{ $classes = "navbar fixed top-0 left-0 right-0 z-40 shadow-md w-full" }}
+    {{ $classes = printf "navbar fixed top-0 left-0 right-0 z-40 shadow-md w-full bg-base-100/%d" (int (.opacity | default 100)) }}
 {{ end }}
+
 
 <div class="{{ $classes }} {{ .css_classes }}">
     <!-- Navbar Start (Logo or Hamburger for sidebar) -->

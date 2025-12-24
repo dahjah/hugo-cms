@@ -570,22 +570,50 @@
                     <icon name="plus" :size="16"></icon>
                 </button>
             </div>
-            <div class="space-y-1">
-                <div v-for="page in pages" :key="page.id" @click="setActivePage(page.id)"
-                    class="group flex items-center justify-between px-3 py-2 rounded-md cursor-pointer text-sm transition-all"
-                    :class="activePageId === page.id ? 'bg-indigo-50 text-indigo-700 font-medium border border-indigo-100' : 'hover:bg-slate-50 text-slate-600 border border-transparent'">
-                    <div class="flex items-center space-x-3 truncate">
-                        <icon name="file-text" :size="16"
-                            :class="activePageId === page.id ? 'text-indigo-500' : 'text-slate-400'"></icon>
-                        <span class="truncate">{{ page.title }}</span>
+            <div class="space-y-1" @dragover="handlePageDragOver($event)" @drop="handlePageDrop($event)">
+                <template v-for="(page, index) in pages" :key="page.id">
+                    <!-- Drop placeholder BEFORE this page -->
+                    <div v-if="dragOverPageIndex === index && draggedPageIndex !== null && draggedPageIndex !== index"
+                        class="h-10 mb-1 bg-indigo-100 border-2 border-dashed border-indigo-400 rounded-md opacity-60">
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-5 h-5 flex items-center justify-center">
-                            <page-status-icon :status="page.contentStatus"></page-status-icon>
+
+                    <div @click="setActivePage(page.id)" @dragover="handlePageDragOver($event)"
+                        @drop="handlePageDrop($event)"
+                        class="group flex items-center justify-between px-3 py-2 rounded-md cursor-pointer text-sm transition-all relative"
+                        :class="[activePageId === page.id ? 'bg-indigo-50 text-indigo-700 font-medium border border-indigo-100' : 'hover:bg-slate-50 text-slate-600 border border-transparent']"
+                        :data-page-index="index">
+
+                        <!-- Drag handle and page info -->
+                        <div class="flex items-center space-x-2 flex-1 min-w-0">
+                            <!-- Drag handle -->
+                            <div draggable="true" @dragstart="handlePageDragStart($event, index)"
+                                @dragend="handlePageDragEnd($event)"
+                                class="opacity-0 group-hover:opacity-100 cursor-grab flex-shrink-0 flex flex-col gap-0.5 py-1 px-1.5">
+                                <div class="w-3.5 h-0.5 bg-slate-400 rounded"></div>
+                                <div class="w-3.5 h-0.5 bg-slate-400 rounded"></div>
+                                <div class="w-3.5 h-0.5 bg-slate-400 rounded"></div>
+                            </div>
+                            <icon name="file-text" :size="16"
+                                :class="activePageId === page.id ? 'text-indigo-500' : 'text-slate-400'">
+                            </icon>
+                            <span class="truncate">{{ page.title }}</span>
                         </div>
-                        <icon name="more-vertical" :size="14" class="opacity-0 group-hover:opacity-100 text-slate-400">
-                        </icon>
+
+                        <!-- Status icons -->
+                        <div class="flex items-center space-x-2">
+                            <div class="w-5 h-5 flex items-center justify-center">
+                                <page-status-icon :status="page.contentStatus"></page-status-icon>
+                            </div>
+                            <icon name="more-vertical" :size="14"
+                                class="opacity-0 group-hover:opacity-100 text-slate-400">
+                            </icon>
+                        </div>
                     </div>
+                </template>
+
+                <!-- Drop placeholder at END -->
+                <div v-if="dragOverPageIndex === pages.length && draggedPageIndex !== null"
+                    class="h-10 mt-1 bg-indigo-100 border-2 border-dashed border-indigo-400 rounded-md opacity-60">
                 </div>
             </div>
 
@@ -3239,6 +3267,10 @@
                 const selectedBlockId = ref(null);
                 const sidebarTab = ref('pages');
 
+                // Page drag-and-drop state
+                const draggedPageIndex = ref(null);
+                const dragOverPageIndex = ref(null);
+
                 const searchQuery = ref('');
                 const blockTemplates = ref({});
 
@@ -4047,6 +4079,100 @@ layout = "${activePage.value.layout}"
                         alert('Failed to create new page. Please try again.');
                     }
                 };
+
+                // Page drag-and-drop handlers
+                const handlePageDragStart = (event, index) => {
+                    draggedPageIndex.value = index;
+                    event.dataTransfer.effectAllowed = 'move';
+                    // Don't set opacity on target - it interferes with hover states
+                };
+
+                const handlePageDragEnd = (event) => {
+                    // Clear any inline styles that might have been set
+                    event.target.style.opacity = '';
+                    draggedPageIndex.value = null;
+                    dragOverPageIndex.value = null;
+                };
+
+                const handlePageDragOver = (event) => {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+
+                    // Find the pages container and get all page elements with data-page-index
+                    const container = event.currentTarget.closest('.space-y-1');
+                    if(!container) return;
+
+                    const pageElements = Array.from(container.querySelectorAll('[data-page-index]'));
+                    const mouseY = event.clientY;
+
+                    let foundIndex = pages.value.length; // Default to end
+
+                    for(let i = 0; i < pageElements.length; i++) {
+                        const rect = pageElements[i].getBoundingClientRect();
+                        const midY = rect.top + (rect.height / 2);
+
+                        if(mouseY < midY) {
+                            foundIndex = i;
+                            break;
+                        }
+                    }
+
+                    dragOverPageIndex.value = foundIndex;
+                };
+
+                const handlePageDrop = async (event) => {
+                    event.preventDefault();
+
+                    const dropIndex = dragOverPageIndex.value;
+
+                    if(draggedPageIndex.value === null || dropIndex === null || draggedPageIndex.value === dropIndex) {
+                        draggedPageIndex.value = null;
+                        dragOverPageIndex.value = null;
+                        return;
+                    }
+
+                    // Calculate actual insertion index (account for array shift after removal)
+                    let insertIndex = dropIndex;
+                    if(draggedPageIndex.value < dropIndex) {
+                        insertIndex = dropIndex - 1;
+                    }
+
+                    // Reorder the pages array
+                    const draggedPage = pages.value[draggedPageIndex.value];
+                    const newPages = [...pages.value];
+                    newPages.splice(draggedPageIndex.value, 1);
+                    newPages.splice(insertIndex, 0, draggedPage);
+
+                    pages.value = newPages;
+
+                    // Reset drag state
+                    draggedPageIndex.value = null;
+                    dragOverPageIndex.value = null;
+
+                    // Call API to persist ordering
+                    await reorderPages();
+                };
+
+                const reorderPages = async () => {
+                    try {
+                        const payload = {
+                            pages: pages.value.map((page, index) => ({
+                                id: page.id,
+                                sort_order: index
+                            }))
+                        };
+
+                        await fetchApi('/api/pages/reorder/', 'POST', payload);
+                        showToast('Page order updated', 'success');
+                    } catch(error) {
+                        console.error('Error reordering pages:', error);
+                        showToast('Error updating page order', 'error');
+
+                        // Reload pages on error to restore correct order
+                        await loadPages();
+                    }
+                };
+
                 const savePageContent = async () => {
                     if(!activePage.value || isSaving.value) return;
                     isSaving.value = true;
@@ -4652,6 +4778,13 @@ layout = "${activePage.value.layout}"
                     generateConfig,
                     setActivePage,
                     createNewPage,
+                    draggedPageIndex,
+                    dragOverPageIndex,
+                    handlePageDragStart,
+                    handlePageDragEnd,
+                    handlePageDragOver,
+                    handlePageDrop,
+                    reorderPages,
                     savePageContent,
                     publishSite,
                     publishCurrentPage,
