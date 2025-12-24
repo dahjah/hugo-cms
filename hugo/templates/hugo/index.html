@@ -3729,8 +3729,8 @@ layout = "${activePage.value.layout}"
                         return;
                     }
 
-                    // Check sessionStorage for unsaved content (works across browser refreshes)
-                    const sessionData = loadFromSessionStorage(pageId, page?.updated_at);
+                    // Check localStorage for unsaved content (works across browser refreshes and tab closure)
+                    const sessionData = loadFromLocalStorage(pageId, page?.updated_at);
                     if(sessionData) {
                         if(sessionData.header) contentZones.value.header = sessionData.header;
                         if(sessionData.footer) contentZones.value.footer = sessionData.footer;
@@ -3794,22 +3794,22 @@ layout = "${activePage.value.layout}"
                 const isLoadingContent = ref(false); // True during fetchContent to prevent watch triggering
                 const contentCache = new Map(); // Cache contentZones for pages with unsaved changes
 
-                // SessionStorage helper functions
-                const saveToSessionStorage = (pageId, content) => {
+                // LocalStorage helper functions
+                const saveToLocalStorage = (pageId, content) => {
                     try {
                         const dataWithTimestamp = {
                             content,
                             timestamp: Date.now()
                         };
-                        sessionStorage.setItem(`cms-unsaved-content-${pageId}`, JSON.stringify(dataWithTimestamp));
+                        localStorage.setItem(`cms-unsaved-content-${pageId}`, JSON.stringify(dataWithTimestamp));
                     } catch(e) {
-                        console.warn('Failed to save to sessionStorage:', e);
+                        console.warn('Failed to save to localStorage:', e);
                     }
                 };
 
-                const loadFromSessionStorage = (pageId, pageUpdatedAt = null) => {
+                const loadFromLocalStorage = (pageId, pageUpdatedAt = null) => {
                     try {
-                        const data = sessionStorage.getItem(`cms-unsaved-content-${pageId}`);
+                        const data = localStorage.getItem(`cms-unsaved-content-${pageId}`);
                         if(!data) return null;
 
                         const parsed = JSON.parse(data);
@@ -3819,29 +3819,29 @@ layout = "${activePage.value.layout}"
                             const dbUpdateTime = new Date(pageUpdatedAt).getTime();
                             if(dbUpdateTime > parsed.timestamp) {
                                 // DB has newer data, invalidate cache
-                                clearFromSessionStorage(pageId);
+                                clearFromLocalStorage(pageId);
                                 return null;
                             }
                         }
 
                         return parsed.content || parsed; // Support both old and new format
                     } catch(e) {
-                        console.warn('Failed to load from sessionStorage:', e);
+                        console.warn('Failed to load from localStorage:', e);
                         return null;
                     }
                 };
 
-                const clearFromSessionStorage = (pageId) => {
+                const clearFromLocalStorage = (pageId) => {
                     try {
-                        sessionStorage.removeItem(`cms-unsaved-content-${pageId}`);
+                        localStorage.removeItem(`cms-unsaved-content-${pageId}`);
                     } catch(e) {
-                        console.warn('Failed to clear sessionStorage:', e);
+                        console.warn('Failed to clear localStorage:', e);
                     }
                 };
 
-                // Debounced save to sessionStorage - saves 1 second after changes stop
+                // Debounced save to localStorage - saves 1 second after changes stop
                 let saveDebounceTimer = null;
-                const debouncedSaveToSessionStorage = () => {
+                const debouncedSaveToLocalStorage = () => {
                     if(saveDebounceTimer) {
                         clearTimeout(saveDebounceTimer);
                     }
@@ -3854,7 +3854,7 @@ layout = "${activePage.value.layout}"
                                 main: [...contentZones.value.main],
                                 sidebar: [...contentZones.value.sidebar]
                             };
-                            saveToSessionStorage(activePageId.value, cacheData);
+                            saveToLocalStorage(activePageId.value, cacheData);
                         }
                     }, 1000); // 1 second debounce
                 };
@@ -4008,9 +4008,9 @@ layout = "${activePage.value.layout}"
                                     page.contentStatus = 'saved';
                                 }
                             }
-                            // Check if there's unsaved content in sessionStorage for this page
+                            // Check if there's unsaved content in localStorage for this page
                             // This will auto-invalidate if DB has newer data
-                            if(loadFromSessionStorage(page.id, page.updated_at)) {
+                            if(loadFromLocalStorage(page.id, page.updated_at)) {
                                 page.contentStatus = 'unsaved';
                             }
                             // Mark as not hydrated initially
@@ -4059,8 +4059,8 @@ layout = "${activePage.value.layout}"
                                 if(activePage) {
                                     activePage.contentStatus = 'unsaved';
                                 }
-                                // Auto-save to sessionStorage after 1 second of no changes
-                                debouncedSaveToSessionStorage();
+                                // Auto-save to localStorage after 1 second of no changes
+                                debouncedSaveToLocalStorage();
                             }
                         }, {deep: true});
 
@@ -4102,15 +4102,7 @@ layout = "${activePage.value.layout}"
                         activePageMenuId.value = null;
                     });
 
-                    // Warn on unsaved changes
-                    window.addEventListener('beforeunload', (e) => {
-                        if(pages.value.some(p => p.contentStatus === 'unsaved') || hasUnsavedChanges.value) {
-                            e.preventDefault();
-                            const msg = "You have unsaved changes! are you sure you want to exit?";
-                            e.returnValue = msg;
-                            return msg;
-                        }
-                    });
+
 
                     // Handle browser back/forward navigation
                     window.addEventListener('popstate', (event) => {
@@ -4149,7 +4141,7 @@ layout = "${activePage.value.layout}"
                                 sidebar: [...contentZones.value.sidebar]
                             };
                             contentCache.set(oldId, cacheData);
-                            saveToSessionStorage(oldId, cacheData);
+                            saveToLocalStorage(oldId, cacheData);
                         }
                     }
 
@@ -4448,9 +4440,9 @@ layout = "${activePage.value.layout}"
                         const pageToUpdate = pages.value.find(p => p.id === activePageId.value);
                         if(pageToUpdate) {
                             pageToUpdate.contentStatus = 'saved';
-                            // Clear from cache and sessionStorage
+                            // Clear from cache and localStorage
                             contentCache.delete(pageToUpdate.id);
-                            clearFromSessionStorage(pageToUpdate.id);
+                            clearFromLocalStorage(pageToUpdate.id);
                         }
                         // Refresh pages to update published status if needed
                         await fetchPages();
@@ -4653,7 +4645,7 @@ layout = "${activePage.value.layout}"
                     if(activePage) {
                         activePage.contentStatus = 'unsaved';
                     }
-                    debouncedSaveToSessionStorage();
+                    debouncedSaveToLocalStorage();
                 };
 
                 const closeInspector = () => {
@@ -4688,7 +4680,7 @@ layout = "${activePage.value.layout}"
                     if(activePage) {
                         activePage.contentStatus = 'unsaved';
                     }
-                    debouncedSaveToSessionStorage();
+                    debouncedSaveToLocalStorage();
                 };
 
                 // --- UTILITIES ---
