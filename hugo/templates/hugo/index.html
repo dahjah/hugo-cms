@@ -2342,6 +2342,9 @@
         };
 
 
+        // Cache for compiled Handlebars templates (avoids recompiling on every render)
+        const compiledTemplateCache = {};
+
         // --- BLOCK RENDERER COMPONENT ---
         BlockRenderer = {
             name: 'BlockRenderer',
@@ -3186,14 +3189,20 @@
                 const renderedHtml = computed(() => {
                     if(!hasCustomTemplate.value) return '';
                     try {
-                        const templateSource = blockTemplates.value[props.block.type];
-                        const template = Handlebars.compile(templateSource);
+                        const blockType = props.block.type;
+                        const templateSource = blockTemplates.value[blockType];
+
+                        // Use cached compiled template or compile and cache
+                        if(!compiledTemplateCache[blockType]) {
+                            compiledTemplateCache[blockType] = Handlebars.compile(templateSource);
+                        }
+
                         const context = {
                             ...props.block.params,
                             id: props.block.id,
                             type: props.block.type
                         };
-                        return template(context);
+                        return compiledTemplateCache[blockType](context);
                     } catch(e) {
                         console.error("Handlebars render error", e);
                         return `<div class="text-red-500 p-2 border border-red-300 bg-red-50">Error rendering block: ${e.message}</div>`;
@@ -3507,6 +3516,9 @@
                     if(oldBlock && oldBlock.id !== newBlock?.id) {
                         const oldEditorKey = oldBlock.id + '_content';
                         if(quillInstances[oldEditorKey]) {
+                            // Properly clean up Quill instance to release memory
+                            const quill = quillInstances[oldEditorKey];
+                            quill.off('text-change'); // Remove event handlers
                             delete quillInstances[oldEditorKey];
                             delete richTextEditors[oldEditorKey];
                         }
