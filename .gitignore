@@ -1,5 +1,8 @@
+# Django & SQLite
 *.sqlite3
-db.sqlite3.*
+*.sqlite3-*
+*.sqlite3.backup
+*.db
 
 # Python
 __pycache__/
@@ -12,3 +15,25 @@ venv/
 hugo_output/
 media/
 static/media/
+
+# HAR captures
+*.har
+
+# Logs
+*.txt
+*.log
+
+# Temp/debug HTML
+*.html
+
+# Scraped data / profile JSON (root-level only, not app JSON)
+*profile.json
+*site_state.json
+comfort_bowl_data.json
+
+# Hugo binaries and tarballs
+bin/hugo
+*.tar.gz
+
+# Storage data
+storage/
