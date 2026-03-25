@@ -24,7 +24,5 @@ COPY . .
 # Expose the port Coolify will route to
 EXPOSE 8000
 
-# Run standard Django standalone server
-# (Note: For a true high-volume production setup, you could change this to gunicorn,
-# but for internal CMS usage runserver works flawlessly out of the box).
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run migrations and start standard Django standalone server
+CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
