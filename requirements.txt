@@ -6,3 +6,10 @@ python-dotenv>=1.0.0
 google-generativeai
 django-storages[google]
 django-tailwind[reload]
+django-taggit
+djangorestframework
+boto3
+colorgram.py
+playwright
+toml
+PyYAML
