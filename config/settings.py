@@ -26,7 +26,11 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-placeholder-ke
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1', 'hugo.cloud.djg.dev', 'hugo.monu.dev','100.72.72.1:12345', '100.72.72.1']
+ALLOWED_HOSTS_ENV = os.environ.get('DJANGO_ALLOWED_HOSTS', '')
+if ALLOWED_HOSTS_ENV:
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',')]
+else:
+    ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1', 'hugo.cloud.djg.dev', 'hugo.monu.dev','100.72.72.1:12345', '100.72.72.1']
 
 
 
