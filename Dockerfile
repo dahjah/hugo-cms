@@ -6,11 +6,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Hugo Extended binary (the CMS requires it to generate static sites)
-# Using the same version you were using locally (0.121.1)
+# Dynamically pull amd64 or arm64 depending on the deployment server's arch
 ENV HUGO_VERSION=0.121.1
-RUN curl -LO https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz \
-    && tar -zxvf hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz -C /usr/local/bin/ \
-    && rm hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz
+RUN ARCH=$(dpkg --print-architecture) && \
+    curl -LO https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-${ARCH}.tar.gz \
+    && tar -zxvf hugo_extended_${HUGO_VERSION}_linux-${ARCH}.tar.gz -C /usr/local/bin/ \
+    && rm hugo_extended_${HUGO_VERSION}_linux-${ARCH}.tar.gz
 
 WORKDIR /app
 
