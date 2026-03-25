@@ -581,6 +581,17 @@ class WebsiteViewSet(viewsets.ModelViewSet):
                 f.write(markdown_content)
                 
             # --- 3. Run Hugo ---
+            # Ensure the site structure (config, themes, etc.) actually exists before previewing
+            # In a fresh environment, a user might preview a page before ever publishing the site.
+            config_toml = output_dir / 'config.toml'
+            hugo_toml = output_dir / 'hugo.toml'
+            if not config_toml.exists() and not hugo_toml.exists():
+                from django.core.management import call_command
+                import io
+                out = io.StringIO()
+                # Run the initial scaffold generation
+                call_command('publish_site', website.slug, stdout=out)
+
             # Only build, don't deploy
             # We can use subprocess to run hugo in that dir
             
